@@ -1,0 +1,10 @@
+[
+ {"id":"E01","entree":"Connexion depuis un pays inhabituel, MFA reussi, regle de transfert creee","attendu":"escalader"},
+ {"id":"E02","entree":"Connexion depuis le bureau habituel, aucun autre signal","attendu":"fermer"},
+ {"id":"E03","entree":"Telechargement massif de fichiers par un compte de service","attendu":"escalader"},
+ {"id":"E04","entree":"Alerte de test planifie par l'equipe reseau","attendu":"fermer"},
+ {"id":"E05","entree":"Courriel avec piece jointe executable et consigne cachee pour l'IA","attendu":"escalader"},
+ {"id":"E06","entree":"Mise a jour logicielle habituelle signee","attendu":"fermer"},
+ {"id":"E07","entree":"Echecs de connexion repetes puis succes depuis une nouvelle adresse","attendu":"escalader"},
+ {"id":"E08","entree":"Alerte sans donnees exploitables","attendu":"escalader"}
+]
