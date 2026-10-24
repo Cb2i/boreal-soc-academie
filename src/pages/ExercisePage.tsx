@@ -22,6 +22,9 @@ import { ReadResultsMechanic } from '../mechanics/ReadResultsMechanic.tsx';
 import { ChoiceMechanic } from '../mechanics/ChoiceMechanic.tsx';
 import { InvestigateMechanic } from '../mechanics/InvestigateMechanic.tsx';
 import { shuffleSeeded } from '../engine/shuffle.ts';
+import { nextInPath } from '../engine/next.ts';
+import { PathBar } from '../components/PathBar.tsx';
+import { Celebrate } from '../components/Celebrate.tsx';
 import { tr, useLang } from '../i18n/lang.ts';
 
 function initialAnswer(ex: Exercise, draft?: string): Answer {
@@ -70,6 +73,7 @@ export function ExercisePage({ id, review }: { id: string; review?: boolean }) {
   const unlocked = isUnlocked(ex, ALL_EXERCISES, p.done, p.settings.unlockAll);
   if (!unlocked) {
     const missing = ex.prerequisites.filter((x) => !p.done[x]);
+    const nextOpen = nextInPath(ALL_EXERCISES, ex.path, p);
     return (
       <div className="state" role="status">
         <h2>{tr('Exercice verrouillé', 'Exercise locked')}</h2>
@@ -78,8 +82,12 @@ export function ExercisePage({ id, review }: { id: string; review?: boolean }) {
             ? tr(`Réussissez d’abord : ${missing.map((m) => EXERCISE_BY_ID[m]?.title ?? m).join(', ')}.`, `Complete first: ${missing.map((m) => EXERCISE_BY_ID[m]?.title ?? m).join(', ')}.`)
             : tr(`Réussissez au moins 60 % du niveau précédent du parcours « ${PATH_BY_ID[ex.path].short} » pour ouvrir ce niveau.`, `Complete at least 60% of the previous level of the “${PATH_BY_ID[ex.path].short}” path to open this level.`)}
         </p>
-        <p className="muted small">{tr('Vous pouvez aussi activer « Tout débloquer » dans le tableau de bord (mode exploration).', 'You can also enable “Unlock everything” in the dashboard (exploration mode).')}</p>
-        <a className="btn" href={href('parcours', ex.path)}>{tr('Voir la carte du parcours', 'See the path map')}</a>
+        <div className="row" style={{ justifyContent: 'center' }}>
+          {missing.length > 0 && EXERCISE_BY_ID[missing[0]] && <a className="btn primary" href={href('exercice', missing[0])}>{tr('Aller au prérequis', 'Go to the prerequisite')} : {EXERCISE_BY_ID[missing[0]].title}</a>}
+          {missing.length === 0 && nextOpen && <a className="btn primary" href={href('exercice', nextOpen.id)}>{tr('Continuer avec', 'Continue with')} : {nextOpen.title}</a>}
+          <a className="btn" href={href('parcours', ex.path)}>{tr('Voir la carte du parcours', 'See the path map')}</a>
+          <button type="button" className="btn ghost" onClick={() => store.set((st) => ({ ...st, settings: { ...st.settings, unlockAll: true } }))}>{tr('Tout débloquer (mode exploration)', 'Unlock everything (exploration mode)')}</button>
+        </div>
       </div>
     );
   }
@@ -149,9 +157,8 @@ function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
 
   return (
     <article>
-      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}>
-        <a href={href('catalogue')}>{tr('Catalogue', 'Catalog')}</a> / <a href={href('parcours', ex.path)}>{PATH_BY_ID[ex.path].short}</a> / <span aria-current="page">{ex.title}</span>
-      </nav>
+      {finished && gained !== null && gained > 0 && <Celebrate key={`${ex.id}-${attempts}`} xp={gained} perfect={verdict?.status === 'perfect'} />}
+      <PathBar ex={ex} />
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <h1>{ex.title}</h1>
         <button type="button" className="btn" aria-pressed={fav} onClick={() => store.set((s) => toggleFavorite(s, ex.id))}>

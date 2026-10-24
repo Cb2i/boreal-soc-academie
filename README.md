@@ -25,6 +25,8 @@ Les chiffres exacts sont générés par `npm run coverage:matrix`.
 
 ## Fonctionnalités
 
+Repères : carte « prochaine étape » sur l'accueil et sur chaque parcours (le cours d'abord, puis l'exercice suivant), choix du point de départ selon le profil, barre de position dans chaque exercice (n sur N, précédent, suivant), page verrouillée avec un chemin de sortie, et recherche globale au clavier (Ctrl+K, Cmd+K ou la touche /) dans les exercices, cours, labs et pages. Une petite célébration (XP, confettis) s'affiche à la réussite et respecte `prefers-reduced-motion`.
+
 Accueil, catalogue filtrable, carte de progression, pages de cours, espace d'exercice avec éditeur, tableau de bord, favoris, reprise de session, indices progressifs, corrections expliquées, XP et badges liés aux compétences, mode révision (répétition espacée de 1, 3, 7, 14 et 30 jours), mode chronométré optionnel, thèmes sombre et clair, navigation au clavier, respect de `prefers-reduced-motion`. Chaque glisser-déposer a une alternative accessible (boutons et listes déroulantes).
 
 Déblocage : le niveau L s'ouvre quand au moins 60 % du niveau L-1 du même parcours est réussi, en plus des prérequis propres à chaque exercice. Le réglage « tout débloquer » le contourne.

@@ -5,6 +5,8 @@ import type { Level, PathId } from '../content/types.ts';
 import { isUnlocked, levelUnlocked } from '../engine/unlock.ts';
 import { href } from '../router.ts';
 import { useProgress } from '../state/useProgress.ts';
+import { nextStep, orderedPath } from '../engine/next.ts';
+import { Ring } from '../components/Ring.tsx';
 import { tr } from '../i18n/lang.ts';
 
 export function PathPage({ id }: { id: string }) {
@@ -14,13 +16,30 @@ export function PathPage({ id }: { id: string }) {
   const exs = ALL_EXERCISES.filter((e) => e.path === path.id);
   const lessons = ALL_LESSONS.filter((l) => l.path === path.id);
   const done = exs.filter((e) => p.done[e.id]).length;
+  const pct = exs.length ? Math.round((done / exs.length) * 100) : 0;
+  const step = nextStep(ALL_EXERCISES, ALL_LESSONS, path.id, p);
+  const nextId = step?.kind === 'exercise' ? step.ex.id : null;
+  const order = orderedPath(ALL_EXERCISES, path.id);
   return (
-    <div className="stack">
+    <div className="stack" style={{ ['--pc' as string]: path.accent }}>
       <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={href('catalogue')}>{tr('Catalogue', 'Catalog')}</a> / <span aria-current="page">{path.short}</span></nav>
-      <h1 style={{ borderLeft: `6px solid ${path.accent}`, paddingLeft: '0.7rem' }}>{path.title}</h1>
-      <p className="lead muted">{path.description}</p>
-      <div className="bar" role="progressbar" aria-valuenow={done} aria-valuemin={0} aria-valuemax={exs.length || 1} aria-label={tr('Progression du parcours', 'Path progress')}><span style={{ width: `${exs.length ? (done / exs.length) * 100 : 0}%` }} /></div>
-      <p className="muted small">{tr(`${done} sur ${exs.length} exercice(s) réussis.`, `${done} of ${exs.length} exercise(s) completed.`)}</p>
+      <div className="path-head">
+        <Ring pct={pct} size={92} stroke={9} color={path.accent}><span className="ring-num big">{pct}%</span></Ring>
+        <div>
+          <h1 style={{ marginBottom: '0.2em' }}>{path.title}</h1>
+          <p className="lead muted" style={{ margin: 0 }}>{path.description}</p>
+          <p className="muted small" style={{ margin: '0.4rem 0 0' }}>{tr(`${done} sur ${exs.length} exercice(s) réussis.`, `${done} of ${exs.length} exercise(s) completed.`)}</p>
+        </div>
+      </div>
+      <div className="bar" role="progressbar" aria-valuenow={done} aria-valuemin={0} aria-valuemax={exs.length || 1} aria-label={tr('Progression du parcours', 'Path progress')}><span style={{ width: `${pct}%` }} /></div>
+      {step && (
+        <a className="next-banner" href={step.kind === 'lesson' ? href('cours', step.lesson.id) : href('exercice', step.ex.id)}>
+          <span className="kicker">{done === 0 ? tr('Commencez ici', 'Start here') : tr('Prochaine étape', 'Next step')}</span>
+          <strong>{step.kind === 'lesson' ? step.lesson.title : step.ex.title}</strong>
+          <span className="muted small">{step.kind === 'lesson' ? tr(`Cours · ${step.lesson.minutes} min`, `Lesson · ${step.lesson.minutes} min`) : tr(`Exercice · niveau ${step.ex.level}`, `Exercise · level ${step.ex.level}`)}</span>
+          <span className="go">{tr('Y aller', 'Go')} →</span>
+        </a>
+      )}
 
       {lessons.length > 0 && (
         <section aria-labelledby="cours-h">
@@ -56,10 +75,12 @@ export function PathPage({ id }: { id: string }) {
                 {inLvl.map((e) => {
                   const ok = isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll);
                   const isDone = !!p.done[e.id];
-                  const cls = `node${isDone ? ' done' : ''}${ok ? '' : ' locked'}`;
+                  const isNext = e.id === nextId;
+                  const cls = `node${isDone ? ' done' : ''}${ok ? '' : ' locked'}${isNext ? ' next' : ''}`;
                   const inner = (
                     <>
-                      <span className="t">{isDone ? '✓ ' : ok ? '' : '🔒 '}{e.title}</span>
+                      <span className="t"><span className="node-n" aria-hidden="true">{isDone ? '✓' : ok ? order.findIndex((x) => x.id === e.id) + 1 : '🔒'}</span>{e.title}</span>
+                      {isNext && <span className="pill info">{tr('À faire maintenant', 'Do this now')}</span>}
                       <span className="muted small">{e.kind === 'mission' ? tr('Mission finale', 'Final mission') : e.kind === 'assessment' ? tr('Évaluation', 'Assessment') : tr('Exercice', 'Exercise')}</span>
                     </>
                   );

@@ -86,6 +86,7 @@ const ok = (name, cond, extra = '') => {
   await page.click('text=Valider ma réponse');
   await page.waitForFunction(() => /Correct/.test(document.querySelector('.verdict')?.textContent || ''));
   ok('kql : bonne requête acceptée', true);
+  ok('réussite : célébration (+XP) affichée', (await page.$$('.celebrate .xp-burst')).length === 1);
   let pr = await progress();
   ok('progression : enregistrée dans localStorage', pr && pr.done && pr.done['kql-003'] && pr.done['kql-003'].xp > 0);
   await page.reload();
@@ -240,6 +241,43 @@ const ok = (name, cond, extra = '') => {
   ok('langue : aucune erreur de console', lerrors.length === 0, lerrors.join(' | '));
   await lctx.close();
   await lmob.close();
+
+  // 11c. Repères : carte « prochaine étape », recherche Ctrl+K, barre de position, page verrouillée avec issue
+  const wctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const wp = await wctx.newPage();
+  const werrors = [];
+  wp.on('pageerror', (e) => werrors.push('pageerror: ' + e.message));
+  wp.on('console', (m) => { if (m.type() === 'error') werrors.push('console: ' + m.text()); });
+  await wp.goto(base);
+  await wp.waitForSelector('.next-card');
+  ok('repères : carte « prochaine étape » avec un bouton', (await wp.$$('.next-card a.btn.primary')).length === 1);
+  ok('repères : « Par où commencer ? » pour un nouvel utilisateur', (await wp.$$('.profile')).length === 4);
+  await wp.keyboard.press('Control+k');
+  await wp.waitForSelector('.cmd input');
+  await wp.keyboard.type('spray');
+  await wp.waitForSelector('.cmd li[role=option].on');
+  ok('recherche : Ctrl+K ouvre la recherche et trouve des résultats', (await wp.$$('.cmd li[role=option]')).length > 1);
+  await wp.keyboard.press('Enter');
+  await wp.waitForFunction(() => !document.querySelector('.cmd'));
+  ok('recherche : Entrée ouvre le résultat et ferme la fenêtre', /#\/(exercice|cours|parcours|labos)/.test(wp.url()), wp.url());
+  await wp.keyboard.press('Control+k');
+  await wp.keyboard.press('Escape');
+  await wp.waitForFunction(() => !document.querySelector('.cmd'));
+  ok('recherche : Échap ferme la fenêtre', true);
+  await wp.goto(base + '#/exercice/kql-031');
+  await wp.waitForSelector('.state');
+  ok('verrouillé : propose une issue (prérequis, carte, tout débloquer)', (await wp.$$('.state a.btn, .state button.btn')).length >= 2);
+  await wp.evaluate(() => localStorage.setItem('boreal.progress.v1', JSON.stringify({ v: 1, settings: { unlockAll: true } })));
+  await wp.goto(base + '#/exercice/kql-003');
+  await wp.reload();
+  await wp.waitForSelector('.pathbar');
+  ok('repères : barre de position affichée dans un exercice', /\d+\s*\/\s*\d+/.test(await wp.textContent('.pathbar-count')));
+  await wp.fill('textarea', 'SigninLogs\n| summarize Total = count() by UserPrincipalName');
+  await wp.goto(base + '#/parcours/kql');
+  await wp.waitForSelector('.next-banner');
+  ok('repères : la carte du parcours indique la prochaine étape', (await wp.$$('.next-banner')).length === 1 && (await wp.$$('.node.next')).length <= 1);
+  ok('repères : aucune erreur de console', werrors.length === 0, werrors.join(' | '));
+  await wctx.close();
 
   // 12. Clavier : tabulation atteint un élément interactif et le lien d'évitement existe
   await page.goto(base);

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRoute, href } from './router.ts';
 import { AnnouncerProvider } from './components/Announcer.tsx';
 import { useProgress } from './state/useProgress.ts';
@@ -14,6 +14,7 @@ import { PlaygroundPage } from './pages/PlaygroundPage.tsx';
 import { LabsPage } from './pages/LabsPage.tsx';
 import { CoveragePage } from './pages/CoveragePage.tsx';
 import { LimitsPage } from './pages/LimitsPage.tsx';
+import { CommandPalette, SearchButton } from './components/CommandPalette.tsx';
 
 const nav = (): [string, string][] => [
   ['accueil', tr('Accueil', 'Home')],
@@ -61,6 +62,28 @@ export function App() {
   const lang = useLang();
   const p = useProgress();
   const xp = totalXp(p);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((o) => !o);
+      } else if (e.key === '/' && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    const onOpen = () => setSearchOpen(true);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('boube:search', onOpen);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('boube:search', onOpen);
+    };
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -112,6 +135,7 @@ export function App() {
               <a key={name} href={href(name)} aria-current={route.name === name ? 'page' : undefined}>{label}</a>
             ))}
           </nav>
+          <SearchButton onOpen={() => setSearchOpen(true)} />
           <button
             type="button"
             className="btn small lang-btn"
@@ -125,6 +149,7 @@ export function App() {
           <span className="xp-chip" aria-label={tr(`${xp} points d’expérience`, `${xp} experience points`)}>{xp} XP</span>
         </div>
       </header>
+      <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
       <main id="main" tabIndex={-1} className="wrap">
         <Boundary resetKey={`${route.name}/${route.params.join('/')}`}>{page}</Boundary>
       </main>
