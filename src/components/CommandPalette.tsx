@@ -29,6 +29,11 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const opener = useRef<HTMLElement | null>(null);
+  // Contenu de la section Agentic AI : chargé à la première ouverture pour ne pas alourdir le chargement initial.
+  const [ai, setAi] = useState<typeof import('../agentic/content/index.ts') | null>(null);
+  useEffect(() => {
+    if (open && !ai) void import('../agentic/content/index.ts').then(setAi);
+  }, [open, ai]);
 
   const items = useMemo<Item[]>(() => {
     const pages: Item[] = [
@@ -53,9 +58,19 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       locked: !isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll, p.startLevel[e.path]),
       done: !!p.done[e.id],
     }));
-    return [...pages, ...paths, ...lessons, ...labs, ...exs];
+    const aiItems: Item[] = ai
+      ? [
+          { key: 'ai-home', label: 'Agentic AI for Cybersecurity', kind: 'IA', hint: 'agents automatisation sécurité', to: href('ia') },
+          { key: 'ai-res', label: tr('Ressources téléchargeables (IA)', 'Downloadable resources (AI)'), kind: 'IA', hint: 'scripts prompts n8n', to: href('ia', 'ressources') },
+          { key: 'ai-proj', label: tr('Projets (IA)', 'Projects (AI)'), kind: 'IA', hint: 'projets de synthèse', to: href('ia', 'projets') },
+          ...ai.MODULES.map((m) => ({ key: `ai-m-${m.id}`, label: `${m.n}. ${m.title}`, kind: 'IA module', hint: m.summary, to: href('ia', 'module', m.id) })),
+          ...ai.LESSONS.map((l) => ({ key: `ai-l-${l.id}`, label: l.title, kind: 'IA cours', hint: l.summary, to: href('ia', 'cours', l.id) })),
+          ...ai.PROJECTS.map((x) => ({ key: `ai-p-${x.id}`, label: x.title, kind: 'IA projet', hint: x.problem, to: href('ia', 'projet', x.id) })),
+        ]
+      : [];
+    return [...pages, ...paths, ...lessons, ...labs, ...exs, ...aiItems];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang, p.done, p.lessonsDone, p.settings.unlockAll, p.startLevel]);
+  }, [lang, p.done, p.lessonsDone, p.settings.unlockAll, p.startLevel, ai]);
 
   const results = useMemo(() => {
     const terms = norm(q).split(/\s+/).filter(Boolean);
