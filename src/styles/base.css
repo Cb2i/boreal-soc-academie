@@ -521,3 +521,19 @@ main:focus { outline: none; }
 .ai-mod > .row { flex-wrap: nowrap; gap: 0.75rem; }
 .ai-mod > .row > :last-child { flex: none; }
 @media (min-width: 901px) { .ai-level .grid.cols-3.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Respiration des pages d'accueil : espaces verticaux généreux entre les blocs */
+.landing > * + *, .ai-home > * + * { margin-top: 2.75rem; }
+.landing .hero { padding: 2.5rem 0 0.5rem; }
+.landing .hero .lead { margin-top: 1.1rem; }
+.landing .section-cards { gap: 1.5rem; margin-top: 2rem; }
+.landing .section-card { padding: 1.75rem; gap: 1rem; }
+.landing .section-card .btn { margin-top: 0.5rem; }
+.landing .how { gap: 1.25rem; }
+.landing .how li { padding: 1.25rem 1.25rem 1.25rem 3.8rem; }
+.landing .how li::before { top: 1.2rem; }
+.landing section.stack > h2 { margin-bottom: 1.1rem; }
+.ai-home .ai-level { padding-top: 0.5rem; }
+.ai-home .ai-level > h2 { margin-bottom: 0.4rem; }
+.ai-home .ai-level > p { margin-bottom: 1.25rem; }
+.ai-home .grid { gap: 1.25rem; }
