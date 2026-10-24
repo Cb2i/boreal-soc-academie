@@ -3,9 +3,11 @@ import { AI_LEVELS } from './levels.ts';
 import { FINAL_PROJECTS } from './final.ts';
 import { RESOURCES } from './resources.ts';
 import { m01 } from './m01.ts';
+import { m02 } from './m02.ts';
+import { m03 } from './m03.ts';
 
 /** Tous les modules livrés, dans l'ordre pédagogique. */
-export const MODULE_CONTENT: ModuleContent[] = [m01];
+export const MODULE_CONTENT: ModuleContent[] = [m01, m02, m03];
 
 export const LEVELS = AI_LEVELS;
 export const MODULES: AiModule[] = MODULE_CONTENT.map((m) => m.module);
