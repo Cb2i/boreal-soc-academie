@@ -20,6 +20,14 @@ export function LimitsPage() {
         <li>{tr(<>Non pris en charge : <code>parse</code>, <code>make-series</code>, <code>series_*</code>, <code>row_number</code>, <code>serialize</code>, <code>lookup</code>, <code>evaluate</code>, <code>mv-apply</code>, <code>scan</code>, <code>search</code>, <code>find</code>.</>, <>Not supported: <code>parse</code>, <code>make-series</code>, <code>series_*</code>, <code>row_number</code>, <code>serialize</code>, <code>lookup</code>, <code>evaluate</code>, <code>mv-apply</code>, <code>scan</code>, <code>search</code>, <code>find</code>.</>)}</li>
         <li>{tr('Le glisser-déposer a toujours une alternative par boutons ou listes (clavier et tactile).', 'Drag and drop always has an alternative with buttons or lists (keyboard and touch).')}</li>
       </ul>
+      <h2>{tr('Section Agentic AI : limites', 'Agentic AI section: limits')}</h2>
+      <ul>
+        <li>{tr('Les agents sont simulés par des règles déterministes : aucun vrai modèle de langage n’a été évalué ici, et aucune API d’IA n’est appelée.', 'Agents are simulated with deterministic rules: no real language model was evaluated here and no AI API is called.')}</li>
+        <li>{tr('Les requêtes KQL de cette section suivent la documentation Microsoft mais n’ont pas été exécutées sur un espace Log Analytics réel.', 'KQL queries in this section follow Microsoft documentation but were not run on a real Log Analytics workspace.')}</li>
+        <li>{tr('Les ressources marquées « à vérifier » (workflow n8n, instructions Logic Apps, gabarits de prompt) n’ont pas été éprouvées dans leur outil cible. Les ressources « testées » l’ont été avec Python 3 ou Node, pas dans un environnement Azure.', 'Resources marked “to verify” (n8n workflow, Logic Apps instructions, prompt templates) were not exercised in their target tool. “Tested” resources were run with Python 3 or Node, not in Azure.')}</li>
+        <li>{tr('Les travaux ouverts n’ont pas de note automatique : seule l’autoévaluation par grille est enregistrée.', 'Open work has no automatic grade: only the rubric self-assessment is recorded.')}</li>
+        <li>{tr('Rien de ce cours n’est un avis juridique ou de conformité (par exemple sur les incidents de confidentialité au Québec).', 'Nothing in this course is legal or compliance advice.')}</li>
+      </ul>
       <h2>{tr('Deux contextes distincts', 'Two distinct contexts')}</h2>
       <p>
         {tr(

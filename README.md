@@ -1,10 +1,31 @@
-# Boube SOC Académie
+# Boube (SOC Académie)
 
-Plateforme d'apprentissage interactive sur Azure, Microsoft Sentinel et KQL. Progression par niveaux, exercices variés, moteur KQL local sur données fictives, enquêtes SOC et labos Azure optionnels. Application statique : aucun compte, aucun serveur, aucun service payant.
+Plateforme d'apprentissage interactive en deux sections : (1) Azure, Microsoft Sentinel et KQL ; (2) Agentic AI for Cybersecurity, de l'IA générative aux agents sécurisés, évalués et exploités. Progression par niveaux, exercices variés, moteur KQL local sur données fictives, enquêtes SOC et labos Azure optionnels. Application statique : aucun compte, aucun serveur, aucun service payant.
 
-> Rien n'a été publié ni déployé. Le dépôt est prêt à l'être (voir la section Déploiement).
+> Le dépôt est prêt à être déployé (voir la section Déploiement). Le déploiement sur GitHub Pages se fait par une poussée sur `main` ; aucun autre service externe n'est utilisé. Le site publié n'a pas pu être testé en ligne depuis l'environnement de rédaction : seuls les builds locaux (racine et sous-chemin) ont été testés.
 
-## Contenu actuel
+## Section Agentic AI for Cybersecurity
+
+Accessible par le sélecteur d'en-tête (`#/ia`). Contenu en français seulement. Aucune API d'IA payante, aucun compte, aucun locataire : tout fonctionne dans le navigateur avec des données fictives et des agents simulés. Les laboratoires connectés sont facultatifs et documentent comptes, permissions, coûts, secrets, nettoyage et limites.
+
+| Niveau | Modules |
+| --- | --- |
+| 1 Fondations | 1 Comprendre l'IA, 2, 3 |
+| 2 Automatisation | 4 Workflows fiables, 5 n8n, 6 Microsoft (Logic Apps, Power Automate, Functions) |
+| 3 Applications IA | 7 Instructions et sorties structurées, 8 Outils, 9 RAG, 10 Patrons d'agents |
+| 4 Cybersécurité | 11 Triage SOC, 12 Sentinel, Defender XDR et KQL, 13 Vulnérabilités, 14 Phishing, identité, posture cloud, 15 Reporting et base de connaissances |
+| 5 Sécurité et production | 16 Sécuriser les agents, 17 Évaluation et observabilité, 18 Déploiement et exploitation |
+| 6 Synthèse | 9 projets de synthèse (`#/ia/projets`) |
+
+Chaque module : 3 leçons (objectifs, explication, démonstration commentée, exercice guidé et autonome, 3 questions, fiche de révision, liens), évaluation de 8 questions, cas pratique, grille de compétences, remédiation et 3 projets (débutant, intermédiaire, avancé). Les exercices sont validés de façon déterministe (QCM, réponse courte, association, remise en ordre, placement, analyse, correction de JSON ou de texte, configuration, workflow). Les travaux ouverts s'autoévaluent avec une grille : aucune note automatique n'est inventée.
+
+- Progression séparée de la section Azure (`localStorage`, clé `boube.agentic.v1`). « Contenu consulté » est distinct de « compétence validée ». Aucune synchronisation.
+- `#/ia/ressources` : fichiers téléchargeables (`public/ressources-ia/`), chacun avec son statut. **Testé** signifie que le contrôle décrit a réellement été exécuté pendant la rédaction (Python 3 ou Node). **À vérifier** signifie jamais importé ni exécuté dans l'outil cible : c'est le cas du workflow n8n (sa logique JavaScript a été exécutée avec Node, mais l'import dans n8n n'a pas été testé), des instructions Logic Apps et des gabarits de prompt (non exécutés contre un modèle réel).
+- Pour rejouer les scripts : `python3 -I public/ressources-ia/<dossier>/<script>.py` (voir la colonne « Contrôle » de la page Ressources pour les arguments). `schemas/valider-sortie.py` exige `pip install jsonschema`.
+- `npm run validate:agentic` : références croisées, ressources présentes, JSON valide, absence de secret probable et de tiret cadratin. Les réponses de référence de chaque exercice sont vérifiées par `tests/agentic-content.test.ts`.
+- Les requêtes KQL du contenu IA suivent la documentation Microsoft mais n'ont pas été exécutées sur un espace Log Analytics réel.
+
+## Contenu de la section Azure
 
 Les chiffres exacts sont générés par `npm run coverage:matrix`.
 
@@ -96,7 +117,7 @@ Limites connues : pas de `make-series`, `row_number`, `parse`, ni de plusieurs f
 
 ## Confidentialité
 
-La progression est stockée uniquement dans le `localStorage` du navigateur (clé `boreal.progress.v1`), avec export et import JSON. Aucune donnée n'est envoyée ailleurs. Aucun secret ni accès à un locataire n'est demandé, y compris dans les labos.
+La progression est stockée uniquement dans le `localStorage` du navigateur (clés `boreal.progress.v1` pour Azure et `boube.agentic.v1` pour la section IA), avec export et import JSON. Aucune donnée n'est envoyée ailleurs. Aucun secret ni accès à un locataire n'est demandé, y compris dans les labos.
 
 ## Déploiement
 
@@ -122,7 +143,7 @@ Publier le contenu de `dist/` (Netlify, Cloudflare Pages, Azure Static Web Apps,
 
 - `npm test` : tests unitaires (moteur KQL, jeu de données, validation, progression, contenu, bascule de langue).
 - `npm run validate:i18n` : complétude et cohérence des traductions anglaises.
-- `npm run e2e` : scénario Playwright (navigation, verrouillage, KQL incorrect puis correct, persistance, glisser-déposer natif et alternatives, enquête, thèmes, mobile 375 px). Playwright n'est pas une dépendance du projet : l'installer globalement (`npm i -g playwright`, puis `npx playwright install chromium`) et construire d'abord avec `npm run build`. Pour le sous-chemin : `VITE_BASE=/soc-academy/ npx vite build --outDir dist-sub` puis `E2E_SUBPATH=1 npm run e2e`.
+- `npm run e2e` : scénario Playwright (97 vérifications, dont la section IA : navigation, exercice, persistance, ressources, projets, recherche Ctrl+K ; navigation, verrouillage, KQL incorrect puis correct, persistance, glisser-déposer natif et alternatives, enquête, thèmes, mobile 375 px). Playwright n'est pas une dépendance du projet : l'installer globalement (`npm i -g playwright`, puis `npx playwright install chromium`) et construire d'abord avec `npm run build`. Pour le sous-chemin : `VITE_BASE=/soc-academy/ npx vite build --outDir dist-sub` puis `E2E_SUBPATH=1 npm run e2e`.
 
 ## Sources et vérification
 
@@ -137,7 +158,11 @@ Les faits techniques ont été vérifiés dans la documentation officielle Micro
 ## Limites connues
 
 - Le niveau expert n'existe presque qu'en KQL (19 exercices; 1 en SOC). Azure : fondations n'a qu'un exercice avancé; Azure : administration et Identité n'ont pas de niveau débutant.
-- Bundle de 710 kB sans découpage du code.
+- La section IA est découpée en un chunk chargé à la demande ; le bundle principal dépasse tout de même 500 kB (avertissement Vite).
+- La section IA n'existe qu'en français. Les contenus tiers cités (CISA, FIRST, RoboShadow, etc.) n'ont pas tous pu être consultés depuis l'environnement de rédaction : seules les affirmations vérifiées sont énoncées comme telles.
+- Les ressources « à vérifier » (n8n, Logic Apps, prompts) n'ont pas été éprouvées dans leur outil cible.
+- Les agents de la section sont simulés (règles déterministes) : aucune évaluation d'un vrai modèle de langage n'a été réalisée ici.
+- Le test de bout en bout contient des vérifications parfois instables (un échec isolé a été observé sur la page d'introduction du test de niveau et, plus tôt, sur un glisser-déposer) : une relance les fait réussir.
 - Aucun test de composants jsdom; la couverture UI repose sur le scénario e2e.
 
 ## Licence
