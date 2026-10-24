@@ -1,0 +1,24 @@
+{
+  "id": "INC-FICTIF-001",
+  "titre": "Compte potentiellement compromis suite à un hameçonnage (fictif)",
+  "severite": "Moyenne",
+  "preuves": {
+    "E1": {"source": "SigninLogs", "extrait": "Connexion b.roy depuis un autre pays a 09:12, MFA reussi"},
+    "E2": {"source": "AuditLogs", "extrait": "Regle de transfert creee a 09:20 vers un domaine externe"},
+    "E3": {"source": "EmailEvents", "extrait": "Courriel de fausse expiration de mot de passe livre a 08:55"},
+    "E4": {"source": "Billet SOC", "extrait": "Utilisateur joint par telephone a 10:05 : n'a pas voyage"}
+  },
+  "chronologie": [
+    {"heure": "08:55", "evenement": "Livraison du courriel d'hameconnage", "preuves": ["E3"]},
+    {"heure": "09:12", "evenement": "Connexion depuis un autre pays", "preuves": ["E1"]},
+    {"heure": "09:20", "evenement": "Creation d'une regle de transfert externe", "preuves": ["E2"]},
+    {"heure": "10:05", "evenement": "L'utilisateur confirme ne pas avoir voyage", "preuves": ["E4"]},
+    {"heure": "10:30", "evenement": "Les donnees de l'entreprise ont ete exfiltrees", "preuves": []}
+  ],
+  "impact": "Un compte standard touche; transfert de courriels vers un domaine externe possible.",
+  "actions": [
+    {"action": "Revocation des sessions et changement de mot de passe securise", "etat": "approuvee_simulee"},
+    {"action": "Retrait de la regle de transfert apres conservation de la preuve", "etat": "approuvee_simulee"}
+  ],
+  "limites": ["Contenu des courriels transferes non examine", "Impact sur des renseignements personnels non evalue"]
+}
