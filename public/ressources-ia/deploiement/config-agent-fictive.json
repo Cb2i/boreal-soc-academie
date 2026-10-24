@@ -1,0 +1,12 @@
+{
+  "agent": "triage-v3",
+  "proprietaire": "equipe-soc",
+  "environnement": "labo",
+  "secrets": {"mode": "variable_en_clair", "valeur_exemple": "cle-factice-ne-pas-utiliser"},
+  "identite": "compte-administrateur",
+  "approbation_actions_reelles": false,
+  "plafond_budget_mensuel": null,
+  "journalisation": true,
+  "retour_arriere": false,
+  "jeu_evaluation_rejoue": true
+}
