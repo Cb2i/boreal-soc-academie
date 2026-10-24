@@ -558,7 +558,7 @@ export function referenceAnswer(ex: Exercise): Answer | null {
 
 export const BASE_XP: Record<number, number> = { 1: 10, 2: 20, 3: 35, 4: 50 };
 
-export function computeXp(ex: Exercise, verdict: Verdict, opts: { hintsUsed: number; attempts: number; timedUnderPar?: boolean }): number {
+export function computeXp(ex: Exercise, verdict: Verdict, opts: { hintsUsed: number; attempts: number }): number {
   if (!verdict.correct) return 0;
   let base = BASE_XP[ex.level] ?? 10;
   if (ex.kind === 'mission') base *= 2.5;
@@ -567,7 +567,6 @@ export function computeXp(ex: Exercise, verdict: Verdict, opts: { hintsUsed: num
   f *= Math.max(0.6, 1 - 0.1 * opts.hintsUsed);
   if (opts.attempts <= 1) f *= 1.1;
   else if (opts.attempts > 4) f *= 0.85;
-  if (opts.timedUnderPar) f *= 1.15;
   return Math.max(1, Math.round(base * f));
 }
 

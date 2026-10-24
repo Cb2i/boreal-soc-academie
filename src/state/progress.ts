@@ -19,7 +19,6 @@ export interface DoneRecord {
 export interface Settings {
   theme: 'auto' | 'dark' | 'light';
   unlockAll: boolean;
-  timed: boolean;
   reducedMotion: 'auto' | 'on' | 'off';
   /** Objectif hebdomadaire : nombre de réussites par semaine (1 à 50). */
   weeklyGoal: number;
@@ -44,8 +43,6 @@ export interface Progress {
   certName: string;
   /** Niveau de départ par parcours (choix libre ou test de niveau), 1 à 4. */
   startLevel: Record<string, number>;
-  /** Défi du jour figé pour la journée, afin que la liste reste stable pendant qu'on la complète. */
-  daily: { day: string; ids: string[] } | null;
   createdAt: number;
 }
 
@@ -70,11 +67,10 @@ export function emptyProgress(now = Date.now()): Progress {
     steps: {},
     labsChecked: {},
     last: null,
-    settings: { theme: 'auto', unlockAll: false, timed: false, reducedMotion: 'auto', weeklyGoal: DEFAULT_WEEKLY_GOAL },
+    settings: { theme: 'auto', unlockAll: false, reducedMotion: 'auto', weeklyGoal: DEFAULT_WEEKLY_GOAL },
     activity: {},
     certName: '',
     startLevel: {},
-    daily: null,
     createdAt: now,
   };
 }
@@ -119,14 +115,12 @@ export function sanitize(raw: unknown): Progress {
     settings: {
       theme: s.theme === 'dark' || s.theme === 'light' ? s.theme : 'auto',
       unlockAll: s.unlockAll === true,
-      timed: s.timed === true,
       reducedMotion: s.reducedMotion === 'on' || s.reducedMotion === 'off' ? s.reducedMotion : 'auto',
       weeklyGoal: typeof s.weeklyGoal === 'number' && Number.isFinite(s.weeklyGoal) ? Math.min(50, Math.max(1, Math.round(s.weeklyGoal))) : DEFAULT_WEEKLY_GOAL,
     },
     activity: cleanActivity(r.activity),
     startLevel: cleanStart(r.startLevel),
     certName: typeof r.certName === 'string' ? r.certName.slice(0, 60) : '',
-    daily: r.daily && typeof r.daily === 'object' && typeof r.daily.day === 'string' && Array.isArray(r.daily.ids) ? { day: r.daily.day, ids: arr(r.daily.ids).slice(0, 10) } : null,
     createdAt: typeof r.createdAt === 'number' ? r.createdAt : base.createdAt,
   };
 }

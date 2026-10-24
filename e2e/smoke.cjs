@@ -290,7 +290,7 @@ const ok = (name, cond, extra = '') => {
   ok('repères : aucune erreur de console', werrors.length === 0, werrors.join(' | '));
   await wctx.close();
 
-  // 11d. Série, objectif, défi du jour et certificat
+  // 11d. Série, objectif et certificat
   const sctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const sp = await sctx.newPage();
   const serrors = [];
@@ -318,17 +318,7 @@ const ok = (name, cond, extra = '') => {
   await sp.reload();
   await sp.waitForSelector('.streak-chip');
   ok('série : 2 jours consécutifs reconstitués à partir de l’historique', /2\s*j/.test(await sp.textContent('.streak-chip')), await sp.textContent('.streak-chip'));
-  await sp.waitForSelector('.daily');
-  ok('défi du jour : 5 exercices sur l’accueil', (await sp.$$('.daily-list li')).length === 5);
-  const first = await sp.$$eval('.daily-list li a', (as) => as.map((a) => a.getAttribute('href')));
-  await sp.reload();
-  await sp.waitForSelector('.daily');
-  const again = await sp.$$eval('.daily-list li a', (as) => as.map((a) => a.getAttribute('href')));
-  ok('défi du jour : liste stable après rechargement', JSON.stringify(first) === JSON.stringify(again));
-  ok('défi du jour : mémorisé dans la progression', (await sp.evaluate(() => JSON.parse(localStorage.getItem('boreal.progress.v1')).daily)).ids.length === 5);
-  await sp.goto(base + '#/revision');
-  await sp.waitForSelector('.daily');
-  ok('défi du jour : présent sur la page de révision', (await sp.$$('.daily-list li')).length === 5);
+  ok('défis : plus de « défi du jour » ni de mode chronométré', (await sp.$$('.daily')).length === 0 && !/chronom/i.test(await sp.textContent('body')));
   await sp.goto(base + '#/tableau');
   await sp.waitForSelector('.cert-list');
   ok('tableau : objectif hebdomadaire modifiable', (await sp.inputValue('#goal')) === '3');
@@ -352,7 +342,7 @@ const ok = (name, cond, extra = '') => {
   await sp.reload();
   await sp.waitForSelector('.cert');
   ok('certificat : version anglaise', /Certificate of completion/.test(await sp.textContent('.cert')));
-  ok('série et défi : aucune erreur de console', serrors.length === 0, serrors.join(' | '));
+  ok('série et certificat : aucune erreur de console', serrors.length === 0, serrors.join(' | '));
   await sctx.close();
 
   // 11e. Entrée dans un parcours : cours visible, test de niveau, choix libre du niveau

@@ -111,7 +111,6 @@ export function ExerciseRunner({ ex, review, placement }: { ex: Exercise; review
   const [attempts, setAttempts] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [gained, setGained] = useState<number | null>(null);
-  const start = useRef(Date.now());
   const verdictRef = useRef<HTMLDivElement>(null);
   const alreadyDone = !!p.done[ex.id];
 
@@ -135,8 +134,7 @@ export function ExerciseRunner({ ex, review, placement }: { ex: Exercise; review
     setVerdict(v);
     announce(`${v.title}. ${v.message}`);
     if (v.correct) {
-      const elapsed = (Date.now() - start.current) / 1000;
-      const xp = revealed ? 0 : computeXp(ex, v, { hintsUsed: hintsShown, attempts: n, timedUnderPar: p.settings.timed && ex.parSeconds !== undefined && elapsed <= ex.parSeconds });
+      const xp = revealed ? 0 : computeXp(ex, v, { hintsUsed: hintsShown, attempts: n });
       setGained(xp);
       store.set((s) => recordSuccess(s, ex.id, xp, v.status, hintsShown, n));
     } else {
@@ -176,7 +174,7 @@ export function ExerciseRunner({ ex, review, placement }: { ex: Exercise; review
         <span className="pill">{PATH_BY_ID[ex.path].short}</span>
         <span className="pill">{tr('Niveau', 'Level')} {ex.level} : {LEVEL_NAMES[ex.level]}</span>
         <span className="pill">{EX_TYPE_LABELS[ex.type]}</span>
-        {ex.kind === 'mission' && <span className="pill warn">{tr('Mission finale', 'Final mission')}</span>}
+        {ex.kind === 'mission' && <span className="pill warn">{tr('Cas pratique', 'Practical case')}</span>}
         {ex.kind === 'assessment' && <span className="pill info">{tr('Évaluation', 'Assessment')}</span>}
         {ex.preview && <span className="pill warn">{tr('Fonctionnalité en préversion', 'Preview feature')}</span>}
         {alreadyDone && <span className="pill ok">{tr('Déjà réussi', 'Already completed')}{review ? tr(' (mode révision)', ' (review mode)') : ''}</span>}

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { dailyChallenge } from '../src/engine/daily.ts';
 import { streak, weekStart, weeklyCount } from '../src/engine/streak.ts';
-import { DAY, dayKey, emptyProgress, recordFailure, recordSuccess, sanitize } from '../src/state/progress.ts';
+import { dayKey, emptyProgress, recordSuccess, sanitize } from '../src/state/progress.ts';
 
 const at = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h).getTime();
 
@@ -39,29 +38,6 @@ describe('série et objectif hebdomadaire', () => {
     expect(p.certName.length).toBe(60);
     expect(p.activity).toEqual({ '2026-01-01': 3 });
     expect(sanitize({ v: 1 }).settings.weeklyGoal).toBe(5);
-  });
-});
-
-describe('défi du jour', () => {
-  const all = () => true;
-  it('est vide sans réussite', () => {
-    expect(dailyChallenge(emptyProgress(0), all, 0)).toEqual([]);
-  });
-  it('priorise ce qui est échu, sans doublon, max 5, stable dans la journée', () => {
-    let p = emptyProgress(0);
-    for (let i = 0; i < 8; i++) p = recordSuccess(p, `ex${i}`, 10, 'perfect', 0, 1, at(2026, 3, 1) + i);
-    p = recordFailure(p, 'ex7');
-    const now = at(2026, 3, 3);
-    const a = dailyChallenge(p, all, now);
-    expect(a).toHaveLength(5);
-    expect(new Set(a).size).toBe(5);
-    expect(dailyChallenge(p, all, now + 3600_000)).toEqual(a);
-    expect(a.every((id) => p.done[id])).toBe(true);
-  });
-  it('ignore les identifiants inconnus et les exercices jamais réussis', () => {
-    let p = recordSuccess(emptyProgress(0), 'ok', 5, 'perfect', 0, 1, 0);
-    p = recordFailure(p, 'jamais-reussi');
-    expect(dailyChallenge(p, (id) => id === 'ok', 5 * DAY)).toEqual(['ok']);
   });
 });
 

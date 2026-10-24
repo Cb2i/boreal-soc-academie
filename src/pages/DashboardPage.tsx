@@ -146,7 +146,6 @@ export function DashboardPage() {
           </label>
         </div>
         <label className="row"><input type="checkbox" checked={p.settings.unlockAll} onChange={(e) => store.set((s) => ({ ...s, settings: { ...s.settings, unlockAll: e.target.checked } }))} /> {tr('Tout débloquer (mode exploration)', 'Unlock everything (exploration mode)')}</label>
-        <label className="row"><input type="checkbox" checked={p.settings.timed} onChange={(e) => store.set((s) => ({ ...s, settings: { ...s.settings, timed: e.target.checked } }))} /> {tr('Défis chronométrés (bonus de 15 % d’XP si le temps de référence est respecté)', 'Timed challenges (15% XP bonus if the reference time is met)')}</label>
         <div className="row">
           <button type="button" className="btn" onClick={doExport}>{tr('Exporter la progression', 'Export progress')}</button>
           <button type="button" className="btn" onClick={() => file.current?.click()}>{tr('Importer une sauvegarde', 'Import a backup')}</button>

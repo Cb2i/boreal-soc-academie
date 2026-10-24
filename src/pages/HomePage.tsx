@@ -9,7 +9,6 @@ import { nextStep, recommendedPath } from '../engine/next.ts';
 import type { Step } from '../engine/next.ts';
 import { Ring } from '../components/Ring.tsx';
 import { tr } from '../i18n/lang.ts';
-import { DailyChallenge } from '../components/DailyChallenge.tsx';
 
 function stepLink(s: Step): { to: string; title: string; kicker: string } {
   return s.kind === 'lesson'
@@ -44,8 +43,8 @@ export function HomePage() {
           <h1>{tr(<>Apprenez Azure, Sentinel et <em>KQL</em> en pratiquant.</>, <>Learn Azure, Sentinel and <em>KQL</em> by doing.</>)}</h1>
           <p className="lead">
             {tr(
-              'Des niveaux, des défis et des enquêtes SOC, avec un moteur KQL qui s’exécute dans votre navigateur. Aucun abonnement Azure requis : les données sont fictives et générées localement.',
-              'Levels, challenges and SOC investigations, with a KQL engine that runs in your browser. No Azure subscription required: the data is fictional and generated locally.',
+              'Des niveaux, des exercices et des enquêtes SOC, avec un moteur KQL qui s’exécute dans votre navigateur. Aucun abonnement Azure requis : les données sont fictives et générées localement.',
+              'Levels, exercises and SOC investigations, with a KQL engine that runs in your browser. No Azure subscription required: the data is fictional and generated locally.',
             )}
           </p>
           <div className="stats-row" aria-label={tr('Contenu', 'Content')}>
@@ -85,8 +84,6 @@ export function HomePage() {
           </div>
         </aside>
       </section>
-
-      {doneCount > 0 && <div className="reveal" style={{ animationDelay: '0.12s' }}><DailyChallenge compact /></div>}
 
       {doneCount < 3 && (
         <section className="stack reveal" style={{ animationDelay: '0.15s' }} aria-labelledby="start-h">

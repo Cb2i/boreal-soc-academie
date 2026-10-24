@@ -101,7 +101,7 @@ export function PathPage({ id }: { id: string }) {
                     <>
                       <span className="t"><span className="node-n" aria-hidden="true">{isDone ? '✓' : ok ? order.findIndex((x) => x.id === e.id) + 1 : '🔒'}</span>{e.title}</span>
                       {isNext && <span className="pill info">{tr('À faire maintenant', 'Do this now')}</span>}
-                      <span className="muted small">{e.kind === 'mission' ? tr('Mission finale', 'Final mission') : e.kind === 'assessment' ? tr('Évaluation', 'Assessment') : tr('Exercice', 'Exercise')}</span>
+                      <span className="muted small">{e.kind === 'mission' ? tr('Cas pratique', 'Practical case') : e.kind === 'assessment' ? tr('Évaluation', 'Assessment') : tr('Exercice', 'Exercise')}</span>
                     </>
                   );
                   return ok ? (

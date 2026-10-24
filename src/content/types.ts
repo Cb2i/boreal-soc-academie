@@ -78,7 +78,7 @@ export interface ExerciseBase {
   explanation: string;
   commonMistakes: string[];
   sources: SourceRef[];
-  /** Temps de référence pour le mode chronométré (secondes). */
+  /** Obsolète : ancien temps de référence du mode chronométré, retiré. Conservé pour ne pas modifier les données. */
   parSeconds?: number;
   lesson?: string;
   /** Contenu lié à une fonctionnalité en préversion (à re-vérifier). */

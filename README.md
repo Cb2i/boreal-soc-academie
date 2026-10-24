@@ -27,7 +27,7 @@ Les chiffres exacts sont générés par `npm run coverage:matrix`.
 
 Repères : carte « prochaine étape » sur l'accueil et sur chaque parcours (le cours d'abord, puis l'exercice suivant), choix du point de départ selon le profil, barre de position dans chaque exercice (n sur N, précédent, suivant), page verrouillée avec un chemin de sortie, et recherche globale au clavier (Ctrl+K, Cmd+K ou la touche /) dans les exercices, cours, labs et pages. Une petite célébration (XP, confettis) s'affiche à la réussite et respecte `prefers-reduced-motion`.
 
-Accueil, catalogue filtrable, carte de progression, pages de cours, espace d'exercice avec éditeur, tableau de bord, favoris, reprise de session, indices progressifs, corrections expliquées, XP et badges liés aux compétences, mode révision (répétition espacée de 1, 3, 7, 14 et 30 jours), mode chronométré optionnel, thèmes sombre et clair, navigation au clavier, respect de `prefers-reduced-motion`. Chaque glisser-déposer a une alternative accessible (boutons et listes déroulantes).
+Accueil, catalogue filtrable, carte de progression, pages de cours, espace d'exercice avec éditeur, tableau de bord, favoris, reprise de session, indices progressifs, corrections expliquées, XP et badges liés aux compétences, mode révision (répétition espacée de 1, 3, 7, 14 et 30 jours), thèmes sombre et clair, navigation au clavier, respect de `prefers-reduced-motion`. Chaque glisser-déposer a une alternative accessible (boutons et listes déroulantes).
 
 Déblocage : le niveau L s'ouvre quand au moins 60 % du niveau L-1 du même parcours est réussi, en plus des prérequis propres à chaque exercice. Le réglage « tout débloquer » le contourne.
 
@@ -39,10 +39,9 @@ Déblocage : le niveau L s'ouvre quand au moins 60 % du niveau L-1 du même parc
 
 Le niveau de départ est enregistré par parcours dans la progression locale (champ facultatif, export toujours en version 1).
 
-## Série, défi du jour et certificats
+## Série et certificats
 
 - **Série et objectif** : la pastille de l'en-tête affiche les jours consécutifs avec au moins une réussite et l'avancement de l'objectif de la semaine (lundi à dimanche, heure locale). L'objectif se règle dans le tableau de bord. Les anciennes sauvegardes sont reconstituées à partir des dates de réussite.
-- **Défi du jour** : 5 exercices déjà réussis, choisis d'abord parmi ceux à réviser, puis les échecs, puis les réussites fragiles. La liste est figée pour la journée et enregistrée localement.
 - **Certificat** : disponible quand tous les exercices d'un parcours sont réussis (`#/certificat/<parcours>`). Le nom saisi reste dans la progression locale. Le bouton d'impression ouvre la boîte du navigateur : choisir « Enregistrer au format PDF », orientation paysage. Le certificat est une attestation personnelle, non officielle.
 
 Tout reste local (aucun compte, aucun serveur). Le format d'export de la progression reste en version 1 : les nouveaux champs sont facultatifs à l'import.

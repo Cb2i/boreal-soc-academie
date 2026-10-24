@@ -68,7 +68,7 @@ export function globalBadges(exs: Exercise[], p: Progress): GlobalBadge[] {
     { id: 'fifty', name: tr('Cinquante exercices', 'Fifty exercises'), description: tr('Réussir 50 exercices.', 'Complete 50 exercises.'), earned: doneIds.length >= 50 },
     { id: 'polyvalent', name: tr('Polyvalent', 'Versatile'), description: tr('Réussir 4 types d’exercices différents.', 'Complete 4 different exercise types.'), earned: types.size >= 4 },
     { id: 'sans-indice', name: tr('Sans filet', 'No safety net'), description: tr('Réussir 5 exercices sans aucun indice.', 'Complete 5 exercises without any hint.'), earned: noHint >= 5 },
-    { id: 'mission', name: tr('Mission accomplie', 'Mission accomplished'), description: tr('Terminer une mission finale.', 'Finish a final mission.'), earned: missions >= 1 },
+    { id: 'mission', name: tr('Cas pratique réussi', 'Practical case completed'), description: tr('Réussir un cas pratique de fin de parcours.', 'Complete an end-of-path practical case.'), earned: missions >= 1 },
     { id: 'xp-500', name: '500 XP', description: tr('Cumuler 500 points d’expérience.', 'Earn 500 experience points.'), earned: totalXp(p) >= 500 },
   ];
 }
