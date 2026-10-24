@@ -61,8 +61,8 @@ export function ProjectPage({ id }: { id: string }) {
         <div className="row" role="radiogroup" aria-label={tr('État du projet', 'Project status')}>
           {STATUS.map((s) => <label key={s.id} className="choice" style={{ display: 'inline-flex' }}><input type="radio" name="st" checked={r.status === s.id} onChange={() => set({ status: s.id })} /> <span>{s.label}</span></label>)}
         </div>
-        <label htmlFor="pn" className="muted small">{tr('Notes personnelles (conservées sur cet appareil)', 'Personal notes (kept on this device)')}</label>
-        <textarea id="pn" rows={4} value={r.notes} onChange={(e) => set({ notes: e.target.value })} />
+        <label htmlFor="pn" className="muted small" style={{ display: 'block' }}>{tr('Notes personnelles (conservées sur cet appareil)', 'Personal notes (kept on this device)')}</label>
+        <textarea id="pn" rows={4} style={{ display: 'block', width: '100%', boxSizing: 'border-box' }} value={r.notes} onChange={(e) => set({ notes: e.target.value })} />
       </div>
       {sec(tr('Problème à résoudre', 'Problem to solve'), <p><Inline text={x.problem} /></p>)}
       {sec(tr('Architecture', 'Architecture'), <p><Inline text={x.architecture} /></p>)}
