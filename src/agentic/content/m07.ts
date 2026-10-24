@@ -160,7 +160,7 @@ const l2: AiLesson = {
     '        erreurs.append("verdict hors énumération")',
     '    for ind in d.get("indicateurs", []):',
     '        if ind.get("citation", "") not in source:',
-    '            erreurs.append("citation introuvable)',
+    '            erreurs.append("citation introuvable")',
     '    return d, erreurs',
     '```',
     '## Sécurité des sorties',
