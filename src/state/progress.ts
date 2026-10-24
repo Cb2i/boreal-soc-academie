@@ -42,6 +42,8 @@ export interface Progress {
   activity: Record<string, number>;
   /** Nom affiché sur les certificats. Reste sur cet appareil. */
   certName: string;
+  /** Niveau de départ par parcours (choix libre ou test de niveau), 1 à 4. */
+  startLevel: Record<string, number>;
   /** Défi du jour figé pour la journée, afin que la liste reste stable pendant qu'on la complète. */
   daily: { day: string; ids: string[] } | null;
   createdAt: number;
@@ -71,6 +73,7 @@ export function emptyProgress(now = Date.now()): Progress {
     settings: { theme: 'auto', unlockAll: false, timed: false, reducedMotion: 'auto', weeklyGoal: DEFAULT_WEEKLY_GOAL },
     activity: {},
     certName: '',
+    startLevel: {},
     daily: null,
     createdAt: now,
   };
@@ -81,6 +84,16 @@ function cleanActivity(x: unknown): Record<string, number> {
   if (x && typeof x === 'object' && !Array.isArray(x)) {
     for (const [k, v] of Object.entries(x as Record<string, unknown>)) {
       if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === 'number' && Number.isFinite(v) && v > 0) out[k] = Math.min(9999, Math.floor(v));
+    }
+  }
+  return out;
+}
+
+function cleanStart(x: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (x && typeof x === 'object' && !Array.isArray(x)) {
+    for (const [k, v] of Object.entries(x as Record<string, unknown>)) {
+      if (typeof v === 'number' && Number.isInteger(v) && v >= 2 && v <= 4) out[k] = v;
     }
   }
   return out;
@@ -111,6 +124,7 @@ export function sanitize(raw: unknown): Progress {
       weeklyGoal: typeof s.weeklyGoal === 'number' && Number.isFinite(s.weeklyGoal) ? Math.min(50, Math.max(1, Math.round(s.weeklyGoal))) : DEFAULT_WEEKLY_GOAL,
     },
     activity: cleanActivity(r.activity),
+    startLevel: cleanStart(r.startLevel),
     certName: typeof r.certName === 'string' ? r.certName.slice(0, 60) : '',
     daily: r.daily && typeof r.daily === 'object' && typeof r.daily.day === 'string' && Array.isArray(r.daily.ids) ? { day: r.daily.day, ids: arr(r.daily.ids).slice(0, 10) } : null,
     createdAt: typeof r.createdAt === 'number' ? r.createdAt : base.createdAt,

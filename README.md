@@ -31,6 +31,14 @@ Accueil, catalogue filtrable, carte de progression, pages de cours, espace d'exe
 
 Déblocage : le niveau L s'ouvre quand au moins 60 % du niveau L-1 du même parcours est réussi, en plus des prérequis propres à chaque exercice. Le réglage « tout débloquer » le contourne.
 
+## Entrer dans un parcours à son niveau
+
+- **Cours visible** : dès l'entrée d'un parcours, le bouton « Lire le cours » et la liste des cours sont au-dessus de la carte des niveaux.
+- **Tester mon niveau** (`#/niveau/<parcours>`) : une vraie question par niveau (1 à 3), tirée des exercices ordinaires du parcours. Chaque réussite ouvre le niveau suivant. Un échec ou « Je ne sais pas » arrête le test. Les exercices réussis comptent dans la progression.
+- **Choisir librement son niveau** : bouton « Commencer ici » sur chaque niveau de la carte. Les niveaux précédents sont ouverts et leurs prérequis ne bloquent plus. « Réinitialiser » rétablit le déverrouillage progressif.
+
+Le niveau de départ est enregistré par parcours dans la progression locale (champ facultatif, export toujours en version 1).
+
 ## Série, défi du jour et certificats
 
 - **Série et objectif** : la pastille de l'en-tête affiche les jours consécutifs avec au moins une réussite et l'avancement de l'objectif de la semaine (lundi à dimanche, heure locale). L'objectif se règle dans le tableau de bord. Les anciennes sauvegardes sont reconstituées à partir des dates de réussite.

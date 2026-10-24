@@ -70,7 +70,7 @@ export function ExercisePage({ id, review }: { id: string; review?: boolean }) {
       </div>
     );
   }
-  const unlocked = isUnlocked(ex, ALL_EXERCISES, p.done, p.settings.unlockAll);
+  const unlocked = isUnlocked(ex, ALL_EXERCISES, p.done, p.settings.unlockAll, p.startLevel[ex.path]);
   if (!unlocked) {
     const missing = ex.prerequisites.filter((x) => !p.done[x]);
     const nextOpen = nextInPath(ALL_EXERCISES, ex.path, p);
@@ -94,7 +94,14 @@ export function ExercisePage({ id, review }: { id: string; review?: boolean }) {
   return <ExerciseRunner key={ex.id} ex={ex} review={review} />;
 }
 
-function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
+export interface PlacementCtl {
+  index: number;
+  total: number;
+  /** Appelé quand l'apprenant passe à la question suivante (réussie ou non). */
+  onNext: (passed: boolean) => void;
+}
+
+export function ExerciseRunner({ ex, review, placement }: { ex: Exercise; review?: boolean; placement?: PlacementCtl }) {
   const p = useProgress();
   const lang = useLang();
   const announce = useAnnounce();
@@ -149,8 +156,8 @@ function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
   const nextEx = useMemo(() => {
     const list = ALL_EXERCISES.filter((e) => e.path === ex.path);
     const i = list.findIndex((e) => e.id === ex.id);
-    return list.slice(i + 1).find((e) => isUnlocked(e, ALL_EXERCISES, { ...p.done, [ex.id]: true }, p.settings.unlockAll)) ?? null;
-  }, [ex.id, ex.path, p.done, p.settings.unlockAll, lang]);
+    return list.slice(i + 1).find((e) => isUnlocked(e, ALL_EXERCISES, { ...p.done, [ex.id]: true }, p.settings.unlockAll, p.startLevel[ex.path])) ?? null;
+  }, [ex.id, ex.path, p.done, p.settings.unlockAll, p.startLevel, lang]);
 
   const solutions = solutionOf(ex);
   const fav = p.favorites.includes(ex.id);
@@ -158,7 +165,7 @@ function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
   return (
     <article>
       {finished && gained !== null && gained > 0 && <Celebrate key={`${ex.id}-${attempts}`} xp={gained} perfect={verdict?.status === 'perfect'} />}
-      <PathBar ex={ex} />
+      {placement ? <p className="kicker" role="status">{tr(`Test de niveau : question ${placement.index + 1} sur ${placement.total}`, `Placement test: question ${placement.index + 1} of ${placement.total}`)}</p> : <PathBar ex={ex} />}
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <h1>{ex.title}</h1>
         <button type="button" className="btn" aria-pressed={fav} onClick={() => store.set((s) => toggleFavorite(s, ex.id))}>
@@ -250,8 +257,10 @@ function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
                   {tr('Voir la correction (sans XP)', 'Show the correction (no XP)')}
                 </button>
               )}
-              {finished && nextEx && <a className="btn primary" href={href('exercice', nextEx.id)}>{tr('Exercice suivant', 'Next exercise')} : {nextEx.title}</a>}
-              {finished && !nextEx && <a className="btn primary" href={href('parcours', ex.path)}>{tr('Retour à la carte du parcours', 'Back to the path map')}</a>}
+              {placement && finished && <button type="button" className="btn primary" onClick={() => placement.onNext(true)}>{placement.index + 1 < placement.total ? tr('Question suivante', 'Next question') : tr('Voir mon résultat', 'See my result')} →</button>}
+              {placement && !finished && <button type="button" className="btn ghost" onClick={() => placement.onNext(false)}>{tr('Je ne sais pas, terminer le test', 'I do not know, finish the test')}</button>}
+              {!placement && finished && nextEx && <a className="btn primary" href={href('exercice', nextEx.id)}>{tr('Exercice suivant', 'Next exercise')} : {nextEx.title}</a>}
+              {!placement && finished && !nextEx && <a className="btn primary" href={href('parcours', ex.path)}>{tr('Retour à la carte du parcours', 'Back to the path map')}</a>}
             </div>
           )}
 

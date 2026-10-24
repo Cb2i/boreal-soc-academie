@@ -64,3 +64,42 @@ describe('défi du jour', () => {
     expect(dailyChallenge(p, (id) => id === 'ok', 5 * DAY)).toEqual(['ok']);
   });
 });
+
+import { ALL_EXERCISES } from '../src/content/index.ts';
+import { isUnlocked, levelUnlocked } from '../src/engine/unlock.ts';
+import { placementQuestions, placementResult } from '../src/pages/PlacementPage.tsx';
+
+describe('niveau de départ et test de niveau', () => {
+  const kqlL3 = ALL_EXERCISES.find((e) => e.path === 'kql' && e.level === 3 && e.prerequisites.length > 0)!;
+  it('un niveau choisi ouvre les niveaux précédents et libère leurs prérequis', () => {
+    expect(isUnlocked(kqlL3, ALL_EXERCISES, {})).toBe(false);
+    expect(levelUnlocked(ALL_EXERCISES, 'kql', 3, {}, 3)).toBe(true);
+    expect(levelUnlocked(ALL_EXERCISES, 'kql', 4, {}, 3)).toBe(false);
+    const lowOnly = ALL_EXERCISES.filter((e) => e.path === 'kql' && e.prerequisites.every((id) => (ALL_EXERCISES.find((x) => x.id === id)?.level ?? 99) < 3) && e.level === 3);
+    expect(lowOnly.length).toBeGreaterThan(0);
+    expect(lowOnly.every((e) => isUnlocked(e, ALL_EXERCISES, {}, false, 3))).toBe(true);
+  });
+  it('sans niveau choisi, le comportement d’origine est inchangé', () => {
+    expect(levelUnlocked(ALL_EXERCISES, 'kql', 2, {})).toBe(false);
+    expect(levelUnlocked(ALL_EXERCISES, 'kql', 1, {})).toBe(true);
+  });
+  it('le test pose une question ordinaire par niveau, jamais une enquête ni une mission', () => {
+    for (const path of ['kql', 'azure-foundations', 'azure-admin', 'identity-security', 'observability', 'sentinel', 'soc'] as const) {
+      const qs = placementQuestions(ALL_EXERCISES, path, {});
+      expect(qs.length, path).toBeGreaterThan(0);
+      expect(new Set(qs.map((q) => q.level)).size).toBe(qs.length);
+      expect(qs.every((q) => q.type !== 'investigate' && (q.kind === undefined || q.kind === 'exercise') && q.path === path)).toBe(true);
+    }
+  });
+  it('calcule le niveau de départ à partir des réussites consécutives', () => {
+    const qs = placementQuestions(ALL_EXERCISES, 'kql', {});
+    expect(placementResult(qs, [], 4)).toBe(1);
+    expect(placementResult(qs, [false], 4)).toBe(1);
+    expect(placementResult(qs, [true, false, true], 4)).toBe(2);
+    expect(placementResult(qs, [true, true, true], 4)).toBe(4);
+    expect(placementResult(qs, [true, true, true], 3)).toBe(3);
+  });
+  it('assainit les niveaux de départ importés', () => {
+    expect(sanitize({ v: 1, startLevel: { kql: 3, soc: 9, x: 'a', y: 1 } }).startLevel).toEqual({ kql: 3 });
+  });
+});

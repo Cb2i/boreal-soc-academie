@@ -50,12 +50,12 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       kind: e.id,
       hint: e.objective,
       to: href('exercice', e.id),
-      locked: !isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll),
+      locked: !isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll, p.startLevel[e.path]),
       done: !!p.done[e.id],
     }));
     return [...pages, ...paths, ...lessons, ...labs, ...exs];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang, p.done, p.lessonsDone, p.settings.unlockAll]);
+  }, [lang, p.done, p.lessonsDone, p.settings.unlockAll, p.startLevel]);
 
   const results = useMemo(() => {
     const terms = norm(q).split(/\s+/).filter(Boolean);

@@ -8,6 +8,7 @@ import { useProgress } from '../state/useProgress.ts';
 import { nextStep, orderedPath } from '../engine/next.ts';
 import { Ring } from '../components/Ring.tsx';
 import { tr } from '../i18n/lang.ts';
+import { store } from '../state/progress.ts';
 import { pathCompletion } from './CertificatePage.tsx';
 
 export function PathPage({ id }: { id: string }) {
@@ -49,6 +50,14 @@ export function PathPage({ id }: { id: string }) {
         </a>
       )}
 
+      <div className="row path-actions" role="group" aria-label={tr('Par où entrer dans ce parcours', 'How to enter this path')}>
+        {lessons[0] && <a className="btn" href={href('cours', lessons[0].id)}>{tr('Lire le cours', 'Read the lesson')} ({lessons.length})</a>}
+        <a className="btn" href={href('niveau', path.id)}>{tr('Tester mon niveau', 'Test my level')}</a>
+        {(p.startLevel[path.id] ?? 1) > 1 && (
+          <span className="muted small">{tr(`Niveau de départ : ${p.startLevel[path.id]}`, `Starting level: ${p.startLevel[path.id]}`)} · <button type="button" className="linklike" onClick={() => store.set((s) => { const { [path.id]: _drop, ...rest } = s.startLevel; return { ...s, startLevel: rest }; })}>{tr('Réinitialiser', 'Reset')}</button></span>
+        )}
+      </div>
+
       {lessons.length > 0 && (
         <section aria-labelledby="cours-h">
           <h2 id="cours-h">{tr('Cours', 'Lessons')}</h2>
@@ -70,18 +79,21 @@ export function PathPage({ id }: { id: string }) {
         {([1, 2, 3, 4] as Level[]).map((lvl) => {
           const inLvl = exs.filter((e) => e.level === lvl);
           if (inLvl.length === 0) return null;
-          const open = levelUnlocked(ALL_EXERCISES, path.id, lvl, p.done) || p.settings.unlockAll;
+          const open = levelUnlocked(ALL_EXERCISES, path.id, lvl, p.done, p.startLevel[path.id]) || p.settings.unlockAll;
           const d = inLvl.filter((e) => p.done[e.id]).length;
           return (
             <div key={lvl} className={`lvl${open ? '' : ' locked'}`}>
               <div className="row" style={{ justifyContent: 'space-between' }}>
                 <h3 style={{ margin: 0 }}>{tr('Niveau', 'Level')} {lvl} : {LEVEL_NAMES[lvl]}</h3>
-                <span className="pill">{d}/{inLvl.length}</span>
+                <span className="row">
+                  {lvl > 1 && lvl !== (p.startLevel[path.id] ?? 1) && !p.settings.unlockAll && <button type="button" className="btn small" onClick={() => store.set((s) => ({ ...s, startLevel: { ...s.startLevel, [path.id]: lvl } }))}>{tr('Commencer ici', 'Start here')}</button>}
+                  <span className="pill">{d}/{inLvl.length}</span>
+                </span>
               </div>
               {!open && <p className="muted small">{tr('Réussissez 60 % du niveau précédent pour ouvrir ce niveau.', 'Complete 60% of the previous level to open this level.')}</p>}
               <div className="nodes">
                 {inLvl.map((e) => {
-                  const ok = isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll);
+                  const ok = isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll, p.startLevel[path.id]);
                   const isDone = !!p.done[e.id];
                   const isNext = e.id === nextId;
                   const cls = `node${isDone ? ' done' : ''}${ok ? '' : ' locked'}${isNext ? ' next' : ''}`;

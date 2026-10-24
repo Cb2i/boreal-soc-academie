@@ -344,6 +344,38 @@ const ok = (name, cond, extra = '') => {
   ok('série et défi : aucune erreur de console', serrors.length === 0, serrors.join(' | '));
   await sctx.close();
 
+  // 11e. Entrée dans un parcours : cours visible, test de niveau, choix libre du niveau
+  const nctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const np = await nctx.newPage();
+  const nerrors = [];
+  np.on('pageerror', (e) => nerrors.push('pageerror: ' + e.message));
+  np.on('console', (m) => { if (m.type() === 'error') nerrors.push('console: ' + m.text()); });
+  await np.goto(base + '#/parcours/kql');
+  await np.waitForSelector('.path-actions');
+  ok('parcours : boutons « Lire le cours » et « Tester mon niveau » visibles dès l’entrée', (await np.$$('.path-actions a')).length >= 2);
+  const lockedBefore = await np.$$eval('.node.locked', (n) => n.length);
+  ok('parcours : des exercices sont verrouillés au départ', lockedBefore > 0);
+  const startBtns = await np.$$('.lvl button:has-text("Commencer ici"), .lvl button:has-text("Start here")');
+  ok('parcours : « Commencer ici » proposé sur les niveaux supérieurs', startBtns.length >= 1, String(startBtns.length));
+  await startBtns[startBtns.length - 1].click();
+  await np.waitForFunction((b) => document.querySelectorAll('.node.locked').length < b, lockedBefore);
+  ok('parcours : choisir un niveau libère les exercices', (await np.$$eval('.node.locked', (n) => n.length)) < lockedBefore);
+  ok('parcours : niveau de départ mémorisé', Object.keys((await np.evaluate(() => JSON.parse(localStorage.getItem('boreal.progress.v1')).startLevel)) || {}).includes('kql'));
+  await np.click('.path-actions .linklike');
+  await np.waitForFunction((b) => document.querySelectorAll('.node.locked').length === b, lockedBefore);
+  ok('parcours : réinitialiser le niveau de départ', true);
+  await np.click('.path-actions a[href$="/niveau/kql"]');
+  await np.waitForSelector('h1');
+  ok('test de niveau : page d’introduction avec 3 niveaux', (await np.$$('ol li')).length >= 2 && /niveau/i.test(await np.textContent('h1')));
+  await np.click('button.btn.primary.big');
+  await np.waitForSelector('.kicker[role=status]');
+  ok('test de niveau : la première question est un vrai exercice', /question 1 sur/i.test(await np.textContent('.kicker[role=status]')) && (await np.$$('.ex-layout')).length === 1);
+  await np.click('button:has-text("Je ne sais pas")');
+  await np.waitForSelector('text=Résultat du test');
+  ok('test de niveau : un échec propose le niveau 1', /niveau 1/i.test(await np.textContent('.card h2')));
+  ok('test de niveau : aucune erreur de console', nerrors.length === 0, nerrors.join(' | '));
+  await nctx.close();
+
   // 12. Clavier : tabulation atteint un élément interactif et le lien d'évitement existe
   await page.goto(base);
   await page.waitForSelector('h1');

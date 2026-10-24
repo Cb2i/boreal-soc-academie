@@ -43,6 +43,7 @@ function ErrorBoundaryFallback() {
 
 import { Component } from 'react';
 import type { ReactNode } from 'react';
+import { PlacementPage } from './pages/PlacementPage.tsx';
 import { CertificatePage } from './pages/CertificatePage.tsx';
 import { StreakChip } from './components/StreakChip.tsx';
 import { tr, useLang, setLang } from './i18n/lang.ts';
@@ -111,6 +112,7 @@ export function App() {
     case 'cours': page = <LessonPage id={route.params[0] ?? ''} />; break;
     case 'exercice': page = <ExercisePage id={route.params[0] ?? ''} />; break;
     case 'revision': page = route.params[0] ? <ExercisePage id={route.params[0]} review /> : <ReviewPage />; break;
+    case 'niveau': page = route.params[0] ? <PlacementPage id={route.params[0]} /> : <CatalogPage />; break;
     case 'certificat': page = <CertificatePage id={route.params[0] ?? ''} />; break;
     case 'tableau': page = <DashboardPage />; break;
     case 'terrain': page = <PlaygroundPage route={route} />; break;

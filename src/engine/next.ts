@@ -5,6 +5,7 @@ export interface ProgressForNext {
   done: Record<string, unknown>;
   lessonsDone: string[];
   settings: { unlockAll: boolean };
+  startLevel?: Record<string, number>;
   last: { route: string; title: string; at: number } | null;
 }
 
@@ -19,7 +20,7 @@ export function orderedPath(exs: Exercise[], path: PathId): Exercise[] {
 
 /** Premier exercice ouvert et non réussi d'un parcours. */
 export function nextInPath(exs: Exercise[], path: PathId, p: ProgressForNext): Exercise | null {
-  return orderedPath(exs, path).find((e) => !p.done[e.id] && isUnlocked(e, exs, p.done, p.settings.unlockAll)) ?? null;
+  return orderedPath(exs, path).find((e) => !p.done[e.id] && isUnlocked(e, exs, p.done, p.settings.unlockAll, p.startLevel?.[path] ?? 1)) ?? null;
 }
 
 export type Step =
@@ -29,7 +30,7 @@ export type Step =
 /** Prochaine action suggérée dans un parcours : le cours d'abord si rien n'a été commencé, sinon l'exercice suivant. */
 export function nextStep(exs: Exercise[], lessons: Lesson[], path: PathId, p: ProgressForNext): Step | null {
   const started = exs.some((e) => e.path === path && p.done[e.id]);
-  if (!started) {
+  if (!started && (p.startLevel?.[path] ?? 1) <= 1) {
     const l = lessons.find((x) => x.path === path && !p.lessonsDone.includes(x.id));
     if (l) return { kind: 'lesson', lesson: l, path };
   }

@@ -419,3 +419,7 @@ main:focus { outline: none; }
   main { padding: 0 !important; max-width: none !important; }
   .cert { break-inside: avoid; border-width: 8px; }
 }
+
+/* Entrée dans un parcours */
+.path-actions { align-items: center; gap: 0.6rem; }
+.linklike { background: none; border: 0; padding: 0; color: var(--link, inherit); text-decoration: underline; cursor: pointer; font: inherit; }

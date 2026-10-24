@@ -29,7 +29,7 @@ export function CatalogPage({ initialPath }: { initialPath?: string }) {
       if (status === 'done' && !done) return false;
       if (status === 'todo' && done) return false;
       if (status === 'fav' && !p.favorites.includes(e.id)) return false;
-      if (status === 'open' && !isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll)) return false;
+      if (status === 'open' && !isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll, p.startLevel[e.path])) return false;
       if (needle && !`${e.title} ${e.objective}`.toLowerCase().includes(needle)) return false;
       return true;
     });
@@ -54,7 +54,7 @@ export function CatalogPage({ initialPath }: { initialPath?: string }) {
         <div className="grid cols-3">
           {list.map((e) => {
             const done = p.done[e.id];
-            const open = isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll);
+            const open = isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll, p.startLevel[e.path]);
             return (
               <a key={e.id} className="card link" href={href('exercice', e.id)} aria-label={`${e.title}${done ? tr(', réussi', ', completed') : open ? '' : tr(', verrouillé', ', locked')}`}>
                 <div className="row" style={{ marginBottom: '0.4rem' }}>
