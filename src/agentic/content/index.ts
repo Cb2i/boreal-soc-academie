@@ -5,9 +5,11 @@ import { RESOURCES } from './resources.ts';
 import { m01 } from './m01.ts';
 import { m02 } from './m02.ts';
 import { m03 } from './m03.ts';
+import { m04 } from './m04.ts';
+import { m06 } from './m06.ts';
 
 /** Tous les modules livrés, dans l'ordre pédagogique. */
-export const MODULE_CONTENT: ModuleContent[] = [m01, m02, m03];
+export const MODULE_CONTENT: ModuleContent[] = [m01, m02, m03, m04, m06];
 
 export const LEVELS = AI_LEVELS;
 export const MODULES: AiModule[] = MODULE_CONTENT.map((m) => m.module);

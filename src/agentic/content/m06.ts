@@ -1,0 +1,663 @@
+// Module 6 : Écosystème Microsoft pour l’automatisation (niveau 2).
+import type { AiCompetency, AiLesson, AiModule, AiProject, ModuleContent } from '../types.ts';
+import { author, src } from './helpers.ts';
+
+const md = (...lines: string[]) => lines.join('\n');
+const a = author('m06');
+
+const SRC_COMPARE = src('Microsoft Learn : Choose the right integration and automation services in Azure', 'https://learn.microsoft.com/azure/azure-functions/functions-compare-logic-apps-ms-flow-webjobs');
+const SRC_MIGR = src('Microsoft Learn : Power Automate migration to Azure Logic Apps (Standard), tableau comparatif', 'https://learn.microsoft.com/azure/logic-apps/power-automate-migration');
+const SRC_LA = src('Microsoft Learn : What is Azure Logic Apps?', 'https://learn.microsoft.com/azure/logic-apps/logic-apps-overview');
+const SRC_FUNC = src('Microsoft Learn : Azure Functions triggers and bindings', 'https://learn.microsoft.com/azure/azure-functions/functions-triggers-bindings');
+const SRC_FLEX = src('Microsoft Learn : Azure Functions Flex Consumption plan hosting', 'https://learn.microsoft.com/azure/azure-functions/flex-consumption-plan');
+const SRC_GRAPH = src('Microsoft Learn : Overview of Microsoft Graph permissions', 'https://learn.microsoft.com/graph/permissions-overview');
+const SRC_PB_AUTH = src('Microsoft Learn : Authenticate playbooks to Microsoft Sentinel', 'https://learn.microsoft.com/azure/sentinel/automation/authenticate-playbooks-to-sentinel');
+const SRC_PB_RUN = src('Microsoft Learn : Automate and run Microsoft Sentinel playbooks', 'https://learn.microsoft.com/azure/sentinel/automation/run-playbooks');
+const SRC_ROLES = src('Microsoft Learn : Roles and permissions in the Microsoft Sentinel platform', 'https://learn.microsoft.com/azure/sentinel/roles');
+const SRC_HEALTH = src('Microsoft Learn : Monitor the health of your automation rules and playbooks', 'https://learn.microsoft.com/azure/sentinel/monitor-automation-health');
+
+const l1: AiLesson = {
+  id: 'm06-l1',
+  module: 'm06',
+  title: 'Logic Apps, Power Automate, Functions : lequel pour quoi ?',
+  summary: 'Quatre outils Microsoft qui se chevauchent. Un critère de choix clair, avec ce que la documentation officielle affirme.',
+  minutes: 30,
+  objectives: [
+    'Comparer Azure Logic Apps (Consumption et Standard), Power Automate et Azure Functions.',
+    'Choisir l’outil adapté à un besoin de SOC en justifiant par des critères vérifiables.',
+    'Expliquer pourquoi les playbooks Microsoft Sentinel reposent sur Logic Apps.',
+  ],
+  prerequisites: ['Module 4 : Automatisation fiable'],
+  body: md(
+    '## Le paysage',
+    'Microsoft offre plusieurs façons d’automatiser. La page officielle « Choose the right integration and automation services in Azure » compare Power Automate, Azure Logic Apps, Azure Functions et les WebJobs : tous peuvent résoudre des problèmes d’intégration, définir des entrées, des actions, des conditions et des sorties, et s’exécuter sur un déclencheur ou une planification. Ils diffèrent par le public visé et par la façon de construire.',
+    '- **Power Automate** : plateforme « designer-first » pour les utilisateurs d’affaires et les « citizen developers », sans code. Exemple typique donné par Microsoft : un flux d’approbation pour une bibliothèque de documents SharePoint. Licence par utilisateur Microsoft 365 dans le tableau comparatif.',
+    '- **Azure Logic Apps** : même philosophie de conception visuelle, mais pour les développeurs et les intégrateurs. Supporte des scénarios allant de peu de code à des flux complexes. Se gère dans l’abonnement Azure (portail, ARM/Bicep, Git, CI/CD).',
+    '- **Azure Functions** : approche **code d’abord** : vous écrivez une fonction (Python, JavaScript/TypeScript, C#, PowerShell, etc.) déclenchée par un événement. La page de comparaison note qu’un workflow Logic Apps peut appeler une fonction et inversement.',
+    '- **Azure Automation Runbooks** : tâches d’infrastructure et remédiations simples (par exemple redémarrer des machines virtuelles).',
+    '## Logic Apps : Consumption ou Standard',
+    'Quand vous créez une ressource Logic Apps, vous choisissez l’hébergement :',
+    '- **Consumption** : multi-locataire, facturation à l’exécution. Une ressource contient **un seul** workflow.',
+    '- **Standard** : mono-locataire (ou ASE v3), plusieurs workflows par ressource, tarification fixe selon le plan, davantage de connecteurs intégrés, intégration au réseau virtuel, exécution locale possible dans Visual Studio Code.',
+    'Chaque hébergement a ses propres limites documentées (nombre d’actions, durée d’exécution, débit). Elles évoluent : relisez la page de limites et de configuration au moment de concevoir, sans vous fier à un chiffre retenu de mémoire.',
+    '## Les connecteurs',
+    'Logic Apps et Power Automate partagent une grande bibliothèque de **connecteurs** (plus de 1 400 d’après le tableau comparatif de Microsoft à la date de vérification). Un connecteur encapsule une API : « Microsoft Sentinel », « Office 365 Outlook », « Microsoft Teams », « HTTP ». Le connecteur **HTTP** permet d’appeler n’importe quelle API pour laquelle il n’existe pas de connecteur dédié.',
+    '## Les playbooks Sentinel sont des Logic Apps',
+    'La documentation de Microsoft Sentinel est explicite : les playbooks sont basés sur des workflows Azure Logic Apps. Vous profitez donc de la personnalisation et des modèles de Logic Apps, mais des frais Logic Apps peuvent s’ajouter. Un playbook peut s’exécuter **automatiquement** (attaché à une règle d’automatisation ou à une règle analytique) ou **manuellement** sur un incident, une alerte ou une entité.',
+    '## Et les agents ?',
+    'Azure Logic Apps propose aussi des **workflows agentiques** (autonomes ou conversationnels) dans sa documentation de démarrage. Comme ces offres évoluent rapidement, ce cours vous apprend à évaluer toute offre de ce type avec la même grille : quels outils, quels droits, quelles limites, quelle approbation humaine, quel journal (modules 2 et 16).',
+    '## Une grille de choix pratique',
+    '```text',
+    'Question                                          Réponse -> orientation',
+    'Qui construira et maintiendra ?                   Utilisateur d’affaires -> Power Automate',
+    '                                                  Équipe SOC / ingénierie -> Logic Apps',
+    'La logique est-elle surtout du code ?             Oui -> Azure Functions (appelée par Logic Apps)',
+    'Faut-il un réseau privé, Git, CI/CD, RBAC fin ?   Oui -> Logic Apps Standard',
+    'Est-ce un playbook de réponse Sentinel ?          Oui -> Logic Apps (Consumption ou Standard)',
+    'Le volume est-il faible et irrégulier ?           Consumption (paiement à l’exécution)',
+    'Le volume est-il élevé et régulier ?              Standard (coût plus prévisible)',
+    '```',
+    '> Cette grille est un point de départ, pas une règle : la tarification, les licences et les limites changent. Vérifiez toujours la page officielle de tarification du jour avant de décider.',
+  ),
+  demo: {
+    title: 'Choisir l’outil pour trois besoins',
+    body: md(
+      '**Besoin A** : « Quand un incident Sentinel de gravité élevée est créé, ajouter un commentaire avec le contexte du compte et prévenir le canal Teams du SOC. »',
+      '**Besoin B** : « Calculer un score de risque à partir de dix signaux avec une logique statistique maison, appelé par plusieurs workflows. »',
+      '**Besoin C** : « Chaque lundi, envoyer aux gestionnaires de département le rapport de réception de leurs demandes d’accès (SharePoint). »',
+      '```text',
+      'A -> Playbook Sentinel (Logic Apps). Déclencheur "incident" de Sentinel, actions Sentinel + Teams.',
+      '     Identité : managed identity avec rôle Sentinel Responder (écriture de commentaire).',
+      'B -> Azure Functions (code Python), appelée par le playbook en HTTP ou via l’action Functions.',
+      '     Le calcul se teste comme du code (tests unitaires) plutôt que comme un diagramme.',
+      'C -> Power Automate : flux planifié, connecteurs SharePoint et Outlook, propriétaire = équipe métier.',
+      '```',
+      '**Lecture commentée.** A est un besoin SOC classique : le déclencheur et les actions existent déjà comme connecteurs Sentinel, et le modèle de rôles est documenté. B est de la logique de calcul : écrire du code testable est plus sûr que d’empiler vingt actions de formule dans un designer. C appartient au monde métier SharePoint/Outlook, et la plateforme destinée aux utilisateurs d’affaires est adaptée. Aucun des trois choix n’est « le meilleur outil en général » : chacun est le plus adapté **à ce besoin et à cette équipe**.',
+    ),
+  },
+  guided: 'm06-g1',
+  autonomous: 'm06-a1',
+  quiz: ['m06-q1a', 'm06-q1b', 'm06-q1c'],
+  revision: md(
+    '## Fiche : choisir l’outil',
+    '- Power Automate : utilisateurs d’affaires, sans code, licence par utilisateur.',
+    '- Logic Apps : intégrateurs et SOC, abonnement Azure, ARM/Bicep, Git, CI/CD.',
+    '- Consumption : paiement à l’exécution, un workflow par ressource. Standard : plan, plusieurs workflows, réseau privé.',
+    '- Azure Functions : code d’abord, appelable depuis Logic Apps.',
+    '- Les playbooks Sentinel sont des workflows Logic Apps.',
+    '- Limites, tarifs et offres agentiques changent : lire la page à jour.',
+  ),
+  links: [SRC_COMPARE, SRC_MIGR, SRC_LA],
+  teaches: ['choix-outil', 'logic-apps', 'power-automate', 'functions'],
+};
+
+const l2: AiLesson = {
+  id: 'm06-l2',
+  module: 'm06',
+  title: 'Identités et permissions : managed identity, service principal, Graph, RBAC Sentinel',
+  summary: 'Comment une automatisation prouve qui elle est et ce qu’elle a le droit de faire, avec les rôles et permissions documentés.',
+  minutes: 35,
+  objectives: [
+    'Comparer identité managée, principal de service et utilisateur pour authentifier une automatisation.',
+    'Distinguer permissions déléguées et permissions d’application dans Microsoft Graph.',
+    'Choisir le rôle Microsoft Sentinel minimal pour un playbook qui lit, ou qui écrit.',
+  ],
+  prerequisites: ['Leçon 1 : choisir l’outil'],
+  body: md(
+    '## Trois façons de s’authentifier',
+    'La documentation « Authenticate playbooks to Microsoft Sentinel » décrit trois types d’identité pour que le connecteur Sentinel de Logic Apps agisse sur un espace de travail :',
+    '- **Identité managée** (managed identity) : l’identité est attachée à la ressource Logic Apps elle-même, gérée par Azure, sans mot de passe ni secret à stocker. Elle apparaît dans Microsoft Entra ID avec un identifiant d’objet. À la date de vérification, la page indique que ce mode est en **préversion** pour le connecteur Sentinel : relisez-la avant de décider.',
+    '- **Principal de service** (application Microsoft Entra) : une application enregistrée, avec des identifiants (secret ou certificat) à gérer et à renouveler. Offre un contrôle plus fin des permissions.',
+    '- **Utilisateur Microsoft Entra** : un compte de personne. À éviter pour l’automatisation, car il mélange l’identité d’un humain avec des actions automatisées, et dépend de son mot de passe, de son authentification multifacteur et de son départ éventuel de l’organisation.',
+    'Règle d’ingénierie : **préférez l’identité managée** quand elle est disponible (aucun secret à voler), sinon un principal de service avec certificat ou secret stocké dans Azure Key Vault, et jamais un compte humain.',
+    '## Les rôles Microsoft Sentinel',
+    'Les permissions du connecteur dépendent du rôle de l’identité sur l’espace de travail :',
+    '```text',
+    'Rôle                               Déclencheurs   Actions de lecture   Actions d’écriture',
+    'Microsoft Sentinel Reader               oui              oui                  non',
+    'Microsoft Sentinel Responder            oui              oui                  oui',
+    'Microsoft Sentinel Contributor          oui              oui                  oui',
+    '```',
+    'Les actions d’écriture incluent par exemple la mise à jour d’un incident ou l’ajout d’un commentaire. La documentation précise que **Reader** suffit pour un playbook qui reçoit seulement des incidents, et **Responder** pour un playbook qui met à jour des incidents ou des listes de surveillance. Appliquez le moindre privilège : un agent d’enquête en lecture seule reçoit **Reader**, jamais Contributor.',
+    '### Qui peut lancer et gérer les playbooks ?',
+    'Autre dimension de sécurité, la gestion des playbooks eux-mêmes : le rôle **Microsoft Sentinel Playbook Operator** permet de les exécuter, et **Logic App Contributor** de les créer ou modifier. Pour qu’une règle d’automatisation exécute un playbook, le compte de service de Sentinel doit recevoir le rôle **Microsoft Sentinel Automation Contributor** sur le groupe de ressources qui contient le playbook. Conséquence à bien comprendre : une fois cette permission accordée, **toute règle d’automatisation peut exécuter n’importe quel playbook de ce groupe de ressources**. On sépare donc les playbooks sensibles dans un groupe de ressources distinct.',
+    '## Microsoft Graph : permissions déléguées ou d’application',
+    'Microsoft Graph est l’API unifiée de Microsoft 365 et d’Entra (utilisateurs, groupes, courriels, appareils, etc.). Il expose deux modèles d’accès :',
+    '- **Délégué** : l’application agit **au nom d’un utilisateur connecté**. Ses droits sont l’intersection de ce que l’application a obtenu et de ce que l’utilisateur peut faire lui-même.',
+    '- **Application** (app-only) : l’application agit **avec sa propre identité**, sans utilisateur. Elle peut accéder à **toutes** les données auxquelles la permission s’applique. Seul un administrateur peut consentir à ces permissions (rôle Privileged Role Administrator ou Global Administrator, d’après la page de vue d’ensemble).',
+    'La documentation recommande l’approche déléguée dès qu’elle répond au besoin, et le **moindre privilège** : demander la permission la plus étroite (par exemple `User.Read` plutôt que `User.ReadWrite`). Pour un automatisme de SOC qui tourne sans utilisateur, les permissions d’application sont souvent inévitables : raison de plus de choisir la plus étroite possible, de limiter la portée quand c’est offert et de surveiller l’usage.',
+    '> Une permission d’application comme `User.ReadWrite.All` permet de modifier de nombreuses propriétés d’utilisateurs, y compris de comptes privilégiés. Ne l’accordez jamais « au cas où ».',
+    '## Key Vault pour les secrets restants',
+    'Quand un secret reste nécessaire (clé d’API tierce, secret de principal de service), il se stocke dans **Azure Key Vault** et l’automatisation le lit à l’exécution avec son identité managée. Le secret n’apparaît ni dans le workflow, ni dans un dépôt, ni dans un journal.',
+    '## Checklist avant la mise en service',
+    '- Une identité par automatisation, nommée de façon claire.',
+    '- Le rôle le plus bas qui fait le travail, sur la portée la plus étroite.',
+    '- Pas de compte humain pour l’automatisation.',
+    '- Secrets dans Key Vault, jamais dans le code.',
+    '- Les permissions sont consignées dans la fiche de périmètre (module 2).',
+    '- Une revue périodique des attributions de rôles.',
+  ),
+  demo: {
+    title: 'Choisir le rôle et l’identité',
+    body: md(
+      'Trois playbooks sont proposés pour un même espace de travail Sentinel. Pour chacun, quel rôle et quelle identité ?',
+      '```text',
+      'P1  Reçoit l’incident, interroge VirusTotal (API tierce), envoie un message Teams. Ne modifie rien dans Sentinel.',
+      'P2  Reçoit l’incident, ajoute un commentaire de contexte dans l’incident.',
+      'P3  Reçoit l’incident, désactive le compte via Microsoft Graph.',
+      '```',
+      '**P1.** Rôle Sentinel **Reader** (il reçoit seulement des incidents). Identité managée. La clé de l’API tierce va dans Key Vault. Aucune écriture Sentinel.',
+      '**P2.** Rôle Sentinel **Responder** (écriture d’un commentaire). Identité managée. Pas de Contributor : on n’a pas besoin de gérer les règles ou les connecteurs.',
+      '**P3.** C’est une action de **confinement** : en plus d’un rôle Sentinel de lecture, il faudrait une permission Graph d’application très sensible. Dans ce cours, cette action est **simulée par défaut** et réservée à une validation humaine. Si elle devait exister un jour, elle serait dans un groupe de ressources séparé, derrière une approbation, avec la permission la plus étroite disponible et un journal complet.',
+      '**À retenir.** Le choix du rôle découle de la liste des actions du workflow, pas de la facilité de configuration. Chaque ligne « écrire » dans le workflow doit se retrouver dans la fiche de périmètre.',
+    ),
+  },
+  guided: 'm06-g2',
+  autonomous: 'm06-a2',
+  quiz: ['m06-q2a', 'm06-q2b', 'm06-q2c'],
+  revision: md(
+    '## Fiche : identités et permissions',
+    '- Préférer l’identité managée (aucun secret). Principal de service avec certificat si nécessaire. Jamais un compte humain.',
+    '- Sentinel Reader : déclencheurs et lecture. Responder / Contributor : écriture.',
+    '- Playbook Operator exécute ; Logic App Contributor crée ; Automation Contributor permet à Sentinel d’exécuter un playbook d’un groupe de ressources.',
+    '- Graph délégué = au nom d’un utilisateur ; application = identité propre, consentement administrateur.',
+    '- Demander la permission la plus étroite. Secrets dans Key Vault.',
+  ),
+  links: [SRC_PB_AUTH, SRC_ROLES, SRC_GRAPH],
+  teaches: ['identites', 'rbac-sentinel', 'graph-permissions', 'key-vault'],
+};
+
+const l3: AiLesson = {
+  id: 'm06-l3',
+  module: 'm06',
+  title: 'Playbooks Sentinel, règles d’automatisation et Functions',
+  summary: 'Comment un incident déclenche une automatisation, comment la surveiller, et où une fonction s’insère. Avec le calendrier de transition vers le portail Defender.',
+  minutes: 30,
+  objectives: [
+    'Expliquer la chaîne règle d’analyse, incident, règle d’automatisation, playbook.',
+    'Savoir où voir les erreurs d’automatisation (table SentinelHealth) et les causes courantes.',
+    'Décrire où Azure Functions s’insère et pourquoi le plan Flex Consumption est recommandé.',
+  ],
+  prerequisites: ['Leçon 2 : identités et permissions'],
+  body: md(
+    '## La chaîne de réponse automatisée',
+    'Dans Microsoft Sentinel, la réponse automatisée suit une chaîne simple :',
+    '```text',
+    'Règle d’analyse -> produit une alerte -> regroupée en incident',
+    '   -> Règle d’automatisation (conditions : gravité, titre, entités...)',
+    '        -> actions directes : assigner, changer le statut, étiqueter',
+    '        -> exécuter un playbook (workflow Logic Apps)',
+    '```',
+    'Une **règle d’automatisation** applique des actions simples et centralisées à la création ou à la mise à jour d’un incident, et peut appeler un **playbook** quand il faut une logique plus riche. Un playbook peut aussi être lancé **manuellement** sur un incident, une alerte ou une entité, ce qui est un bon mode de départ pour tester.',
+    '> Calendrier à connaître : la documentation de Microsoft Sentinel indique qu’après le **31 mars 2027**, Microsoft Sentinel ne sera plus pris en charge dans le portail Azure et sera disponible uniquement dans le **portail Microsoft Defender**. Si vous exploitez Sentinel dans le portail Azure, planifiez la transition. L’emplacement des écrans change, les concepts restent les mêmes.',
+    '## Les prérequis de permission, en pratique',
+    'Pour qu’un playbook s’exécute depuis une règle d’automatisation, il faut : (1) accorder à Sentinel la permission d’exécuter les playbooks du groupe de ressources (opération qui demande des droits **Owner** sur ce groupe), (2) que la personne qui configure ait le rôle **Playbook Operator**. Le tableau des rôles de la leçon précédente vous dit qui peut faire quoi.',
+    '## Surveiller les automatisations : SentinelHealth',
+    'Quand une règle d’automatisation ne déclenche pas un playbook, ou qu’un playbook échoue, la table **SentinelHealth** permet d’en savoir plus. La documentation liste des messages d’erreur et des actions suggérées. Quelques-uns, utiles à reconnaître :',
+    '- **Permission manquante** : le playbook n’a pas migré vers le nouveau modèle de permissions. On accorde à Sentinel la permission d’exécuter le playbook et on réenregistre la règle.',
+    '- **Trop de requêtes / limite de débit du workflow** : le nombre d’exécutions en attente dépasse la limite. On peut ajuster la concurrence du déclencheur (`maximumWaitingRuns`) ou ralentir.',
+    '- **Accès interdit** : l’identité managée n’a pas reçu de permissions, ou une restriction réseau empêche Sentinel de déclencher le playbook.',
+    '```kusto',
+    '// Les 20 derniers échecs d’exécution d’automatisation (adaptez le nom de table et les colonnes à votre schéma)',
+    'SentinelHealth',
+    '| where TimeGenerated > ago(7d)',
+    '| where SentinelResourceType == "Automation rule" or SentinelResourceType == "Playbook"',
+    '| where Status != "Success"',
+    '| project TimeGenerated, SentinelResourceName, Status, Description',
+    '| top 20 by TimeGenerated desc',
+    '```',
+    '> Cette requête illustre la forme. Le nom exact des colonnes et des valeurs peut varier et la table doit être activée dans votre espace de travail : vérifiez le schéma réel avant de l’utiliser (règle du module 12 : jamais de colonne supposée).',
+    '## Où s’insèrent les fonctions Azure',
+    'Une **fonction** est un petit bloc de code déclenché par un événement. Ses concepts clés, d’après la documentation : un **déclencheur** (exactement un par fonction) définit comment elle est invoquée, et des **liaisons** (bindings) d’entrée ou de sortie la connectent à d’autres ressources sans coder l’accès. Rien ne vous oblige à utiliser les liaisons : vous pouvez aussi créer un client avec le kit de développement Azure.',
+    'Dans une automatisation de sécurité, une fonction sert typiquement à : (1) **calculer** quelque chose de trop complexe pour un designer (score, normalisation, extraction d’indicateurs), (2) **valider** la sortie d’un modèle de langage selon un schéma, (3) **appeler** une API qui n’a pas de connecteur propre en gérant pagination et réessais. Le workflow Logic Apps appelle la fonction, qui est testée comme du code ordinaire.',
+    '### Plan d’hébergement',
+    'Pour un usage « serverless », la documentation indique que le plan **Flex Consumption** est le plan serverless recommandé : facturation à l’usage, réseau privé, taille de mémoire des instances au choix, mise à l’échelle rapide. Elle liste aussi des limites (par exemple une seule application par plan Flex Consumption, et certaines extensions non prises en charge selon le plan). Là encore : lisez la page à jour avant de choisir.',
+    '## Principe de conception',
+    'Gardez le **workflow simple et lisible** (orchestration, approbation, notification) et poussez dans le **code testé** (fonction) ce qui est calcul ou validation. Le workflow est facile à lire pour l’équipe, la fonction est facile à tester. C’est un bon compromis entre accessibilité et rigueur.',
+  ),
+  demo: {
+    title: 'Lire une erreur SentinelHealth',
+    body: md(
+      'Trois lignes fictives de la table de santé des automatisations :',
+      '```text',
+      '2026-10-23 02:10  Playbook "ctx-incident"   Failure  "Could not trigger playbook: Access was forbidden. Managed identity is missing configuration..."',
+      '2026-10-23 02:14  Playbook "ctx-incident"   Failure  "Could not trigger playbook: Too many requests, exceeding workflow throttling limits."',
+      '2026-10-23 02:40  Automation rule "triage"  Failure  "Could not trigger playbook: Playbook wasn’t migrated to new permissions model. Grant permissions..."',
+      '```',
+      '**Ligne 1 : accès interdit.** Vérifiez que l’identité managée du playbook a reçu un rôle sur l’espace de travail (Reader pour recevoir, Responder pour écrire), puis vérifiez qu’aucune restriction réseau de la ressource Logic Apps ne bloque le service Sentinel.',
+      '**Ligne 2 : trop de requêtes.** Un pic d’incidents dépasse les exécutions en attente autorisées. Ne pas simplement augmenter la limite : demandez-vous d’abord pourquoi autant d’incidents arrivent (règle trop bavarde ?) et si le playbook est assez rapide.',
+      '**Ligne 3 : permissions de l’exécution.** Accordez à Sentinel la permission d’exécuter les playbooks du groupe de ressources (il faut être Owner sur ce groupe) et réenregistrez la règle d’automatisation.',
+      '**À retenir.** Trois erreurs, trois causes différentes : identité, volume, autorisation d’exécution. Les traiter toutes par « redémarrer le playbook » ne résout rien.',
+    ),
+  },
+  guided: 'm06-g3',
+  autonomous: 'm06-a3',
+  quiz: ['m06-q3a', 'm06-q3b', 'm06-q3c'],
+  revision: md(
+    '## Fiche : playbooks et fonctions',
+    '- Règle d’analyse, alerte, incident, règle d’automatisation, playbook.',
+    '- Playbook : automatique via règle ou manuel sur incident, alerte, entité.',
+    '- Après le 31 mars 2027 : Sentinel uniquement dans le portail Defender.',
+    '- Diagnostic : table SentinelHealth ; accès interdit, trop de requêtes, permissions d’exécution.',
+    '- Fonction : un déclencheur, des liaisons facultatives ; calcul, validation, API sans connecteur.',
+    '- Workflow lisible, code testé dans les fonctions. Flex Consumption est le plan serverless recommandé.',
+  ),
+  links: [SRC_PB_RUN, SRC_HEALTH, SRC_FUNC, SRC_FLEX],
+  teaches: ['chaine-reponse', 'sentinelhealth', 'functions', 'portail-defender'],
+};
+
+const exercises = [
+  // ----- Leçon 1 -----
+  a.match({
+    id: 'm06-g1', title: 'Quel outil pour quel besoin ?', comp: 'm06-c1', tags: ['choix-outil'], role: 'guided', dim: 'comprendre', lesson: 'm06-l1',
+    st: 'Associez chaque besoin à l’outil le plus adapté.',
+    items: [['n1', 'Une équipe métier veut un flux d’approbation SharePoint sans écrire de code'], ['n2', 'Un playbook déclenché par un incident Sentinel qui écrit un commentaire'], ['n3', 'Un calcul de score statistique qui doit être testé unitairement et appelé par plusieurs workflows'], ['n4', 'Redémarrer des machines virtuelles de test chaque nuit']],
+    options: [['pa', 'Power Automate'], ['la', 'Azure Logic Apps'], ['fn', 'Azure Functions'], ['rb', 'Azure Automation Runbook']],
+    answer: { n1: 'pa', n2: 'la', n3: 'fn', n4: 'rb' },
+    exp: 'Power Automate vise les utilisateurs d’affaires sans code. Les playbooks Sentinel sont des workflows Logic Apps. Un calcul testable relève du code, donc d’Azure Functions. Les tâches d’infrastructure simples comme le redémarrage de machines relèvent des runbooks Azure Automation.',
+  }),
+  a.place({
+    id: 'm06-a1', title: 'Consumption ou Standard ?', comp: 'm06-c1', tags: ['logic-apps'], role: 'autonomous', dim: 'comprendre', lesson: 'm06-l1',
+    st: 'Placez chaque caractéristique dans la zone qui la décrit (d’après la documentation de Microsoft à la date de vérification).',
+    items: [['c1', 'Une ressource contient un seul workflow'], ['c2', 'Une ressource peut contenir plusieurs workflows'], ['c3', 'Tarification à l’exécution (paiement à l’usage)'], ['c4', 'Tarification fixe selon le plan d’hébergement'], ['c5', 'Exécution et débogage locaux dans Visual Studio Code, intégration au réseau virtuel']],
+    zones: [['cons', 'Consumption', 'Multi-locataire'], ['std', 'Standard', 'Mono-locataire']],
+    answer: { c1: 'cons', c2: 'std', c3: 'cons', c4: 'std', c5: 'std' },
+    exp: 'Consumption : un workflow par ressource, paiement à l’exécution. Standard : plusieurs workflows, tarification fixe, plus de connecteurs intégrés, réseau virtuel, développement local. Vérifiez la page de comparaison à jour avant de décider.',
+  }),
+  a.qcm({
+    id: 'm06-q1a', title: 'Playbook Sentinel', comp: 'm06-c1', tags: ['logic-apps', 'chaine-reponse'], role: 'quiz', dim: 'comprendre', lesson: 'm06-l1',
+    st: 'Sur quelle technologie reposent les playbooks Microsoft Sentinel ?',
+    exp: 'Sur les workflows Azure Logic Apps. Des frais Logic Apps peuvent donc s’ajouter.',
+  }, [
+    ['Azure Logic Apps.', true, 'Ils sont basés sur des workflows Logic Apps.'],
+    ['Power BI.', false, 'Power BI sert à la visualisation de données.'],
+    ['Azure Virtual Desktop.', false, 'Sans rapport.'],
+    ['Azure DevOps Pipelines.', false, 'Ce sont des pipelines de build et de déploiement.'],
+  ]),
+  a.qcm({
+    id: 'm06-q1b', title: 'Pourquoi une fonction ?', comp: 'm06-c1', tags: ['functions'], role: 'quiz', dim: 'maintenir', lesson: 'm06-l1',
+    st: 'Pourquoi placer un calcul complexe dans Azure Functions plutôt que dans vingt actions d’un designer ?',
+    exp: 'Le code se teste, se versionne et se relit mieux qu’un enchaînement d’actions de formule. Le workflow reste lisible.',
+  }, [
+    ['Le code se teste et se versionne mieux, et le workflow reste lisible.', true, 'Bon compromis entre accessibilité et rigueur.'],
+    ['Les fonctions sont toujours gratuites.', false, 'Elles ont une tarification.'],
+    ['Logic Apps ne peut jamais appeler de code.', false, 'Il peut appeler une fonction.'],
+    ['Les designers sont interdits en production.', false, 'Aucune telle interdiction.'],
+  ]),
+  a.qcm({
+    id: 'm06-q1c', title: 'Fiabilité des chiffres', comp: 'm06-c1', tags: ['limites-plateforme'], role: 'quiz', dim: 'maintenir', lesson: 'm06-l1',
+    st: 'Vous citez dans une conception une limite chiffrée de Logic Apps retenue de mémoire. Que faut-il faire avant de vous y fier ?',
+    exp: 'Les limites évoluent : on relit la page officielle de référence au moment de concevoir et on note la date de vérification.',
+  }, [
+    ['Relire la page officielle des limites et noter la date de vérification.', true, 'Les limites changent.'],
+    ['Rien : un chiffre cité reste vrai pour toujours.', false, 'Les limites évoluent avec les versions du service.'],
+    ['Demander à un modèle de langage de confirmer de mémoire.', false, 'Un modèle peut se tromper ou citer une version périmée.'],
+    ['Utiliser le chiffre d’un autre produit.', false, 'Les limites sont propres à chaque produit.'],
+  ]),
+
+  // ----- Leçon 2 -----
+  a.config({
+    id: 'm06-g2', title: 'Identité et rôle pour trois playbooks', comp: 'm06-c2', tags: ['identites', 'rbac-sentinel'], role: 'guided', dim: 'securiser', lesson: 'm06-l2',
+    st: 'Un playbook **reçoit** un incident Sentinel, interroge une API tierce (clé d’API) et envoie un message Teams. Il ne modifie rien dans Sentinel. Configurez son identité.',
+    fields: [
+      { id: 'identite', label: 'Type d’identité', kind: 'select', options: [{ id: 'mi', label: 'Identité managée du playbook' }, { id: 'sp', label: 'Principal de service avec secret dans le workflow' }, { id: 'user', label: 'Compte d’un analyste' }], accept: ['mi'], why: 'Aucun secret à stocker et identité dédiée à la ressource.' },
+      { id: 'role', label: 'Rôle Sentinel', kind: 'select', options: [{ id: 'reader', label: 'Microsoft Sentinel Reader' }, { id: 'responder', label: 'Microsoft Sentinel Responder' }, { id: 'contrib', label: 'Microsoft Sentinel Contributor' }], accept: ['reader'], why: 'Reader suffit pour recevoir un incident sans rien modifier.' },
+      { id: 'cle', label: 'Où stocker la clé de l’API tierce ?', kind: 'select', options: [{ id: 'kv', label: 'Azure Key Vault' }, { id: 'wf', label: 'En clair dans le workflow' }, { id: 'prompt', label: 'Dans une zone de texte du ticket' }], accept: ['kv'], why: 'Le secret reste hors du workflow, lu à l’exécution.' },
+    ],
+    solution: { identite: 'mi', role: 'reader', cle: 'kv' },
+    exp: 'Identité managée, rôle Reader (le moindre privilège suffisant) et clé dans Key Vault. Si le playbook devait écrire un commentaire, il faudrait Responder.',
+  }),
+  a.config({
+    id: 'm06-a2', title: 'Rôle pour un playbook qui écrit un commentaire', comp: 'm06-c2', tags: ['rbac-sentinel', 'identites'], role: 'autonomous', dim: 'securiser', lesson: 'm06-l2',
+    st: 'Un second playbook doit **ajouter un commentaire** à un incident. Choisissez les attributions.',
+    fields: [
+      { id: 'role', label: 'Rôle sur l’espace de travail', kind: 'select', options: [{ id: 'reader', label: 'Reader' }, { id: 'responder', label: 'Responder' }, { id: 'owner', label: 'Owner de l’abonnement' }], accept: ['responder'], why: 'Écrire un commentaire est une action d’écriture : Responder suffit.' },
+      { id: 'portee', label: 'Portée de l’attribution', kind: 'select', options: [{ id: 'ws', label: 'L’espace de travail Sentinel concerné' }, { id: 'sub', label: 'Tout l’abonnement' }], accept: ['ws'], why: 'Portée la plus étroite possible.' },
+      { id: 'rg', label: 'Placer le playbook dans un groupe de ressources dédié', kind: 'toggle', accept: ['on'], why: 'Une fois la permission d’exécution accordée, toute règle peut lancer tout playbook du groupe : on sépare les playbooks sensibles.' },
+    ],
+    solution: { role: 'responder', portee: 'ws', rg: 'on' },
+    exp: 'Responder sur l’espace de travail, pas plus large, et un groupe de ressources dédié aux playbooks sensibles.',
+  }),
+  a.qcm({
+    id: 'm06-q2a', title: 'Délégué ou application', comp: 'm06-c2', tags: ['graph-permissions'], role: 'quiz', dim: 'comprendre', lesson: 'm06-l2',
+    st: 'Une permission Microsoft Graph **d’application** est caractérisée par…',
+    exp: 'Elle fonctionne sans utilisateur connecté, avec l’identité propre de l’application, et exige le consentement d’un administrateur.',
+  }, [
+    ['un accès sans utilisateur connecté, avec consentement administrateur.', true, 'C’est le modèle app-only.'],
+    ['un accès limité à ce que l’utilisateur connecté peut déjà faire.', false, 'C’est le modèle délégué.'],
+    ['l’absence de tout contrôle d’accès.', false, 'Le consentement et les rôles s’appliquent.'],
+    ['un consentement possible par n’importe quel utilisateur.', false, 'Seul un administrateur consent aux permissions d’application.'],
+  ]),
+  a.qcm({
+    id: 'm06-q2b', title: 'Pourquoi pas un compte humain ?', comp: 'm06-c2', tags: ['identites'], role: 'quiz', dim: 'securiser', lesson: 'm06-l2',
+    st: 'Pourquoi éviter d’authentifier une automatisation avec le compte d’un analyste ?',
+    exp: 'On mélange l’humain et l’automate, les actions ne sont plus attribuables, les droits sont souvent trop larges, et l’automatisation casse si la personne change de rôle ou part.',
+  }, [
+    ['Actions non attribuables, droits souvent trop larges et dépendance à une personne.', true, 'Trois raisons concrètes.'],
+    ['Parce qu’un humain ne peut pas avoir de rôle Sentinel.', false, 'Il peut en avoir.'],
+    ['Parce que Logic Apps refuse tout compte utilisateur.', false, 'Le connecteur supporte un utilisateur, mais ce n’est pas recommandé pour l’automatisation.'],
+    ['Parce que ça coûte plus cher.', false, 'Le coût n’est pas la raison.'],
+  ]),
+  a.short({
+    id: 'm06-q2c', title: 'Nom du principe', comp: 'm06-c2', tags: ['graph-permissions', 'identites'], role: 'quiz', dim: 'securiser', lesson: 'm06-l2',
+    st: 'Comment s’appelle le principe qui consiste à n’accorder que les permissions nécessaires à la tâche, sur la portée la plus étroite ?',
+    ph: 'quelques mots', accepted: ['moindre privilege', 'principe du moindre privilege', 'least privilege'], patterns: ['le moindre privilege', 'moindre privilege', 'least privilege', 'principe de moindre privilege'],
+    exp: 'C’est le **moindre privilège** (least privilege).',
+  }),
+
+  // ----- Leçon 3 -----
+  a.match({
+    id: 'm06-g3', title: 'Diagnostiquer des erreurs d’automatisation', comp: 'm06-c3', tags: ['sentinelhealth'], role: 'guided', dim: 'fonctionner', lesson: 'm06-l3',
+    st: 'Associez chaque message d’erreur de la table de santé à la correction la plus appropriée.',
+    items: [['e1', 'Access was forbidden. Managed identity is missing configuration or network restriction.'], ['e2', 'Too many requests, exceeding workflow throttling limits.'], ['e3', 'Playbook wasn’t migrated to new permissions model. Grant permissions to run this playbook.']],
+    options: [['id', 'Vérifier le rôle de l’identité managée et les restrictions réseau'], ['vol', 'Examiner le volume d’incidents, la rapidité du playbook, puis la concurrence du déclencheur'], ['exec', 'Accorder à Sentinel la permission d’exécuter les playbooks du groupe de ressources et réenregistrer la règle'], ['redo', 'Supprimer la règle d’automatisation']],
+    answer: { e1: 'id', e2: 'vol', e3: 'exec' },
+    exp: 'Accès interdit : identité ou réseau. Trop de requêtes : volume et vitesse avant tout. Permissions d’exécution : autoriser Sentinel sur le groupe de ressources (Owner requis) puis réenregistrer la règle.',
+  }),
+  a.workflow({
+    id: 'm06-a3', title: 'Construire la chaîne de réponse automatisée', comp: 'm06-c3', tags: ['chaine-reponse'], role: 'autonomous', dim: 'fonctionner', lesson: 'm06-l3',
+    st: 'Construisez la chaîne qui, pour un incident de gravité élevée, ajoute un commentaire de contexte et notifie l’équipe.',
+    blocks: [['x1', 'Règle d’analyse crée une alerte'], ['x2', 'L’alerte est regroupée en incident'], ['x3', 'Règle d’automatisation : condition gravité = élevée'], ['x4', 'Exécuter le playbook de contexte'], ['x5', 'Le playbook lit les entités avec le rôle Reader ou Responder'], ['x6', 'Le playbook ajoute un commentaire (rôle Responder)'], ['x7', 'Le playbook désactive le compte automatiquement'], ['x8', 'Donner le rôle Contributor à toutes les identités']],
+    required: ['x1', 'x2', 'x3', 'x4', 'x5', 'x6'], forbidden: ['x7', 'x8'],
+    before: [['x1', 'x2'], ['x2', 'x3'], ['x3', 'x4'], ['x4', 'x5'], ['x5', 'x6']],
+    notes: { x7: 'Confinement non demandé et à fort impact.', x8: 'Viole le moindre privilège.' },
+    solution: ['x1', 'x2', 'x3', 'x4', 'x5', 'x6'],
+    exp: 'Analyse, incident, règle d’automatisation, playbook, lecture, écriture du commentaire. Aucun confinement et aucun rôle large.',
+  }),
+  a.qcm({
+    id: 'm06-q3a', title: 'Calendrier du portail', comp: 'm06-c3', tags: ['portail-defender'], role: 'quiz', dim: 'maintenir', lesson: 'm06-l3',
+    st: 'D’après la documentation de Microsoft Sentinel consultée lors de la rédaction, que se passe-t-il après le 31 mars 2027 ?',
+    exp: 'Microsoft Sentinel ne sera plus pris en charge dans le portail Azure et sera disponible uniquement dans le portail Microsoft Defender. Il faut planifier la transition, et revérifier la page officielle.',
+  }, [
+    ['Sentinel sera disponible uniquement dans le portail Microsoft Defender.', true, 'Calendrier annoncé dans la documentation.'],
+    ['Sentinel sera retiré complètement.', false, 'C’est le portail Azure qui est concerné, pas le produit.'],
+    ['Rien ne change.', false, 'Une transition de portail est annoncée.'],
+    ['Les playbooks cesseront de fonctionner.', false, 'La documentation parle du portail, pas de la fin des playbooks.'],
+  ]),
+  a.qcm({
+    id: 'm06-q3b', title: 'Déclencheur d’une fonction', comp: 'm06-c3', tags: ['functions'], role: 'quiz', dim: 'comprendre', lesson: 'm06-l3',
+    st: 'Combien de déclencheurs possède une fonction Azure ?',
+    exp: 'Exactement un : le déclencheur définit comment la fonction est invoquée. Les liaisons d’entrée et de sortie sont facultatives.',
+  }, [
+    ['Exactement un.', true, 'Une fonction doit avoir un seul déclencheur.'],
+    ['Aucun, elle s’exécute en permanence.', false, 'Elle a toujours un déclencheur.'],
+    ['Au moins trois.', false, 'Une fonction n’a qu’un seul déclencheur.'],
+    ['Autant que de liaisons.', false, 'Les liaisons sont distinctes.'],
+  ]),
+  a.qcm({
+    id: 'm06-q3c', title: 'Où séparer les playbooks ?', comp: 'm06-c3', tags: ['rbac-sentinel', 'chaine-reponse'], role: 'quiz', dim: 'securiser', lesson: 'm06-l3',
+    st: 'Pourquoi placer les playbooks sensibles dans un groupe de ressources distinct ?',
+    exp: 'Une fois la permission d’exécution accordée sur un groupe de ressources, toute règle d’automatisation peut exécuter n’importe quel playbook de ce groupe. La séparation limite la portée.',
+  }, [
+    ['Parce que toute règle peut exécuter n’importe quel playbook du groupe accordé.', true, 'Conséquence documentée.'],
+    ['Parce que Azure refuse plus de deux playbooks par groupe.', false, 'Aucune telle limite.'],
+    ['Pour améliorer la vitesse de réponse.', false, 'Sans rapport.'],
+    ['Pour éviter d’utiliser des identités.', false, 'Les identités restent nécessaires.'],
+  ]),
+
+  // ----- Évaluation du module -----
+  a.qcm({
+    id: 'm06-ev1', title: 'Choix pour un SOC', comp: 'm06-c1', tags: ['choix-outil'], role: 'eval', dim: 'comprendre', lesson: 'm06-l1',
+    st: 'Une équipe SOC veut un workflow déclenché par un incident Sentinel, versionné dans Git et déployé par pipeline. Quel choix est le plus naturel ?',
+    exp: 'Logic Apps (surtout Standard) offre l’intégration Git, CI/CD, ARM/Bicep et le connecteur Sentinel. Power Automate vise les utilisateurs d’affaires.',
+  }, [
+    ['Azure Logic Apps (Standard).', true, 'Git, CI/CD, connecteur Sentinel, RBAC fin.'],
+    ['Power Automate avec licence par utilisateur.', false, 'Moins adapté à l’ALM d’une équipe SOC.'],
+    ['Un script manuel lancé à la main.', false, 'Ne répond pas au déclenchement automatique.'],
+    ['Azure Automation uniquement.', false, 'Orienté infrastructure, pas incident Sentinel.'],
+  ]),
+  a.match({
+    id: 'm06-ev2', title: 'Rôles Sentinel', comp: 'm06-c2', tags: ['rbac-sentinel'], role: 'eval', dim: 'securiser', lesson: 'm06-l2',
+    st: 'Associez chaque tâche au rôle minimal.',
+    items: [['t1', 'Un playbook reçoit des incidents sans rien modifier'], ['t2', 'Un playbook ajoute des commentaires aux incidents'], ['t3', 'Une personne exécute manuellement des playbooks existants'], ['t4', 'Une personne crée et modifie des playbooks']],
+    options: [['rd', 'Microsoft Sentinel Reader'], ['rs', 'Microsoft Sentinel Responder'], ['po', 'Microsoft Sentinel Playbook Operator'], ['lc', 'Logic App Contributor']],
+    answer: { t1: 'rd', t2: 'rs', t3: 'po', t4: 'lc' },
+    exp: 'Reader pour recevoir, Responder pour écrire, Playbook Operator pour exécuter, Logic App Contributor pour créer ou modifier.',
+  }),
+  a.inspect({
+    id: 'm06-ev3', title: 'Revue de la fiche d’identité', comp: 'm06-c2', tags: ['identites', 'graph-permissions', 'key-vault'], role: 'eval', dim: 'securiser', lesson: 'm06-l2', language: 'yaml',
+    st: 'Voici la fiche d’identité d’un playbook de contexte. Repérez les lignes à corriger.',
+    lines: [
+      ['i1', 'nom: ctx-incident'],
+      ['i2', 'identite: compte-utilisateur-analyste-senior', { ok: 'a1', fixes: [['a1', 'Utiliser l’identité managée du playbook'], ['a2', 'Garder le compte mais changer son mot de passe']] }],
+      ['i3', 'role_sentinel: Contributor sur l’abonnement', { ok: 'b1', fixes: [['b1', 'Responder sur l’espace de travail concerné seulement'], ['b2', 'Owner pour éviter les blocages']] }],
+      ['i4', 'graph: User.ReadWrite.All (application)', { ok: 'c1', fixes: [['c1', 'Retirer la permission, ou la remplacer par la plus étroite nécessaire en lecture'], ['c2', 'La conserver au cas où']] }],
+      ['i5', 'secret_api_tierce: dans le workflow en clair', { ok: 'd1', fixes: [['d1', 'Stocker dans Azure Key Vault et lire à l’exécution'], ['d2', 'Le masquer avec des étoiles dans l’affichage']] }],
+    ],
+    exp: 'Compte humain, rôle trop large, permission Graph d’application excessive et secret en clair : les quatre lignes sont à corriger selon le moindre privilège.',
+  }),
+  a.qcm({
+    id: 'm06-ev4', title: 'Erreur 403 sur un playbook', comp: 'm06-c3', tags: ['sentinelhealth', 'identites'], role: 'eval', dim: 'fonctionner', lesson: 'm06-l3',
+    st: 'Un playbook déclenché par une règle d’automatisation échoue avec « Access was forbidden. Managed identity is missing configuration… ». Que vérifiez-vous en premier ?',
+    exp: 'Les attributions de rôle de l’identité managée sur l’espace de travail, puis les restrictions réseau qui pourraient bloquer le service Sentinel.',
+  }, [
+    ['Les rôles de l’identité managée et d’éventuelles restrictions réseau.', true, 'Les deux causes citées dans la documentation.'],
+    ['Le nombre de caractères du nom du playbook.', false, 'Sans rapport.'],
+    ['La couleur du thème du portail.', false, 'Sans rapport.'],
+    ['Si le déclencheur est planifié.', false, 'Sans rapport avec le message.'],
+  ]),
+  a.workflow({
+    id: 'm06-ev5', title: 'Mettre un playbook en service', comp: 'm06-c3', tags: ['chaine-reponse', 'rbac-sentinel'], role: 'eval', dim: 'maintenir', lesson: 'm06-l3',
+    st: 'Ordonnez les étapes de mise en service d’un playbook qui écrit un commentaire.',
+    blocks: [['s1', 'Créer le playbook dans un groupe de ressources dédié'], ['s2', 'Activer l’identité managée'], ['s3', 'Attribuer Responder sur l’espace de travail'], ['s4', 'Tester manuellement sur un incident de test'], ['s5', 'Accorder à Sentinel la permission d’exécuter les playbooks du groupe'], ['s6', 'Attacher à une règle d’automatisation filtrée'], ['s7', 'Attacher à toutes les règles sans filtre dès le premier jour']],
+    required: ['s1', 's2', 's3', 's4', 's5', 's6'], forbidden: ['s7'],
+    before: [['s1', 's2'], ['s2', 's3'], ['s3', 's4'], ['s4', 's6'], ['s5', 's6']],
+    notes: { s7: 'Un playbook non éprouvé ne s’attache pas à tout sans filtre.' },
+    solution: ['s1', 's2', 's3', 's4', 's5', 's6'],
+    exp: 'Créer, identité, rôle, test manuel, permission d’exécution puis règle filtrée. L’ordre de s4 et s5 peut varier tant que les deux précèdent s6.',
+  }),
+  a.qcm({
+    id: 'm06-ev6', title: 'Délégué ou application pour un automate', comp: 'm06-c2', tags: ['graph-permissions'], role: 'eval', dim: 'securiser', lesson: 'm06-l2',
+    st: 'Un automate nocturne lit des profils d’utilisateurs sans personne connectée. Quel accès Graph est requis et que devez-vous faire ?',
+    exp: 'Sans utilisateur connecté, il faut des permissions d’application, avec consentement administrateur. On choisit la plus étroite (par exemple une permission de lecture) et on surveille son usage.',
+  }, [
+    ['Permission d’application la plus étroite, avec consentement administrateur et surveillance.', true, 'Seule option compatible sans utilisateur.'],
+    ['Permission déléguée : il suffit que personne ne se connecte.', false, 'Le délégué exige un utilisateur connecté.'],
+    ['Aucune permission : Graph est public.', false, 'Graph exige une authentification et des permissions.'],
+    ['User.ReadWrite.All pour être tranquille.', false, 'Excessif.'],
+  ]),
+  a.short({
+    id: 'm06-ev7', title: 'Nom de la table', comp: 'm06-c3', tags: ['sentinelhealth'], role: 'eval', dim: 'maintenir', lesson: 'm06-l3',
+    st: 'Quelle table consultez-vous pour diagnostiquer l’échec de déclenchement de règles d’automatisation et de playbooks Sentinel ?',
+    ph: 'nom de la table', accepted: ['sentinelhealth'], patterns: ['la table sentinelhealth', 'sentinel health'],
+    exp: 'La table **SentinelHealth**. Elle doit être activée dans votre espace de travail ; vérifiez son schéma réel avant d’écrire une requête.',
+  }),
+  a.qcm({
+    id: 'm06-ev8', title: 'Faire confiance à une affirmation produit', comp: 'm06-c1', tags: ['limites-plateforme', 'choix-outil'], role: 'eval', dim: 'maintenir', lesson: 'm06-l1',
+    st: 'Un collègue affirme une limite précise de Logic Apps (« c’est une limite connue ») sans source. Que faites-vous ?',
+    exp: 'Les limites dépendent de l’hébergement (Consumption ou Standard) et changent avec le temps. On vérifie la page officielle et on précise le contexte plutôt que de répéter une généralité.',
+  }, [
+    ['Je vérifie la page officielle et je précise Consumption ou Standard.', true, 'La réponse dépend de l’hébergement et de la date.'],
+    ['Je confirme sans vérifier.', false, 'Une généralité sans source peut être périmée.'],
+    ['Je nie sans vérifier.', false, 'Nier sans vérifier est aussi une supposition.'],
+    ['Je demande à un modèle de trancher.', false, 'Un modèle peut se tromper.'],
+  ]),
+
+  // ----- Cas pratique -----
+  a.qcm({
+    id: 'm06-cs1', title: 'Cas : choisir l’architecture', comp: 'm06-c1', tags: ['choix-outil', 'functions'], role: 'case', dim: 'comprendre', lesson: 'm06-l1',
+    st: 'Le SOC veut enrichir chaque incident avec un score de risque calculé par une logique maison, puis écrire un commentaire. Les analystes veulent pouvoir lire le flux sans lire du code. Quelle architecture proposez-vous ?',
+    exp: 'Un playbook Logic Apps lisible (orchestration et commentaire) appelant une fonction Azure Functions testée pour le calcul du score.',
+  }, [
+    ['Un playbook Logic Apps qui appelle une fonction Azure pour le calcul du score.', true, 'Orchestration lisible, calcul testable.'],
+    ['Tout dans un designer avec quarante actions de formule.', false, 'Illisible et difficile à tester.'],
+    ['Tout dans une fonction, sans playbook, déclenchée à la main.', false, 'Perd la lisibilité et le déclenchement par règle.'],
+    ['Power Automate avec un compte personnel.', false, 'Mauvaise identité et mauvais public.'],
+  ]),
+  a.config({
+    id: 'm06-cs2', title: 'Cas : identités et rôles de l’architecture', comp: 'm06-c2', tags: ['identites', 'rbac-sentinel', 'key-vault'], role: 'case', dim: 'securiser', lesson: 'm06-l2',
+    st: 'Configurez les droits du playbook et de la fonction de l’architecture retenue.',
+    fields: [
+      { id: 'pb', label: 'Identité du playbook', kind: 'select', options: [{ id: 'mi', label: 'Identité managée' }, { id: 'user', label: 'Compte analyste' }], accept: ['mi'], why: 'Pas de secret, identité dédiée.' },
+      { id: 'role', label: 'Rôle Sentinel du playbook', kind: 'select', options: [{ id: 'reader', label: 'Reader' }, { id: 'responder', label: 'Responder' }, { id: 'contrib', label: 'Contributor' }], accept: ['responder'], why: 'Il écrit un commentaire.' },
+      { id: 'fn', label: 'La fonction accède à Sentinel', kind: 'select', options: [{ id: 'non', label: 'Non : elle reçoit les données en entrée et renvoie un score' }, { id: 'oui', label: 'Oui, avec un rôle Contributor' }], accept: ['non'], why: 'Une fonction de calcul pur n’a pas besoin d’accès.' },
+      { id: 'kv', label: 'Secrets éventuels dans Key Vault', kind: 'toggle', accept: ['on'], why: 'Aucun secret dans le code.' },
+    ],
+    solution: { pb: 'mi', role: 'responder', fn: 'non', kv: 'on' },
+    exp: 'Le calcul pur ne demande aucun accès à Sentinel : plus l’architecture sépare les responsabilités, moins il y a de droits à accorder.',
+  }),
+  a.inspect({
+    id: 'm06-cs3', title: 'Cas : lire le journal de santé après déploiement', comp: 'm06-c3', tags: ['sentinelhealth', 'portail-defender'], role: 'case', dim: 'maintenir', lesson: 'm06-l3', language: 'text',
+    st: 'Voici trois observations après le déploiement. Repérez celles qui demandent une correction et choisissez-la.',
+    lines: [
+      ['o1', 'Le playbook s’exécute correctement sur les incidents de test.'],
+      ['o2', 'Des échecs "Too many requests" apparaissent chaque matin à 8 h pendant le pic d’incidents.', { ok: 'a1', fixes: [['a1', 'Examiner le volume et la vitesse du playbook, puis ajuster la concurrence si nécessaire'], ['a2', 'Désactiver la règle d’automatisation']] }],
+      ['o3', 'Le rôle de l’identité managée est Contributor "pour que ça marche".', { ok: 'b1', fixes: [['b1', 'Ramener à Responder, la portée la plus étroite'], ['b2', 'Ajouter Owner pour être cohérent']] }],
+    ],
+    exp: 'Le pic du matin demande d’examiner le volume plutôt que de couper l’automatisation. Le rôle Contributor est excessif pour une écriture de commentaire.',
+  }),
+  a.open({
+    id: 'm06-cs-open', title: 'Cas : note d’architecture', comp: 'm06-c3', tags: ['choix-outil', 'identites'], role: 'case', dim: 'maintenir', lesson: 'm06-l3',
+    st: 'Rédigez la note d’architecture d’une page pour le playbook de contexte et sa fonction de score.',
+    deliverable: 'Une note : besoin, choix des outils avec raisons, schéma du flux, identités et rôles, secrets, surveillance, coûts à vérifier, calendrier du portail Defender.',
+    rubric: [
+      ['r1', 'Le choix Logic Apps plus Functions est justifié par des critères vérifiables.', 'comprendre'],
+      ['r2', 'Chaque identité a un rôle minimal et une portée précise.', 'securiser'],
+      ['r3', 'Les secrets sont dans Key Vault et rien n’est en clair.', 'securiser'],
+      ['r4', 'La surveillance via SentinelHealth est prévue avec une alerte.', 'maintenir'],
+      ['r5', 'Les coûts et limites sont à vérifier avec une date de vérification.', 'maintenir'],
+      ['r6', 'La transition vers le portail Defender est mentionnée.', 'maintenir'],
+    ],
+    exp: 'Pas de note automatique. Comparez à la grille : la note doit permettre à un architecte d’approuver ou de refuser la conception.',
+  }),
+
+  // ----- Remédiation -----
+  a.qcm({
+    id: 'm06-rm1', title: 'Remédiation : Power Automate', comp: 'm06-c1', tags: ['power-automate', 'choix-outil'], role: 'remediation', dim: 'comprendre', lesson: 'm06-l1',
+    st: 'À qui Power Automate s’adresse-t-il en priorité, d’après Microsoft ?',
+    exp: 'Aux utilisateurs d’affaires et « citizen developers » qui veulent construire des intégrations simples sans écrire de code.',
+  }, [
+    ['Aux utilisateurs d’affaires sans code.', true, 'Public cible documenté.'],
+    ['Uniquement aux administrateurs de réseau.', false, 'Le public visé est celui des utilisateurs d’affaires.'],
+    ['Aux développeurs C++ seulement.', false, 'Elle ne vise pas les développeurs en priorité.'],
+    ['Aux seuls clients du plan Standard.', false, 'Sans rapport.'],
+  ]),
+  a.qcm({
+    id: 'm06-rm2', title: 'Remédiation : identité managée', comp: 'm06-c2', tags: ['identites'], role: 'remediation', dim: 'securiser', lesson: 'm06-l2',
+    st: 'Quel est l’avantage principal d’une identité managée ?',
+    exp: 'Aucun secret à stocker ni à renouveler : Azure gère l’identité de la ressource.',
+  }, [
+    ['Aucun secret à stocker ni à renouveler.', true, 'Réduit le risque de fuite.'],
+    ['Elle donne automatiquement tous les droits.', false, 'Elle n’a que les rôles qu’on lui attribue.'],
+    ['Elle remplace le besoin de rôles.', false, 'Les rôles restent nécessaires.'],
+    ['Elle ne fonctionne qu’avec Excel.', false, 'Elle s’applique aux ressources Azure en général.'],
+  ]),
+  a.qcm({
+    id: 'm06-rm3', title: 'Remédiation : Reader ou Responder', comp: 'm06-c2', tags: ['rbac-sentinel'], role: 'remediation', dim: 'securiser', lesson: 'm06-l2',
+    st: 'Un playbook ajoute un commentaire à un incident. Quel rôle Sentinel minimal lui faut-il ?',
+    exp: 'Responder : ajouter un commentaire est une action d’écriture, que Reader n’autorise pas.',
+  }, [
+    ['Microsoft Sentinel Responder.', true, 'Autorise l’écriture.'],
+    ['Microsoft Sentinel Reader.', false, 'Lecture seulement.'],
+    ['Owner de l’abonnement.', false, 'Excessif.'],
+    ['Aucun rôle.', false, 'Sans rôle, l’appel échoue en 403.'],
+  ]),
+  a.qcm({
+    id: 'm06-rm4', title: 'Remédiation : suivre les automatisations', comp: 'm06-c3', tags: ['sentinelhealth'], role: 'remediation', dim: 'maintenir', lesson: 'm06-l3',
+    st: 'Où voir pourquoi une règle d’automatisation n’a pas déclenché un playbook ?',
+    exp: 'Dans la table SentinelHealth, qui consigne l’état de santé des règles d’automatisation et des playbooks, si elle est activée.',
+  }, [
+    ['Dans la table SentinelHealth.', true, 'Elle contient les erreurs et les causes.'],
+    ['Dans la facture mensuelle.', false, 'La facture n’explique pas un échec.'],
+    ['Dans l’aide Teams.', false, 'Sans rapport.'],
+    ['Nulle part : ces erreurs ne sont pas consignées.', false, 'Elles le sont.'],
+  ]),
+];
+
+const competencies: AiCompetency[] = [
+  {
+    id: 'm06-c1', module: 'm06', name: 'Choisir l’outil d’automatisation Microsoft',
+    description: 'Comparer Logic Apps, Power Automate et Functions et justifier le choix par des critères vérifiables et datés.',
+    criteria: [
+      { id: 'm06-c1-1', text: 'Je compare les quatre outils par public, mode de construction et hébergement.' },
+      { id: 'm06-c1-2', text: 'Je sais que les playbooks Sentinel sont des workflows Logic Apps.' },
+      { id: 'm06-c1-3', text: 'Je vérifie limites et prix sur la page officielle avant de décider.' },
+    ],
+  },
+  {
+    id: 'm06-c2', module: 'm06', name: 'Attribuer identités et permissions au moindre privilège',
+    description: 'Choisir l’identité, le rôle Sentinel et la permission Graph minimaux, et stocker les secrets dans Key Vault.',
+    criteria: [
+      { id: 'm06-c2-1', text: 'Je choisis identité managée, principal de service ou utilisateur avec raisons.' },
+      { id: 'm06-c2-2', text: 'Je distingue Reader, Responder, Contributor, Playbook Operator et Logic App Contributor.' },
+      { id: 'm06-c2-3', text: 'Je distingue permission déléguée et d’application et je choisis la plus étroite.' },
+    ],
+  },
+  {
+    id: 'm06-c3', module: 'm06', name: 'Exploiter les playbooks et les fonctions',
+    description: 'Comprendre la chaîne règle, incident, automatisation, playbook, diagnostiquer avec SentinelHealth et placer les fonctions.',
+    criteria: [
+      { id: 'm06-c3-1', text: 'Je décris la chaîne de réponse automatisée et ses prérequis de permission.' },
+      { id: 'm06-c3-2', text: 'Je diagnostique une erreur d’automatisation à partir de SentinelHealth.' },
+      { id: 'm06-c3-3', text: 'Je sais où une fonction apporte de la valeur et je connais le calendrier du portail Defender.' },
+    ],
+  },
+];
+
+const projects: AiProject[] = [
+  {
+    id: 'm06-p1', module: 'm06', level: 'débutant', title: 'Matrice de choix d’outil',
+    problem: 'Votre équipe hésite entre Power Automate, Logic Apps et Functions pour cinq automatisations prévues. Vous produisez une matrice de décision justifiée.',
+    architecture: 'Un tableau : besoin, qui maintient, volume, besoin de réseau privé, besoin de Git/CI/CD, outil recommandé, source officielle et date de vérification.',
+    tools: ['Un tableur', 'Pages officielles de comparaison'],
+    data: 'Cinq besoins décrits en une phrase, sans donnée réelle.',
+    steps: ['Lister cinq besoins.', 'Remplir les critères.', 'Appliquer la grille de la leçon 1.', 'Citer la source et la date pour chaque affirmation de limite ou de prix.', 'Faire relire.'],
+    success: ['Chaque recommandation est justifiée.', 'Chaque chiffre a une source et une date.', 'Au moins un besoin est orienté vers Power Automate et un vers Functions.'],
+    risks: ['Citer des tarifs périmés.', 'Choisir selon la préférence personnelle.'],
+    extensions: ['Ajouter une colonne coût estimé.', 'Réutiliser dans le projet de synthèse Logic Apps.'],
+  },
+  {
+    id: 'm06-p2', module: 'm06', level: 'intermédiaire', title: 'Fiche d’identité et de permissions d’un playbook',
+    problem: 'Pour un playbook de contexte, vous documentez précisément identité, rôles, permissions Graph, secrets et groupe de ressources, puis vous la faites relire par un pair.',
+    architecture: 'Un document à gabarit fixe (identité, rôle Sentinel, portée, permissions Graph, secrets, groupe de ressources, plan de revue) accompagné d’une liste de contrôle de relecture.',
+    tools: ['Un éditeur de texte', 'Documentation Sentinel (rôles, authentification des playbooks)'],
+    data: 'Aucune donnée réelle : un playbook décrit sur papier.',
+    steps: ['Lister les actions du workflow.', 'En déduire les rôles minimaux.', 'Lister les secrets et leur emplacement.', 'Ajouter le plan de revue trimestriel.', 'Relecture par un pair avec la liste de contrôle.'],
+    success: ['Chaque action d’écriture est reliée à un rôle.', 'Aucun compte humain.', 'La relecture trouve zéro droit superflu.'],
+    risks: ['Oublier une permission nécessaire.', 'Accorder « temporairement » un rôle large qui reste.'],
+    extensions: ['Modèle réutilisable pour tous vos playbooks.', 'Ajout d’un contrôle automatique des attributions de rôle.'],
+    connected: { accounts: 'Un abonnement Azure de test et un espace de travail Sentinel de test (jamais la production).', permissions: 'Owner sur le groupe de ressources de test, Logic App Contributor pour créer le playbook.', costs: 'Des frais Logic Apps et de journalisation Log Analytics peuvent s’appliquer : consultez les pages de tarification officielles avant de commencer.', secrets: 'Aucun secret dans le workflow : identité managée uniquement.', cleanup: 'Supprimer le groupe de ressources de test et les attributions de rôle à la fin.', limits: 'Facultatif : tout le projet peut se faire sur papier. Aucune action de confinement.' },
+  },
+  {
+    id: 'm06-p3', module: 'm06', level: 'avancé', title: 'Fonction de calcul testée et appelée par un workflow',
+    problem: 'Vous écrivez en Python une fonction de score de risque testée unitairement, puis vous décrivez comment un workflow Logic Apps l’appellerait, avec contrat d’entrée et de sortie, erreurs et réessais.',
+    architecture: 'Un module Python pur (entrées JSON, sortie JSON), sa suite de tests, un document de contrat (schéma d’entrée et de sortie, codes d’erreur) et un schéma du workflow qui l’appelle.',
+    tools: ['Python 3', 'pytest ou unittest', 'Un éditeur', 'Git'],
+    data: 'Incidents fictifs en JSON.',
+    steps: ['Définir le contrat d’entrée et de sortie.', 'Écrire la fonction et dix tests (cas limites inclus).', 'Ajouter la validation du contrat.', 'Documenter les erreurs et les réessais côté workflow.', 'Dessiner le workflow.'],
+    success: ['Les tests couvrent valeurs manquantes, hors plage et types incorrects.', 'La fonction n’a besoin d’aucun accès réseau.', 'Le contrat est lisible par un non-développeur.'],
+    risks: ['Cacher de la logique de sécurité dans le score.', 'Ne pas versionner le contrat.'],
+    extensions: ['Packager comme fonction Azure (Flex Consumption), après vérification de la documentation du jour.', 'Brancher au projet de priorisation du niveau 4.'],
+  },
+];
+
+const module_: AiModule = {
+  id: 'm06',
+  level: 2,
+  n: 6,
+  title: 'Écosystème Microsoft',
+  summary: 'Logic Apps, Power Automate, Azure Functions, identités managées, rôles Sentinel, permissions Microsoft Graph, playbooks et diagnostic SentinelHealth.',
+  lessons: ['m06-l1', 'm06-l2', 'm06-l3'],
+  evaluation: ['m06-ev1', 'm06-ev2', 'm06-ev3', 'm06-ev4', 'm06-ev5', 'm06-ev6', 'm06-ev7', 'm06-ev8'],
+  caseStudy: 'm06-case',
+  competencies: ['m06-c1', 'm06-c2', 'm06-c3'],
+  projects: ['m06-p1', 'm06-p2', 'm06-p3'],
+  remediation: ['m06-rm1', 'm06-rm2', 'm06-rm3', 'm06-rm4'],
+};
+
+export const m06: ModuleContent = {
+  module: module_,
+  lessons: [l1, l2, l3],
+  exercises,
+  competencies,
+  caseStudy: {
+    id: 'm06-case',
+    module: 'm06',
+    title: 'Un playbook de contexte avec un score de risque',
+    scenario: 'Le SOC veut enrichir chaque incident avec un score calculé par une logique maison et un commentaire de contexte. Vous choisissez l’architecture, réglez identités et rôles, lisez la santé du déploiement et rédigez la note d’architecture.',
+    steps: ['m06-cs1', 'm06-cs2', 'm06-cs3'],
+    deliverable: 'm06-cs-open',
+    minutes: 40,
+  },
+  projects,
+};
