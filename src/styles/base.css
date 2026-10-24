@@ -444,3 +444,63 @@ main:focus { outline: none; }
 @media (hover: none) and (pointer: coarse) {
   .btn kbd, .search-btn kbd { display: none; }
 }
+
+/* Sections du site */
+.sections { display: inline-flex; gap: 0.2rem; padding: 0.2rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
+.sections a { padding: 0.3rem 0.8rem; border-radius: 999px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 0.9rem; white-space: nowrap; }
+.sections a[aria-current='true'] { background: var(--accent); color: var(--on-accent, #04201f); }
+.sections a:hover { color: var(--text); }
+.sections a[aria-current='true']:hover { color: var(--on-accent, #04201f); }
+.section-card { display: grid; gap: 0.7rem; align-content: start; padding: 1.4rem; border: 1px solid var(--border); border-top: 5px solid var(--pc, var(--accent)); border-radius: 14px; background: var(--surface); color: inherit; text-decoration: none; transition: transform 0.15s ease, border-color 0.15s ease; }
+.section-card:hover { transform: translateY(-2px); border-color: var(--pc, var(--accent)); }
+.section-card h2 { margin: 0.1em 0 0; }
+.section-card .btn { justify-self: start; }
+@media (max-width: 760px) {
+  .sections { order: 9; flex: 0 0 auto; }
+  .nav { order: 10; }
+}
+
+/* Section Agentic AI */
+.ai-hero { display: grid; gap: 1.5rem; padding-block: 1rem; }
+@media (min-width: 900px) { .ai-hero { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); align-items: start; } }
+.ai-level h2 { display: flex; align-items: center; gap: 0.6rem; }
+.lvl-n { display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 50%; background: var(--pc, var(--accent)); color: #04201f; font-size: 0.95rem; }
+.ai-mod { align-content: start; }
+.qcm-item { display: grid; gap: 0.25rem; }
+.qcm-item.is-right .why { color: var(--ok); }
+.qcm-item.is-wrong .why { color: var(--bad); }
+.why { margin: 0 0 0 1.9rem; }
+.fix-area { width: 100%; font-family: var(--font-mono); font-size: 0.9rem; line-height: 1.5; tab-size: 2; white-space: pre; overflow: auto; }
+.config-grid { display: grid; gap: 0.7rem; }
+.config-row { display: grid; gap: 0.3rem; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.config-row.good { border-color: var(--ok); }
+.config-row.badc { border-color: var(--bad); }
+.toc { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; margin-top: 0.8rem; font-size: 0.9rem; }
+.prose { max-width: 74ch; }
+.prose h3 { margin-top: 1.6em; }
+.prose p, .prose li { line-height: 1.7; }
+.demo { border-left: 5px solid var(--pc, var(--accent)); }
+.revision-sheet { border-top: 1px dashed var(--border); padding-top: 0.8rem; }
+.table-wrap { overflow-x: auto; }
+.grid-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.grid-table th, .grid-table td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.grid-table thead th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.grid-table td input[type='radio'] { width: 1.1rem; height: 1.1rem; }
+.coverage th[scope='rowgroup'] { background: var(--surface); }
+.defs { display: grid; grid-template-columns: minmax(0, 12rem) minmax(0, 1fr); gap: 0.5rem 1rem; margin: 0; }
+.defs dt { font-weight: 600; }
+.defs dd { margin: 0; }
+@media (max-width: 640px) { .defs { grid-template-columns: 1fr; } }
+.filters label { display: inline-flex; gap: 0.4rem; align-items: center; }
+.focus-ring { outline: 3px solid var(--accent); outline-offset: 2px; }
+@media print { .lesson .card, .lesson section { break-inside: avoid; } .lesson > section:not(#fiche) { display: none; } .lesson header .toc { display: none; } }
+
+/* Corrections mobile de la section IA */
+.table-scroll { overflow-x: auto; max-width: 100%; }
+.stack > *, .card, .lesson > * { min-width: 0; }
+.dnd-item select, .dnd-item .grow { min-width: 0; max-width: 100%; }
+@media (max-width: 760px) {
+  .dnd-item { flex-wrap: wrap; }
+}
+.dnd-item select { width: 100%; text-overflow: ellipsis; }
+.dnd-item .grow { flex: 1 1 12rem; }

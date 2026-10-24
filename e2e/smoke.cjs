@@ -119,7 +119,11 @@ const ok = (name, cond, extra = '') => {
   await go('exercice/az-022');
   await page.waitForSelector('.dnd-item');
   const before = await page.$$eval('.dnd-item .grow', (els) => els.map((e) => e.textContent.trim()));
-  await page.dragAndDrop('.dnd-item:last-child', '.dnd-item:first-child');
+  for (let t = 0; t < 3; t++) {
+    await page.dragAndDrop('.dnd-item:last-child', '.dnd-item:first-child');
+    const changed = await page.waitForFunction((b) => [...document.querySelectorAll('.dnd-item .grow')].map((e) => e.textContent.trim()).join('|') !== b, before.join('|'), { timeout: 1500 }).then(() => true).catch(() => false);
+    if (changed) break;
+  }
   const after = await page.$$eval('.dnd-item .grow', (els) => els.map((e) => e.textContent.trim()));
   ok('glisser-déposer : l’ordre change', before.join('|') !== after.join('|'));
 
@@ -188,17 +192,17 @@ const ok = (name, cond, extra = '') => {
   const mp = await mobile.newPage();
   await mp.goto(base);
   await mp.waitForSelector('h1');
-  for (const r of ['', 'catalogue', 'exercice/kql-001', 'exercice/az-022', 'parcours/kql']) {
+  for (const r of ['', 'azure', 'ia', 'ia/module/m01', 'ia/cours/m01-l1', 'catalogue', 'exercice/kql-001', 'exercice/az-022', 'parcours/kql']) {
     await mp.goto(base + '#/' + r);
     await mp.waitForSelector('h1, h2');
     const overflow = await mp.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     ok(`mobile 375 px : pas de défilement horizontal (#/${r})`, overflow <= 1, 'débordement ' + overflow);
   }
 
-  await mp.goto(base);
+  await mp.goto(base + '#/azure');
   await mp.waitForSelector('.site-header');
   const hh = await mp.evaluate(() => document.querySelector('.site-header').getBoundingClientRect().height);
-  ok('mobile : en-tête compact (moins de 130 px)', hh < 130, Math.round(hh) + ' px');
+  ok('mobile : en-tête compact (moins de 165 px, trois lignes)', hh < 165, Math.round(hh) + ' px');
   const navRow = await mp.evaluate(() => { const n = document.querySelector('.nav'); return n.scrollWidth >= n.clientWidth && getComputedStyle(n).flexWrap === 'nowrap'; });
   ok('mobile : menu sur une ligne, défilable', navRow);
   await mp.goto(base + '#/exercice/kql-001');
@@ -212,7 +216,7 @@ const ok = (name, cond, extra = '') => {
   const lerrors = [];
   lp.on('pageerror', (e) => lerrors.push('pageerror: ' + e.message));
   lp.on('console', (m) => { if (m.type() === 'error') lerrors.push('console: ' + m.text()); });
-  await lp.goto(base);
+  await lp.goto(base + '#/azure');
   await lp.waitForSelector('h1');
   const frH1 = await lp.textContent('h1');
   ok('langue : français par défaut', (await lp.evaluate(() => document.documentElement.lang)) === 'fr-CA');
@@ -243,7 +247,7 @@ const ok = (name, cond, extra = '') => {
   ok('langue : retour au français', /[éèêàç]|Accueil|Catalogue/.test(await lp.textContent('body')));
   const lmob = await browser.newContext({ viewport: { width: 375, height: 740 }, hasTouch: true });
   const lmp = await lmob.newPage();
-  await lmp.goto(base);
+  await lmp.goto(base + '#/azure');
   await lmp.evaluate(() => localStorage.setItem('boreal.lang', 'en'));
   await lmp.reload();
   await lmp.waitForSelector('h1');
@@ -259,7 +263,7 @@ const ok = (name, cond, extra = '') => {
   const werrors = [];
   wp.on('pageerror', (e) => werrors.push('pageerror: ' + e.message));
   wp.on('console', (m) => { if (m.type() === 'error') werrors.push('console: ' + m.text()); });
-  await wp.goto(base);
+  await wp.goto(base + '#/azure');
   await wp.waitForSelector('.next-card');
   ok('repères : carte « prochaine étape » avec un bouton', (await wp.$$('.next-card a.btn.primary')).length === 1);
   ok('repères : « Par où commencer ? » pour un nouvel utilisateur', (await wp.$$('.profile')).length === 4);
@@ -296,7 +300,7 @@ const ok = (name, cond, extra = '') => {
   const serrors = [];
   sp.on('pageerror', (e) => serrors.push('pageerror: ' + e.message));
   sp.on('console', (m) => { if (m.type() === 'error') serrors.push('console: ' + m.text()); });
-  await sp.goto(base);
+  await sp.goto(base + '#/azure');
   await sp.waitForSelector('.streak-chip');
   ok('série : pastille visible dans l’en-tête à 0 jour', /0\s*j/.test(await sp.textContent('.streak-chip')));
   await sp.evaluate(() => localStorage.setItem('boreal.progress.v1', JSON.stringify({ v: 1, settings: { unlockAll: true } })));
@@ -314,7 +318,7 @@ const ok = (name, cond, extra = '') => {
     list.forEach((id, i) => { done[id] = { xp: 10, firstAt: now - 86400000, lastAt: now - (i % 2) * 0, attempts: 1, hintsUsed: 0, status: 'perfect', box: 1, due: now - 1000 }; });
     localStorage.setItem('boreal.progress.v1', JSON.stringify({ v: 1, done, settings: { unlockAll: true, weeklyGoal: 3 } }));
   }, [ids, nowMs]);
-  await sp.goto(base);
+  await sp.goto(base + '#/azure');
   await sp.reload();
   await sp.waitForSelector('.streak-chip');
   ok('série : 2 jours consécutifs reconstitués à partir de l’historique', /2\s*j/.test(await sp.textContent('.streak-chip')), await sp.textContent('.streak-chip'));
@@ -378,7 +382,7 @@ const ok = (name, cond, extra = '') => {
   await nctx.close();
 
   // 12. Clavier : tabulation atteint un élément interactif et le lien d'évitement existe
-  await page.goto(base);
+  await page.goto(base + '#/azure');
   await page.waitForSelector('h1');
   await page.keyboard.press('Tab');
   const focused = await page.evaluate(() => document.activeElement && document.activeElement.tagName);

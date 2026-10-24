@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useRoute, href } from './router.ts';
 import { AnnouncerProvider } from './components/Announcer.tsx';
 import { useProgress } from './state/useProgress.ts';
 import { totalXp } from './state/progress.ts';
 import { HomePage } from './pages/HomePage.tsx';
+import { LandingPage } from './pages/LandingPage.tsx';
+const AiRouter = lazy(() => import('./pages/ia/AiRouter.tsx').then((m) => ({ default: m.AiRouter })));
 import { CatalogPage } from './pages/CatalogPage.tsx';
 import { PathPage } from './pages/PathPage.tsx';
 import { LessonPage } from './pages/LessonPage.tsx';
@@ -16,14 +18,35 @@ import { CoveragePage } from './pages/CoveragePage.tsx';
 import { LimitsPage } from './pages/LimitsPage.tsx';
 import { CommandPalette, SearchButton } from './components/CommandPalette.tsx';
 
-const nav = (): [string, string][] => [
-  ['accueil', tr('Accueil', 'Home')],
-  ['catalogue', tr('Catalogue', 'Catalog')],
-  ['terrain', tr('Terrain KQL', 'KQL playground')],
-  ['tableau', tr('Tableau de bord', 'Dashboard')],
-  ['revision', tr('Révision', 'Review')],
-  ['labos', tr('Labos', 'Labs')],
-];
+type Section = 'home' | 'azure' | 'ia';
+const sectionOf = (name: string): Section => (name === 'accueil' ? 'home' : name === 'ia' ? 'ia' : 'azure');
+
+interface NavItem { to: string; label: string; active: boolean }
+const navFor = (section: Section, route: { name: string; params: string[] }): NavItem[] => {
+  if (section === 'azure') {
+    const items: [string, string][] = [
+      ['azure', tr('Accueil', 'Home')],
+      ['catalogue', tr('Catalogue', 'Catalog')],
+      ['terrain', tr('Terrain KQL', 'KQL playground')],
+      ['tableau', tr('Tableau de bord', 'Dashboard')],
+      ['revision', tr('Révision', 'Review')],
+      ['labos', tr('Labos', 'Labs')],
+    ];
+    return items.map(([name, label]) => ({ to: href(name), label, active: route.name === name }));
+  }
+  if (section === 'ia') {
+    const sub = route.params[0];
+    const items: [string | undefined, string, string[]][] = [
+      [undefined, tr('Formation', 'Course'), ['module', 'cours', 'exercice', 'evaluation', 'cas']],
+      ['suivi', tr('Suivi', 'Tracking'), []],
+      ['projets', tr('Projets', 'Projects'), ['projet']],
+      ['ressources', tr('Ressources', 'Resources'), []],
+      ['couverture', tr('Couverture', 'Coverage'), []],
+    ];
+    return items.map(([s, label, also]) => ({ to: s ? href('ia', s) : href('ia'), label, active: s ? sub === s || also.includes(sub ?? '') : sub === undefined || also.includes(sub) }));
+  }
+  return [];
+};
 
 function Logo() {
   return (
@@ -62,6 +85,7 @@ class Boundary extends Component<{ children: ReactNode; resetKey: string }, { fa
 
 export function App() {
   const route = useRoute();
+  const section = sectionOf(route.name);
   const lang = useLang();
   const p = useProgress();
   const xp = totalXp(p);
@@ -101,12 +125,14 @@ export function App() {
     window.scrollTo(0, 0);
     const h = document.getElementById('main');
     h?.focus({ preventScroll: true });
-    document.title = `Boube : ${route.name === 'accueil' ? tr('Azure, Sentinel et KQL', 'Azure, Sentinel and KQL') : route.name}`;
+    document.title = `Boube : ${route.name === 'accueil' ? tr('Cybersécurité Microsoft et IA agentique', 'Microsoft security and agentic AI') : route.name === 'azure' ? tr('Azure, Sentinel et KQL', 'Azure, Sentinel and KQL') : route.name === 'ia' ? 'Agentic AI for Cybersecurity' : route.name}`;
   }, [route.name, route.params.join('/'), lang]);
 
   let page: ReactNode;
   switch (route.name) {
-    case 'accueil': page = <HomePage />; break;
+    case 'accueil': page = <LandingPage />; break;
+    case 'azure': page = <HomePage />; break;
+    case 'ia': page = <Suspense fallback={<p className="muted" role="status">{tr('Chargement de la section…', 'Loading the section…')}</p>}><AiRouter route={route} /></Suspense>; break;
     case 'catalogue': page = <CatalogPage />; break;
     case 'parcours': page = route.params[0] ? <PathPage id={route.params[0]} /> : <CatalogPage />; break;
     case 'cours': page = <LessonPage id={route.params[0] ?? ''} />; break;
@@ -135,11 +161,17 @@ export function App() {
       <header className="site-header">
         <div className="wrap">
           <a className="brand" href={href('accueil')}><Logo /> Boube</a>
-          <nav className="nav" aria-label={tr('Navigation principale', 'Main navigation')}>
-            {nav().map(([name, label]) => (
-              <a key={name} href={href(name)} aria-current={route.name === name ? 'page' : undefined}>{label}</a>
-            ))}
+          <nav className="sections" aria-label={tr('Sections du site', 'Site sections')}>
+            <a href={href('azure')} aria-current={section === 'azure' ? 'true' : undefined}>{tr('Azure, Sentinel, KQL', 'Azure, Sentinel, KQL')}</a>
+            <a href={href('ia')} aria-current={section === 'ia' ? 'true' : undefined}>Agentic AI</a>
           </nav>
+          {section !== 'home' && (
+            <nav className="nav" aria-label={tr('Navigation de la section', 'Section navigation')}>
+              {navFor(section, route).map((it) => (
+                <a key={it.to} href={it.to} aria-current={it.active ? 'page' : undefined}>{it.label}</a>
+              ))}
+            </nav>
+          )}
           <SearchButton onOpen={() => setSearchOpen(true)} />
           <button
             type="button"
@@ -151,8 +183,8 @@ export function App() {
           >
             {lang === 'fr' ? 'EN' : 'FR'}
           </button>
-          <StreakChip />
-          <span className="xp-chip" aria-label={tr(`${xp} points d’expérience`, `${xp} experience points`)}>{xp} XP</span>
+          {section === 'azure' && <StreakChip />}
+          {section === 'azure' && <span className="xp-chip" aria-label={tr(`${xp} points d’expérience`, `${xp} experience points`)}>{xp} XP</span>}
         </div>
       </header>
       <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
