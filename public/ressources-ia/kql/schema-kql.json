@@ -1,0 +1,26 @@
+{
+  "_note": "Schema partiel et verifie dans Microsoft Learn le 2026-10-24. Ajoutez les colonnes dont vous avez besoin APRES les avoir verifiees dans votre espace (getschema).",
+  "_sources": [
+    "https://learn.microsoft.com/azure/azure-monitor/reference/tables/signinlogs",
+    "https://learn.microsoft.com/azure/azure-monitor/reference/tables/securityincident",
+    "https://learn.microsoft.com/defender-xdr/advanced-hunting-deviceprocessevents-table"
+  ],
+  "tables": {
+    "SigninLogs": {
+      "time": "TimeGenerated",
+      "columns": ["TimeGenerated", "UserPrincipalName", "UserDisplayName", "IPAddress", "Location", "AppDisplayName", "ResultType", "ResultDescription", "ConditionalAccessStatus", "ClientAppUsed", "AuthenticationRequirement", "IsInteractive", "IsRisky", "RiskDetail", "UserAgent", "UserType", "AutonomousSystemNumber", "CorrelationId", "ResourceDisplayName", "Identity", "Status"]
+    },
+    "SecurityIncident": {
+      "time": "TimeGenerated",
+      "columns": ["TimeGenerated", "IncidentNumber", "IncidentName", "Title", "Severity", "Status", "Classification", "ClassificationReason", "ClassificationComment", "CreatedTime", "FirstActivityTime", "LastActivityTime", "LastModifiedTime", "ClosedTime", "Owner", "Labels", "AlertIds", "ProviderName", "ModifiedBy", "IncidentUrl"]
+    },
+    "DeviceProcessEvents": {
+      "time": "Timestamp",
+      "columns": ["Timestamp", "DeviceId", "DeviceName", "ActionType", "FileName", "FolderPath", "SHA1", "ProcessId", "ProcessCommandLine", "AccountDomain", "AccountName", "AccountUpn", "InitiatingProcessFileName", "InitiatingProcessCommandLine", "InitiatingProcessParentFileName", "InitiatingProcessAccountName", "ReportId"]
+    },
+    "AuditLogs": {
+      "time": "TimeGenerated",
+      "columns": ["TimeGenerated", "OperationName", "Identity", "TargetResources"]
+    }
+  }
+}
