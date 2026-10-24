@@ -103,4 +103,17 @@ describe('contenu Agentic AI : intégrité', () => {
   it('les ressources annoncées existent sur le disque', () => {
     for (const r of RESOURCES) expect(existsSync(resolve('public/ressources-ia', r.file)), r.file).toBe(true);
   });
+
+  it('18 modules, 9 projets de synthèse et ressources cohérentes', () => {
+    expect(MODULES.length).toBe(18);
+    expect(PROJECTS.filter((p) => p.module === 'final').length).toBe(9);
+    const ids = new Set(RESOURCES.map((r) => r.id));
+    expect(ids.size).toBe(RESOURCES.length);
+    for (const p of PROJECTS) for (const id of p.resources ?? []) expect(ids.has(id), `${p.id} -> ${id}`).toBe(true);
+    for (const r of RESOURCES) {
+      expect(['teste', 'a-verifier']).toContain(r.status);
+      expect(r.how.length, r.id).toBeGreaterThan(20);
+      if (r.kind === 'n8n' || r.kind === 'logicapps') expect(r.status, r.id).toBe('a-verifier');
+    }
+  });
 });

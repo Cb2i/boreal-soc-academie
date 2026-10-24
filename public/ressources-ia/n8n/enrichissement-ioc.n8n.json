@@ -1,0 +1,73 @@
+{
+  "name": "Enrichissement IOC (simulé, sans appel externe)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Démarrage manuel",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { valeur: 'evil.example.test' } },\n  { json: { valeur: '203.0.113.7' } },\n  { json: { valeur: 'pas un indicateur; DROP' } }\n];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Données fictives",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst RE_DOMAINE = /^(?=.{1,253}$)([a-z0-9-]{1,63}\\.)+[a-z]{2,24}$/i;\nconst RE_IPV4 = /^(25[0-5]|2[0-4]\\d|1?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|1?\\d?\\d)){3}$/;\nconst RE_SHA256 = /^[a-f0-9]{64}$/i;\nreturn items.map((it) => {\n  const brut = String(it.json.valeur ?? '').trim().slice(0, 300);\n  let type = 'invalide';\n  if (RE_IPV4.test(brut)) type = 'ipv4';\n  else if (RE_SHA256.test(brut)) type = 'sha256';\n  else if (RE_DOMAINE.test(brut)) type = 'domaine';\n  const defanged = brut.replace(/\\./g, '[.]');\n  return { json: { valeur: brut, type, defanged, accepte: type !== 'invalide', note: 'Aucun appel externe : enrichissement simulé' } };\n});\n"
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Valider et normaliser",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Démarrage manuel": {
+      "main": [
+        [
+          {
+            "node": "Données fictives",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Données fictives": {
+      "main": [
+        [
+          {
+            "node": "Valider et normaliser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "note": "Fichier généré pour le cours. Non importé dans n8n au moment de la rédaction : à vérifier."
+  }
+}
