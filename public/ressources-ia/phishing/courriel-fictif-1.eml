@@ -1,0 +1,16 @@
+From: "Support Contoso" <support@contoso-secure.example>
+To: b.roy@contoso.example
+Reply-To: reponses@mail-collect.example
+Return-Path: <bounce@mailer-xyz.example>
+Subject: Action requise : votre mot de passe expire aujourd'hui
+Date: Mon, 19 Oct 2026 09:12:00 -0400
+Message-ID: <fictif-0001@mailer-xyz.example>
+Authentication-Results: mx.contoso.example; spf=fail smtp.mailfrom=mailer-xyz.example; dkim=none; dmarc=fail header.from=contoso-secure.example
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+
+<html><body>
+<p>Bonjour, votre mot de passe expire aujourd'hui. Connectez-vous pour le conserver.</p>
+<p><a href="https://contoso-login.example/verifier?id=12345">https://login.contoso.example/mot-de-passe</a></p>
+<p>Ceci est un message fictif pour un cours.</p>
+</body></html>

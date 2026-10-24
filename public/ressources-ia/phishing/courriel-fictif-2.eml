@@ -1,0 +1,14 @@
+From: "Infolettre Contoso" <infolettre@contoso.example>
+To: b.roy@contoso.example
+Return-Path: <infolettre@contoso.example>
+Subject: Infolettre d'octobre
+Date: Tue, 20 Oct 2026 08:00:00 -0400
+Message-ID: <fictif-0002@contoso.example>
+Authentication-Results: mx.contoso.example; spf=pass smtp.mailfrom=contoso.example; dkim=pass header.d=contoso.example; dmarc=pass header.from=contoso.example
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+
+<html><body>
+<p>Les nouvelles du mois.</p>
+<p><a href="https://www.contoso.example/nouvelles">Lire les nouvelles</a></p>
+</body></html>
