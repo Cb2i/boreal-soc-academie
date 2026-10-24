@@ -1,0 +1,8 @@
+[
+ {"outil":"lire_alerte","params":{"id":"INC-1042"}},
+ {"outil":"chercher_ioc","params":{"valeur":"evil.example.test"}},
+ {"outil":"envoyer_courriel","params":{"a":"x@exemple.test","texte":"donnees"}},
+ {"outil":"isoler_machine","params":{"hote":"PC-COMPTA-07"}},
+ {"outil":"ajouter_note","params":{"id":"INC-1042","texte":"Verifie par l'analyste"}},
+ {"outil":"lire_alerte","params":{"id":"INC-1042; DROP TABLE"}}
+]

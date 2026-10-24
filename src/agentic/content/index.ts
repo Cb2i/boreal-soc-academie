@@ -17,9 +17,10 @@ import { m12 } from './m12.ts';
 import { m13 } from './m13.ts';
 import { m14 } from './m14.ts';
 import { m15 } from './m15.ts';
+import { m16 } from './m16.ts';
 
 /** Tous les modules livrés, dans l'ordre pédagogique. */
-export const MODULE_CONTENT: ModuleContent[] = [m01, m02, m03, m04, m05, m06, m07, m08, m09, m10, m11, m12, m13, m14, m15];
+export const MODULE_CONTENT: ModuleContent[] = [m01, m02, m03, m04, m05, m06, m07, m08, m09, m10, m11, m12, m13, m14, m15, m16];
 
 export const LEVELS = AI_LEVELS;
 export const MODULES: AiModule[] = MODULE_CONTENT.map((m) => m.module);
