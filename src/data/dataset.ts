@@ -11,6 +11,7 @@
 // cela permet de vérifier qu'une requête applique une logique générale (et pas des valeurs codées en dur).
 
 import type { Row, Table, Ty, Value } from '../kql/types.ts';
+import { getLang } from '../i18n/lang.ts';
 
 export const SIM_NOW = new Date('2026-03-12T12:00:00Z');
 
@@ -763,3 +764,6 @@ export function contextTables(ds: Dataset, ctx: DatasetContext): { tables: Recor
 
 export const DATASET_NOTE =
   'Données fictives générées pour l’apprentissage (entreprise simulée « Nordlys Technologies »). Les adresses IP appartiennent aux plages de documentation (RFC 5737). L’horloge simulée est 2026-03-12 12:00 UTC : ago(1d) est évalué par rapport à cette heure.';
+export const DATASET_NOTE_EN =
+  'Fictional data generated for learning (simulated company “Nordlys Technologies”). The IP addresses belong to the documentation ranges (RFC 5737). The simulated clock is 2026-03-12 12:00 UTC: ago(1d) is evaluated relative to that time.';
+export const datasetNote = () => (getLang() === 'en' ? DATASET_NOTE_EN : DATASET_NOTE);

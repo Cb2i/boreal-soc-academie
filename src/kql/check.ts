@@ -4,6 +4,7 @@ import { unknownNameError } from './eval.ts';
 import { FUNCTIONS } from './functions.ts';
 import { KqlError } from './types.ts';
 import type { Ty } from './types.ts';
+import { tr } from '../i18n/lang.ts';
 
 /** Parcourt récursivement une expression (sans entrer dans les sous-requêtes). */
 export function walk(e: Expr, fn: (n: Expr) => void): void {
@@ -130,10 +131,10 @@ export function typeCheck(e: Expr, types: Record<string, Ty>, ctx: Ctx): void {
     const a = inferTy(n.l, types, ctx);
     const b = inferTy(n.r, types, ctx);
     if ((a === 'string' && b === 'number') || (a === 'number' && b === 'string')) {
-      throw new KqlError('semantic', `Impossible de comparer des valeurs de types différents : ${a === 'number' ? 'long/real' : 'string'} et ${b === 'number' ? 'long/real' : 'string'}.`, {
+      throw new KqlError('semantic', tr(`Impossible de comparer des valeurs de types différents : ${a === 'number' ? 'long/real' : 'string'} et ${b === 'number' ? 'long/real' : 'string'}.`, `Cannot compare values of different types: ${a === 'number' ? 'long/real' : 'string'} and ${b === 'number' ? 'long/real' : 'string'}.`), {
         line: n.pos.line,
         col: n.pos.col,
-        hint: 'Ajoutez une conversion explicite : tostring(...), toint(...) ou todouble(...) selon le cas.',
+        hint: tr('Ajoutez une conversion explicite : tostring(...), toint(...) ou todouble(...) selon le cas.', 'Add an explicit conversion: tostring(...), toint(...) or todouble(...) as appropriate.'),
       });
     }
   });

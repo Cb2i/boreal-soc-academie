@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { tr } from '../i18n/lang.ts';
 
 export interface SortItem {
   id: string;
@@ -40,7 +41,7 @@ export function SortableList({ items, onChange, feedback, disabled, onRemove, on
     if (to < 0 || to >= ids.length) return;
     onChange(moveItem(ids, from, to));
     const it = items[from];
-    announce(`${it.label} déplacé en position ${to + 1} sur ${ids.length}.`);
+    announce(tr(`${it.label} déplacé en position ${to + 1} sur ${ids.length}.`, `${it.label} moved to position ${to + 1} of ${ids.length}.`));
     requestAnimationFrame(() => refs.current[id]?.focus());
   };
 
@@ -90,18 +91,18 @@ export function SortableList({ items, onChange, feedback, disabled, onRemove, on
                 move(it.id, 1);
               }
             }}
-            aria-label={`${idx + 1} sur ${ids.length} : ${it.label}. Alt plus flèche haut ou bas pour déplacer.`}
+            aria-label={tr(`${idx + 1} sur ${ids.length} : ${it.label}. Alt plus flèche haut ou bas pour déplacer.`, `${idx + 1} of ${ids.length}: ${it.label}. Alt plus up or down arrow to move.`)}
           >
             <span className="handle" aria-hidden="true">⋮⋮</span>
             <span className="grow">{it.content}</span>
-            {fb === true && <span className="pill ok">bien placé</span>}
-            {fb === false && <span className="pill bad">à revoir</span>}
+            {fb === true && <span className="pill ok">{tr('bien placé', 'well placed')}</span>}
+            {fb === false && <span className="pill bad">{tr('à revoir', 'review')}</span>}
             {!disabled && (
               <span className="row" style={{ gap: '0.25rem' }}>
-                <button type="button" className="btn small icon-btn" onClick={() => move(it.id, -1)} disabled={idx === 0} aria-label={`Monter : ${it.label}`}>↑</button>
-                <button type="button" className="btn small icon-btn" onClick={() => move(it.id, 1)} disabled={idx === items.length - 1} aria-label={`Descendre : ${it.label}`}>↓</button>
+                <button type="button" className="btn small icon-btn" onClick={() => move(it.id, -1)} disabled={idx === 0} aria-label={tr(`Monter : ${it.label}`, `Move up: ${it.label}`)}>↑</button>
+                <button type="button" className="btn small icon-btn" onClick={() => move(it.id, 1)} disabled={idx === items.length - 1} aria-label={tr(`Descendre : ${it.label}`, `Move down: ${it.label}`)}>↓</button>
                 {onRemove && (
-                  <button type="button" className="btn small icon-btn danger" onClick={() => onRemove(it.id)} aria-label={`Retirer : ${it.label}`}>✕</button>
+                  <button type="button" className="btn small icon-btn danger" onClick={() => onRemove(it.id)} aria-label={tr(`Retirer : ${it.label}`, `Remove: ${it.label}`)}>✕</button>
                 )}
               </span>
             )}

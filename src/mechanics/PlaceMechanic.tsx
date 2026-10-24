@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { PlaceEx } from '../content/types.ts';
 import type { Verdict } from '../engine/validate.ts';
+import { tr } from '../i18n/lang.ts';
 
 interface Props {
   ex: PlaceEx;
@@ -21,7 +22,7 @@ export function PlaceMechanic({ ex, map, onMap, disabled, verdict, announce, onS
     onMap(next);
     const it = ex.items.find((i) => i.id === itemId);
     const z = ex.zones.find((zz) => zz.id === zoneId);
-    announce(zoneId ? `${it?.text} placé dans ${z?.label}.` : `${it?.text} retiré.`);
+    announce(zoneId ? tr(`${it?.text} placé dans ${z?.label}.`, `${it?.text} placed in ${z?.label}.`) : tr(`${it?.text} retiré.`, `${it?.text} removed.`));
   };
   const chip = (id: string) => {
     const it = ex.items.find((i) => i.id === id)!;
@@ -37,9 +38,9 @@ export function PlaceMechanic({ ex, map, onMap, disabled, verdict, announce, onS
         }}
       >
         {it.text}
-        <label className="sr-only" htmlFor={`pl-${id}`}>Placer {it.text} dans</label>
+        <label className="sr-only" htmlFor={`pl-${id}`}>{tr('Placer', 'Place')} {it.text} {tr('dans', 'in')}</label>
         <select id={`pl-${id}`} value={map[id] ?? ''} disabled={disabled} onChange={(e) => place(id, e.target.value)} style={{ minHeight: 28, padding: '0.1rem 0.3rem' }}>
-          <option value="">Non placé</option>
+          <option value="">{tr('Non placé', 'Not placed')}</option>
           {ex.zones.map((z) => (
             <option key={z.id} value={z.id}>{z.label}</option>
           ))}
@@ -50,11 +51,11 @@ export function PlaceMechanic({ ex, map, onMap, disabled, verdict, announce, onS
   const unplaced = ex.items.filter((i) => !map[i.id]);
   return (
     <div className="stack">
-      <p className="muted small">Glissez chaque élément vers une zone, ou choisissez la zone dans la liste « Placer dans » (alternative clavier et tactile).</p>
+      <p className="muted small">{tr('Glissez chaque élément vers une zone, ou choisissez la zone dans la liste « Placer dans » (alternative clavier et tactile).', 'Drag each item into a zone, or choose the zone from the “Place in” list (keyboard and touch alternative).')}</p>
       <div>
-        <h3>À placer</h3>
+        <h3>{tr('À placer', 'To place')}</h3>
         <div className="zone" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); const s = e.dataTransfer.getData('text/plain'); if (s) place(s, ''); }}>
-          {unplaced.length === 0 ? <span className="muted small">Tous les éléments sont placés.</span> : unplaced.map((i) => chip(i.id))}
+          {unplaced.length === 0 ? <span className="muted small">{tr('Tous les éléments sont placés.', 'All items are placed.')}</span> : unplaced.map((i) => chip(i.id))}
         </div>
       </div>
       <div className="grid cols-2">
@@ -66,7 +67,7 @@ export function PlaceMechanic({ ex, map, onMap, disabled, verdict, announce, onS
             onDragLeave={() => setOver(null)}
             onDrop={(e) => { e.preventDefault(); setOver(null); const s = e.dataTransfer.getData('text/plain'); if (s) place(s, z.id); }}
             role="group"
-            aria-label={`Zone : ${z.label}`}
+            aria-label={tr(`Zone : ${z.label}`, `Zone: ${z.label}`)}
           >
             <h4>{z.label}</h4>
             {z.description && <p className="muted small">{z.description}</p>}
@@ -75,7 +76,7 @@ export function PlaceMechanic({ ex, map, onMap, disabled, verdict, announce, onS
         ))}
       </div>
       <div className="row">
-        <button type="button" className="btn primary" onClick={onSubmit} disabled={disabled}>Valider le placement</button>
+        <button type="button" className="btn primary" onClick={onSubmit} disabled={disabled}>{tr('Valider le placement', 'Submit placement')}</button>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { KqlError } from './types.ts';
+import { tr } from '../i18n/lang.ts';
 
 export type TokKind = 'ident' | 'num' | 'str' | 'span' | 'punct' | 'eof';
 
@@ -119,10 +120,10 @@ export function lex(src: string): Token[] {
         }
       }
       if (!closed) {
-        throw new KqlError('syntax', 'Chaîne de caractères non terminée (guillemet fermant manquant).', {
+        throw new KqlError('syntax', tr('Chaîne de caractères non terminée (guillemet fermant manquant).', 'Unterminated string (closing quote missing).'), {
           line: start.line,
           col: start.col,
-          hint: 'Vérifiez que chaque guillemet ouvrant a son guillemet fermant.',
+          hint: tr('Vérifiez que chaque guillemet ouvrant a son guillemet fermant.', 'Check that each opening quote has a closing quote.'),
         });
       }
       toks.push({ t: 'str', v: out, pos: start.pos, end: i, line: start.line, col: start.col });
@@ -203,10 +204,10 @@ export function lex(src: string): Token[] {
       continue;
     }
 
-    throw new KqlError('syntax', `Caractère inattendu « ${c} ».`, {
+    throw new KqlError('syntax', tr(`Caractère inattendu « ${c} ».`, `Unexpected character “${c}”.`), {
       line,
       col,
-      hint: c === '`' ? 'Les accents graves ne sont pas utilisés en KQL. Utilisez des apostrophes ou des guillemets pour les chaînes.' : undefined,
+      hint: c === '`' ? tr('Les accents graves ne sont pas utilisés en KQL. Utilisez des apostrophes ou des guillemets pour les chaînes.', 'Backticks are not used in KQL. Use apostrophes or double quotes for strings.') : undefined,
     });
   }
   toks.push({ t: 'eof', v: '', pos: src.length, end: src.length, line, col });

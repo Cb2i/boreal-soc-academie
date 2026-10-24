@@ -12,8 +12,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "validate:content": "tsx scripts/validate-content.ts",
+    "validate:i18n": "tsx scripts/validate-i18n.ts",
     "coverage:matrix": "tsx scripts/coverage-matrix.ts",
-    "check": "npm run typecheck && npm run test && npm run validate:content && npm run build",
+    "check": "npm run typecheck && npm run test && npm run validate:content && npm run validate:i18n && npm run build",
     "e2e": "node e2e/smoke.cjs"
   },
   "dependencies": {

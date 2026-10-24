@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { highlight } from '../kql/index.ts';
+import { tr } from '../i18n/lang.ts';
 
 interface Props {
   value: string;
@@ -41,7 +42,7 @@ export function CodeEditor({ value, onChange, onRun, label, error, readOnly, min
         }}
       />
       <span id="editor-help" className="sr-only">
-        Ctrl plus Entrée exécute la requête. La touche Tab déplace le focus hors de l’éditeur.
+        {tr('Ctrl plus Entrée exécute la requête. La touche Tab déplace le focus hors de l’éditeur.', 'Ctrl plus Enter runs the query. The Tab key moves focus out of the editor.')}
       </span>
     </div>
   );

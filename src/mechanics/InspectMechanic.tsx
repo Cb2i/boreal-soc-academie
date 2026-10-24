@@ -1,6 +1,7 @@
 import type { InspectEx } from '../content/types.ts';
 import type { Verdict } from '../engine/validate.ts';
 import { HighlightedCode } from '../components/CodeBlock.tsx';
+import { tr } from '../i18n/lang.ts';
 
 interface Props {
   ex: InspectEx;
@@ -22,8 +23,8 @@ export function InspectMechanic({ ex, faulty, remedies, onChange, disabled, verd
   };
   return (
     <div className="stack">
-      <p className="muted small">Sélectionnez les lignes défectueuses (touche Espace ou Entrée sur la ligne). Si un correctif est demandé, choisissez-le dans la liste qui apparaît.</p>
-      <div className="card" style={{ padding: '0.6rem' }} role="group" aria-label="Lignes de la configuration">
+      <p className="muted small">{tr('Sélectionnez les lignes défectueuses (touche Espace ou Entrée sur la ligne). Si un correctif est demandé, choisissez-le dans la liste qui apparaît.', 'Select the faulty lines (Space or Enter on the line). If a fix is requested, choose it from the list that appears.')}</p>
+      <div className="card" style={{ padding: '0.6rem' }} role="group" aria-label={tr('Lignes de la configuration', 'Configuration lines')}>
         {ex.lines.map((l, i) => {
           const sel = faulty.includes(l.id);
           const fb = verdict?.itemFeedback?.[l.id];
@@ -40,13 +41,13 @@ export function InspectMechanic({ ex, faulty, remedies, onChange, disabled, verd
               >
                 <span className="no">{i + 1}</span>
                 <pre><HighlightedCode code={l.text} lang={ex.language} /></pre>
-                {sel && <span className="pill warn">suspecte</span>}
+                {sel && <span className="pill warn">{tr('suspecte', 'suspect')}</span>}
               </button>
               {sel && rem && rem.length > 0 && (
                 <div style={{ margin: '0.2rem 0 0.5rem 2.6rem' }}>
-                  <label htmlFor={`rem-${l.id}`} className="small">Correctif pour la ligne {i + 1} : </label>
+                  <label htmlFor={`rem-${l.id}`} className="small">{tr('Correctif pour la ligne', 'Fix for line')} {i + 1}{tr(' : ', ': ')}</label>
                   <select id={`rem-${l.id}`} value={remedies[l.id] ?? ''} disabled={disabled} onChange={(e) => onChange(faulty, { ...remedies, [l.id]: e.target.value })}>
-                    <option value="">Choisir un correctif…</option>
+                    <option value="">{tr('Choisir un correctif…', 'Choose a fix…')}</option>
                     {rem.map((r) => (
                       <option key={r.id} value={r.id}>{r.text}</option>
                     ))}
@@ -58,8 +59,8 @@ export function InspectMechanic({ ex, faulty, remedies, onChange, disabled, verd
         })}
       </div>
       <div className="row">
-        <button type="button" className="btn primary" onClick={onSubmit} disabled={disabled}>Valider l’inspection</button>
-        <span className="muted small">{faulty.length} ligne(s) sélectionnée(s)</span>
+        <button type="button" className="btn primary" onClick={onSubmit} disabled={disabled}>{tr('Valider l’inspection', 'Submit inspection')}</button>
+        <span className="muted small">{faulty.length} {tr('ligne(s) sélectionnée(s)', 'line(s) selected')}</span>
       </div>
     </div>
   );

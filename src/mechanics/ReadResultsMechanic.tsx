@@ -5,6 +5,7 @@ import { execute, VISIBLE_SEED } from '../engine/validate.ts';
 import { CodeBlock } from '../components/CodeBlock.tsx';
 import { ResultTable } from '../components/ResultTable.tsx';
 import { Markdown } from '../components/Markdown.tsx';
+import { tr } from '../i18n/lang.ts';
 
 interface Props {
   ex: ReadResultsEx;
@@ -22,12 +23,12 @@ export function ReadResultsMechanic({ ex, value, choices, onValue, onChoices, di
   return (
     <div className="stack">
       <CodeBlock code={ex.query} lang="kql" playgroundContext={ex.context} />
-      {run.ok ? <ResultTable table={run.table} caption="Résultat de la requête affichée" /> : <div className="verdict bad">{run.error.message}</div>}
-      <h3>Question</h3>
+      {run.ok ? <ResultTable table={run.table} caption={tr('Résultat de la requête affichée', 'Result of the displayed query')} /> : <div className="verdict bad">{run.error.message}</div>}
+      <h3>{tr('Question', 'Question')}</h3>
       <Markdown source={ex.question} />
       {ex.answerKind === 'choice' ? (
         <fieldset style={{ border: 0, padding: 0, margin: 0 }} className="stack">
-          <legend className="sr-only">Réponses possibles</legend>
+          <legend className="sr-only">{tr('Réponses possibles', 'Possible answers')}</legend>
           {(ex.choices ?? []).map((c) => {
             const on = choices.includes(c.id);
             const fb = verdict?.itemFeedback?.[c.id];
@@ -47,12 +48,12 @@ export function ReadResultsMechanic({ ex, value, choices, onValue, onChoices, di
         </fieldset>
       ) : (
         <div className="row">
-          <label htmlFor="rr-input" className="sr-only">Votre réponse</label>
-          <input id="rr-input" type="text" value={value} disabled={disabled} onChange={(e) => onValue(e.target.value)} placeholder="Votre réponse" onKeyDown={(e) => e.key === 'Enter' && onSubmit()} />
+          <label htmlFor="rr-input" className="sr-only">{tr('Votre réponse', 'Your answer')}</label>
+          <input id="rr-input" type="text" value={value} disabled={disabled} onChange={(e) => onValue(e.target.value)} placeholder={tr('Votre réponse', 'Your answer')} onKeyDown={(e) => e.key === 'Enter' && onSubmit()} />
         </div>
       )}
       <div className="row">
-        <button type="button" className="btn primary" onClick={onSubmit} disabled={disabled}>Valider ma réponse</button>
+        <button type="button" className="btn primary" onClick={onSubmit} disabled={disabled}>{tr('Valider ma réponse', 'Submit my answer')}</button>
       </div>
     </div>
   );

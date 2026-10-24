@@ -4,6 +4,7 @@ import { AGGREGATES, FUNCTIONS } from './functions.ts';
 import { parseQuery, SUPPORTED_OPERATORS } from './parser.ts';
 import { KqlError } from './types.ts';
 import type { RunOptions, RunResult } from './types.ts';
+import { tr } from '../i18n/lang.ts';
 
 export * from './types.ts';
 export { SUPPORTED_OPERATORS } from './parser.ts';
@@ -17,7 +18,7 @@ export const SUPPORTED_OPERATOR_LIST: string[] = [...SUPPORTED_OPERATORS];
 /** Exécute une requête KQL avec le moteur local. Ne lance jamais : retourne un résultat ok/erreur. */
 export function runQuery(source: string, opts: RunOptions): RunResult {
   try {
-    if (source.length > 20_000) throw new KqlError('limit', 'La requête est trop longue pour le moteur local (20 000 caractères maximum).');
+    if (source.length > 20_000) throw new KqlError('limit', tr('La requête est trop longue pour le moteur local (20 000 caractères maximum).', 'The query is too long for the local engine (20,000 characters maximum).'));
     const ast = parseQuery(source);
     const features = analyze(ast, Object.keys(opts.tables));
     const notes: string[] = [];
@@ -35,6 +36,6 @@ export function runQuery(source: string, opts: RunOptions): RunResult {
   } catch (e) {
     if (e instanceof KqlError) return { ok: false, error: e };
     const msg = e instanceof Error ? e.message : String(e);
-    return { ok: false, error: new KqlError('semantic', `Erreur interne du moteur local : ${msg}`) };
+    return { ok: false, error: new KqlError('semantic', tr(`Erreur interne du moteur local : ${msg}`, `Internal local engine error: ${msg}`)) };
   }
 }

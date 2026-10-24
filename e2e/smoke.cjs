@@ -194,6 +194,53 @@ const ok = (name, cond, extra = '') => {
     ok(`mobile 375 px : pas de défilement horizontal (#/${r})`, overflow <= 1, 'débordement ' + overflow);
   }
 
+  // 11b. Langue : bouton EN / FR (contenu anglais chargé à la demande, choix mémorisé)
+  const lctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const lp = await lctx.newPage();
+  const lerrors = [];
+  lp.on('pageerror', (e) => lerrors.push('pageerror: ' + e.message));
+  lp.on('console', (m) => { if (m.type() === 'error') lerrors.push('console: ' + m.text()); });
+  await lp.goto(base);
+  await lp.waitForSelector('h1');
+  const frH1 = await lp.textContent('h1');
+  ok('langue : français par défaut', (await lp.evaluate(() => document.documentElement.lang)) === 'fr-CA');
+  await lp.click('button.lang-btn');
+  await lp.waitForFunction(() => document.documentElement.lang === 'en');
+  const enH1 = await lp.textContent('h1');
+  ok('langue : le titre change en anglais', enH1 !== frH1, frH1 + ' / ' + enH1);
+  ok('langue : mémorisée dans localStorage', (await lp.evaluate(() => localStorage.getItem('boreal.lang'))) === 'en');
+  await lp.goto(base + '#/exercice/kql-001');
+  await lp.waitForSelector('h1');
+  const enTitle = await lp.textContent('h1');
+  ok('langue : titre d’exercice en anglais', !/[éèêàç]/.test(enTitle) && enTitle.length > 3, enTitle);
+  const enBody = await lp.textContent('body');
+  ok('langue : énoncé en anglais (pas de « Retournez »)', !/Retournez|Écrivez|Valider/.test(enBody), enBody.slice(0, 200));
+  await lp.reload();
+  await lp.waitForSelector('h1');
+  ok('langue : survit au rechargement', (await lp.evaluate(() => document.documentElement.lang)) === 'en' && (await lp.textContent('h1')) === enTitle);
+  await lp.goto(base + '#/exercice/kql-003');
+  await lp.evaluate(() => localStorage.setItem('boreal.progress.v1', JSON.stringify({ v: 1, settings: { unlockAll: true } })));
+  await lp.reload();
+  await lp.waitForSelector('textarea');
+  await lp.fill('textarea', 'SigninLogs | take 3');
+  await lp.click('button:has-text("Check my answer"), button:has-text("Submit"), button.primary');
+  await lp.waitForSelector('.verdict');
+  ok('langue : verdict KQL en anglais', !/attendu|Requête|incorrect/i.test(await lp.textContent('.verdict')), await lp.textContent('.verdict'));
+  await lp.click('button.lang-btn');
+  await lp.waitForFunction(() => document.documentElement.lang === 'fr-CA');
+  ok('langue : retour au français', /[éèêàç]|Accueil|Catalogue/.test(await lp.textContent('body')));
+  const lmob = await browser.newContext({ viewport: { width: 375, height: 740 }, hasTouch: true });
+  const lmp = await lmob.newPage();
+  await lmp.goto(base);
+  await lmp.evaluate(() => localStorage.setItem('boreal.lang', 'en'));
+  await lmp.reload();
+  await lmp.waitForSelector('h1');
+  const ovf = await lmp.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  ok('langue : mobile 375 px en anglais sans défilement horizontal', ovf <= 1, 'débordement ' + ovf);
+  ok('langue : aucune erreur de console', lerrors.length === 0, lerrors.join(' | '));
+  await lctx.close();
+  await lmob.close();
+
   // 12. Clavier : tabulation atteint un élément interactif et le lien d'évitement existe
   await page.goto(base);
   await page.waitForSelector('h1');

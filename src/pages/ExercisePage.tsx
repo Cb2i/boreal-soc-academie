@@ -22,6 +22,7 @@ import { ReadResultsMechanic } from '../mechanics/ReadResultsMechanic.tsx';
 import { ChoiceMechanic } from '../mechanics/ChoiceMechanic.tsx';
 import { InvestigateMechanic } from '../mechanics/InvestigateMechanic.tsx';
 import { shuffleSeeded } from '../engine/shuffle.ts';
+import { tr, useLang } from '../i18n/lang.ts';
 
 function initialAnswer(ex: Exercise, draft?: string): Answer {
   switch (ex.type) {
@@ -60,9 +61,9 @@ export function ExercisePage({ id, review }: { id: string; review?: boolean }) {
   if (!ex) {
     return (
       <div className="state" role="alert">
-        <h2>Exercice introuvable</h2>
-        <p>L’identifiant « {id} » n’existe pas dans cette version du contenu.</p>
-        <a className="btn" href={href('catalogue')}>Retour au catalogue</a>
+        <h2>{tr('Exercice introuvable', 'Exercise not found')}</h2>
+        <p>{tr(`L’identifiant « ${id} » n’existe pas dans cette version du contenu.`, `The identifier “${id}” does not exist in this version of the content.`)}</p>
+        <a className="btn" href={href('catalogue')}>{tr('Retour au catalogue', 'Back to the catalog')}</a>
       </div>
     );
   }
@@ -71,14 +72,14 @@ export function ExercisePage({ id, review }: { id: string; review?: boolean }) {
     const missing = ex.prerequisites.filter((x) => !p.done[x]);
     return (
       <div className="state" role="status">
-        <h2>Exercice verrouillé</h2>
+        <h2>{tr('Exercice verrouillé', 'Exercise locked')}</h2>
         <p>
           {missing.length > 0
-            ? `Réussissez d’abord : ${missing.map((m) => EXERCISE_BY_ID[m]?.title ?? m).join(', ')}.`
-            : `Réussissez au moins 60 % du niveau précédent du parcours « ${PATH_BY_ID[ex.path].short} » pour ouvrir ce niveau.`}
+            ? tr(`Réussissez d’abord : ${missing.map((m) => EXERCISE_BY_ID[m]?.title ?? m).join(', ')}.`, `Complete first: ${missing.map((m) => EXERCISE_BY_ID[m]?.title ?? m).join(', ')}.`)
+            : tr(`Réussissez au moins 60 % du niveau précédent du parcours « ${PATH_BY_ID[ex.path].short} » pour ouvrir ce niveau.`, `Complete at least 60% of the previous level of the “${PATH_BY_ID[ex.path].short}” path to open this level.`)}
         </p>
-        <p className="muted small">Vous pouvez aussi activer « Tout débloquer » dans le tableau de bord (mode exploration).</p>
-        <a className="btn" href={href('parcours', ex.path)}>Voir la carte du parcours</a>
+        <p className="muted small">{tr('Vous pouvez aussi activer « Tout débloquer » dans le tableau de bord (mode exploration).', 'You can also enable “Unlock everything” in the dashboard (exploration mode).')}</p>
+        <a className="btn" href={href('parcours', ex.path)}>{tr('Voir la carte du parcours', 'See the path map')}</a>
       </div>
     );
   }
@@ -87,6 +88,7 @@ export function ExercisePage({ id, review }: { id: string; review?: boolean }) {
 
 function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
   const p = useProgress();
+  const lang = useLang();
   const announce = useAnnounce();
   const [answer, setAnswer] = useState<Answer>(() => initialAnswer(ex, p.drafts[ex.id]));
   const [verdict, setVerdict] = useState<Verdict | null>(null);
@@ -111,7 +113,7 @@ function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
     try {
       v = validateExercise(ex, answer);
     } catch (e) {
-      v = { status: 'semantic', correct: false, xpFactor: 0, title: 'Erreur interne de validation', message: e instanceof Error ? e.message : String(e), details: [] };
+      v = { status: 'semantic', correct: false, xpFactor: 0, title: tr('Erreur interne de validation', 'Internal validation error'), message: e instanceof Error ? e.message : String(e), details: [] };
     }
     const n = attempts + 1;
     setAttempts(n);
@@ -140,56 +142,57 @@ function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
     const list = ALL_EXERCISES.filter((e) => e.path === ex.path);
     const i = list.findIndex((e) => e.id === ex.id);
     return list.slice(i + 1).find((e) => isUnlocked(e, ALL_EXERCISES, { ...p.done, [ex.id]: true }, p.settings.unlockAll)) ?? null;
-  }, [ex.id, ex.path, p.done, p.settings.unlockAll]);
+  }, [ex.id, ex.path, p.done, p.settings.unlockAll, lang]);
 
   const solutions = solutionOf(ex);
   const fav = p.favorites.includes(ex.id);
 
   return (
     <article>
-      <nav className="crumbs" aria-label="Fil d’Ariane">
-        <a href={href('catalogue')}>Catalogue</a> / <a href={href('parcours', ex.path)}>{PATH_BY_ID[ex.path].short}</a> / <span aria-current="page">{ex.title}</span>
+      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}>
+        <a href={href('catalogue')}>{tr('Catalogue', 'Catalog')}</a> / <a href={href('parcours', ex.path)}>{PATH_BY_ID[ex.path].short}</a> / <span aria-current="page">{ex.title}</span>
       </nav>
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <h1>{ex.title}</h1>
         <button type="button" className="btn" aria-pressed={fav} onClick={() => store.set((s) => toggleFavorite(s, ex.id))}>
-          {fav ? '★ Favori' : '☆ Ajouter aux favoris'}
+          {fav ? tr('★ Favori', '★ Favorite') : tr('☆ Ajouter aux favoris', '☆ Add to favorites')}
         </button>
       </div>
       <div className="row" style={{ marginBottom: '1rem' }}>
         <span className="pill">{PATH_BY_ID[ex.path].short}</span>
-        <span className="pill">Niveau {ex.level} : {LEVEL_NAMES[ex.level]}</span>
+        <span className="pill">{tr('Niveau', 'Level')} {ex.level} : {LEVEL_NAMES[ex.level]}</span>
         <span className="pill">{EX_TYPE_LABELS[ex.type]}</span>
-        {ex.kind === 'mission' && <span className="pill warn">Mission finale</span>}
-        {ex.kind === 'assessment' && <span className="pill info">Évaluation</span>}
-        {ex.preview && <span className="pill warn">Fonctionnalité en préversion</span>}
-        {alreadyDone && <span className="pill ok">Déjà réussi{review ? ' (mode révision)' : ''}</span>}
+        {ex.kind === 'mission' && <span className="pill warn">{tr('Mission finale', 'Final mission')}</span>}
+        {ex.kind === 'assessment' && <span className="pill info">{tr('Évaluation', 'Assessment')}</span>}
+        {ex.preview && <span className="pill warn">{tr('Fonctionnalité en préversion', 'Preview feature')}</span>}
+        {alreadyDone && <span className="pill ok">{tr('Déjà réussi', 'Already completed')}{review ? tr(' (mode révision)', ' (review mode)') : ''}</span>}
       </div>
 
       <div className="ex-layout">
-        <section className="stack" aria-label="Énoncé">
+        <section className="stack" aria-label={tr('Énoncé', 'Statement')}>
           <div className="card stack">
-            <div><strong>Objectif :</strong> {ex.objective}</div>
+            <div><strong>{tr('Objectif :', 'Objective:')}</strong> {ex.objective}</div>
             <Markdown source={ex.statement} context={'context' in ex ? ex.context : undefined} />
-            {ex.resources && <p className="muted small"><strong>Ressources :</strong> {ex.resources}</p>}
-            {lesson && <a href={href('cours', lesson.id)}>Relire le cours : {lesson.title}</a>}
+            {lang === 'en' && 'tables' in ex && ex.type !== 'read-results' && <p className="muted small">Some column names in the exercises are French identifiers (for example <code>Echecs</code>, <code>Connexions</code>). Use them exactly as written in the statement.</p>}
+            {ex.resources && <p className="muted small"><strong>{tr('Ressources :', 'Resources:')}</strong> {ex.resources}</p>}
+            {lesson && <a href={href('cours', lesson.id)}>{tr('Relire le cours', 'Re-read the lesson')} : {lesson.title}</a>}
           </div>
 
           <div className="card stack">
-            <h2 style={{ fontSize: '1.05rem' }}>Indices ({hintsShown}/{ex.hints.length})</h2>
+            <h2 style={{ fontSize: '1.05rem' }}>{tr('Indices', 'Hints')} ({hintsShown}/{ex.hints.length})</h2>
             {ex.hints.slice(0, hintsShown).map((h, i) => (
-              <div key={i} className="callout"><strong>Indice {i + 1}.</strong> <Markdown source={h} /></div>
+              <div key={i} className="callout"><strong>{tr('Indice', 'Hint')} {i + 1}.</strong> <Markdown source={h} /></div>
             ))}
             <div className="row">
-              <button type="button" className="btn" disabled={hintsShown >= ex.hints.length || finished} onClick={() => { setHintsShown((n) => n + 1); announce(`Indice ${hintsShown + 1} révélé.`); }}>
-                {hintsShown >= ex.hints.length ? 'Plus d’indices' : `Révéler l’indice ${hintsShown + 1}`}
+              <button type="button" className="btn" disabled={hintsShown >= ex.hints.length || finished} onClick={() => { setHintsShown((n) => n + 1); announce(tr(`Indice ${hintsShown + 1} révélé.`, `Hint ${hintsShown + 1} revealed.`)); }}>
+                {hintsShown >= ex.hints.length ? tr('Plus d’indices', 'No more hints') : tr(`Révéler l’indice ${hintsShown + 1}`, `Reveal hint ${hintsShown + 1}`)}
               </button>
-              <span className="muted small">Chaque indice réduit les XP de 10 % (maximum 40 %).</span>
+              <span className="muted small">{tr('Chaque indice réduit les XP de 10 % (maximum 40 %).', 'Each hint reduces XP by 10% (maximum 40%).')}</span>
             </div>
           </div>
         </section>
 
-        <section className="ex-side stack" aria-label="Espace de travail">
+        <section className="ex-side stack" aria-label={tr('Espace de travail', 'Workspace')}>
           {ex.type === 'kql-write' || ex.type === 'kql-fix' ? (
             <KqlMechanic ex={ex} query={(answer as { query: string }).query} onQuery={setQuery} disabled={disabled} onSubmit={submit} />
           ) : ex.type === 'kql-blocks' ? (
@@ -215,7 +218,7 @@ function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
               <div className={`verdict ${verdictClass(verdict)} anim-pop`} role="status">
                 <h3>{verdict.title}</h3>
                 <p><Inline text={verdict.message} /></p>
-                {verdict.hint && <p className="muted">Piste : {verdict.hint}</p>}
+                {verdict.hint && <p className="muted">{tr('Piste', 'Hint')} : {verdict.hint}</p>}
                 {verdict.details.length > 0 && (
                   <ul>
                     {verdict.details.map((d, i) => <li key={i}><Inline text={d} /></li>)}
@@ -227,7 +230,7 @@ function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
                   </ul>
                 )}
                 {verdict.correct && gained !== null && (
-                  <p><strong>+{gained} XP</strong>{revealed ? ' (solution consultée : aucun XP)' : ''}</p>
+                  <p><strong>+{gained} XP</strong>{revealed ? tr(' (solution consultée : aucun XP)', ' (solution viewed: no XP)') : ''}</p>
                 )}
               </div>
             )}
@@ -236,35 +239,35 @@ function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
           {!isInvestigate && (
             <div className="row">
               {attempts >= 1 && !showCorrection && (
-                <button type="button" className="btn ghost" onClick={() => { setRevealed(true); announce('Correction affichée. Aucun XP ne sera accordé pour cet exercice.'); }}>
-                  Voir la correction (sans XP)
+                <button type="button" className="btn ghost" onClick={() => { setRevealed(true); announce(tr('Correction affichée. Aucun XP ne sera accordé pour cet exercice.', 'Correction shown. No XP will be awarded for this exercise.')); }}>
+                  {tr('Voir la correction (sans XP)', 'Show the correction (no XP)')}
                 </button>
               )}
-              {finished && nextEx && <a className="btn primary" href={href('exercice', nextEx.id)}>Exercice suivant : {nextEx.title}</a>}
-              {finished && !nextEx && <a className="btn primary" href={href('parcours', ex.path)}>Retour à la carte du parcours</a>}
+              {finished && nextEx && <a className="btn primary" href={href('exercice', nextEx.id)}>{tr('Exercice suivant', 'Next exercise')} : {nextEx.title}</a>}
+              {finished && !nextEx && <a className="btn primary" href={href('parcours', ex.path)}>{tr('Retour à la carte du parcours', 'Back to the path map')}</a>}
             </div>
           )}
 
           {showCorrection && !isInvestigate && (
             <div className="card stack anim-pop">
-              <h2 style={{ fontSize: '1.15rem' }}>Correction expliquée</h2>
+              <h2 style={{ fontSize: '1.15rem' }}>{tr('Correction expliquée', 'Explained correction')}</h2>
               {solutions.map((s, i) => (
                 <div key={i}>
-                  {solutions.length > 1 && <p className="muted small">{i === 0 ? 'Solution de référence' : `Variante ${i}`}</p>}
+                  {solutions.length > 1 && <p className="muted small">{i === 0 ? tr('Solution de référence', 'Reference solution') : tr(`Variante ${i}`, `Variant ${i}`)}</p>}
                   <CodeBlock code={s} lang="kql" playgroundContext={'context' in ex ? ex.context : undefined} />
                 </div>
               ))}
               <Markdown source={ex.explanation} />
               {ex.commonMistakes.length > 0 && (
                 <>
-                  <h3>Erreurs fréquentes</h3>
+                  <h3>{tr('Erreurs fréquentes', 'Common mistakes')}</h3>
                   <ul>{ex.commonMistakes.map((m, i) => <li key={i}><Inline text={m} /></li>)}</ul>
                 </>
               )}
               <h3>Sources</h3>
               <ul className="small">
                 {ex.sources.map((s) => (
-                  <li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer">{s.title}</a> <span className="muted">(vérifié le {s.verified})</span></li>
+                  <li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer">{s.title}</a> <span className="muted">({tr('vérifié le', 'verified on')} {s.verified})</span></li>
                 ))}
               </ul>
             </div>
@@ -290,23 +293,23 @@ function ExerciseRunner({ ex, review }: { ex: Exercise; review?: boolean }) {
             const nextDone = done.includes(stepId) ? done : [...done, stepId];
             store.set((s) => ({ ...s, steps: { ...s.steps, [e.id]: nextDone } }));
             if (e.steps.every((st) => nextDone.includes(st.id))) {
-              const v: Verdict = { status: 'perfect', correct: true, xpFactor: 1, title: 'Enquête terminée', message: 'Toutes les étapes sont validées.', details: [] };
+              const v: Verdict = { status: 'perfect', correct: true, xpFactor: 1, title: tr('Enquête terminée', 'Investigation complete'), message: tr('Toutes les étapes sont validées.', 'All steps are validated.'), details: [] };
               const xp = computeXp(e, v, { hintsUsed: hintsShown, attempts: Math.max(1, p.failed[e.id] ?? 0) });
               setVerdict(v);
               setGained(xp);
               store.set((s) => recordSuccess(s, e.id, xp, 'perfect', hintsShown, 1));
-              announce('Enquête terminée.');
+              announce(tr('Enquête terminée.', 'Investigation complete.'));
             }
           }}
         />
         {finishedAll && (
           <div className="card stack anim-pop">
-            <h2 style={{ fontSize: '1.15rem' }}>Bilan de l’enquête</h2>
+            <h2 style={{ fontSize: '1.15rem' }}>{tr('Bilan de l’enquête', 'Investigation wrap-up')}</h2>
             <Markdown source={e.explanation} />
             <h3>Sources</h3>
             <ul className="small">
               {e.sources.map((s) => (
-                <li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer">{s.title}</a> <span className="muted">(vérifié le {s.verified})</span></li>
+                <li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer">{s.title}</a> <span className="muted">({tr('vérifié le', 'verified on')} {s.verified})</span></li>
               ))}
             </ul>
           </div>

@@ -1,37 +1,48 @@
 import { SUPPORTED_AGGREGATES, SUPPORTED_FUNCTIONS, SUPPORTED_OPERATOR_LIST } from '../kql/index.ts';
-import { DATASET_NOTE } from '../data/dataset.ts';
+import { datasetNote } from '../data/dataset.ts';
+import { tr } from '../i18n/lang.ts';
 
 export function LimitsPage() {
   return (
     <div className="stack prose" style={{ maxWidth: '80ch' }}>
-      <h1>Limites et honnêteté technique</h1>
-      <p>Boréal exécute le KQL avec un <strong>moteur local écrit pour l’apprentissage</strong>. Ce n’est pas Azure Data Explorer ni Log Analytics. Il couvre un sous-ensemble documenté ci-dessous. Une construction non prise en charge est refusée avec un message clair, jamais ignorée en silence.</p>
-      <h2>Ce que la plateforme ne fait pas</h2>
+      <h1>{tr('Limites et honnêteté technique', 'Limits and technical honesty')}</h1>
+      <p>
+        {tr(
+          <>Boube exécute le KQL avec un <strong>moteur local écrit pour l’apprentissage</strong>. Ce n’est pas Azure Data Explorer ni Log Analytics. Il couvre un sous-ensemble documenté ci-dessous. Une construction non prise en charge est refusée avec un message clair, jamais ignorée en silence.</>,
+          <>Boube runs KQL with a <strong>local engine written for learning</strong>. It is not Azure Data Explorer or Log Analytics. It covers the documented subset below. An unsupported construct is rejected with a clear message, never silently ignored.</>,
+        )}
+      </p>
+      <h2>{tr('Ce que la plateforme ne fait pas', 'What the platform does not do')}</h2>
       <ul>
-        <li>Aucune requête n’est envoyée à Azure : tout s’exécute dans votre navigateur, sans <code>eval</code>.</li>
-        <li>Les données sont fictives et générées de façon déterministe. Un second jeu de données, caché, sert à détecter les réponses codées en dur.</li>
-        <li>La division est réelle (pas de division entière). <code>percentile</code> utilise le rang le plus proche. <code>make_set</code> retourne un tableau trié. <code>dcount</code> est exact (réellement approximatif dans Kusto).</li>
-        <li>Non pris en charge : <code>parse</code>, <code>make-series</code>, <code>series_*</code>, <code>row_number</code>, <code>serialize</code>, <code>lookup</code>, <code>evaluate</code>, <code>mv-apply</code>, <code>scan</code>, <code>search</code>, <code>find</code>.</li>
-        <li>Le glisser-déposer a toujours une alternative par boutons ou listes (clavier et tactile).</li>
+        <li>{tr(<>Aucune requête n’est envoyée à Azure : tout s’exécute dans votre navigateur, sans <code>eval</code>.</>, <>No query is sent to Azure: everything runs in your browser, without <code>eval</code>.</>)}</li>
+        <li>{tr('Les données sont fictives et générées de façon déterministe. Un second jeu de données, caché, sert à détecter les réponses codées en dur.', 'The data is fictional and generated deterministically. A second, hidden dataset is used to detect hard-coded answers.')}</li>
+        <li>{tr(<>La division est réelle (pas de division entière). <code>percentile</code> utilise le rang le plus proche. <code>make_set</code> retourne un tableau trié. <code>dcount</code> est exact (réellement approximatif dans Kusto).</>, <>Division is real (no integer division). <code>percentile</code> uses the nearest rank. <code>make_set</code> returns a sorted array. <code>dcount</code> is exact (actually approximate in Kusto).</>)}</li>
+        <li>{tr(<>Non pris en charge : <code>parse</code>, <code>make-series</code>, <code>series_*</code>, <code>row_number</code>, <code>serialize</code>, <code>lookup</code>, <code>evaluate</code>, <code>mv-apply</code>, <code>scan</code>, <code>search</code>, <code>find</code>.</>, <>Not supported: <code>parse</code>, <code>make-series</code>, <code>series_*</code>, <code>row_number</code>, <code>serialize</code>, <code>lookup</code>, <code>evaluate</code>, <code>mv-apply</code>, <code>scan</code>, <code>search</code>, <code>find</code>.</>)}</li>
+        <li>{tr('Le glisser-déposer a toujours une alternative par boutons ou listes (clavier et tactile).', 'Drag and drop always has an alternative with buttons or lists (keyboard and touch).')}</li>
       </ul>
-      <h2>Deux contextes distincts</h2>
-      <p><strong>Sentinel / Log Analytics</strong> utilise <code>TimeGenerated</code> et des tables comme <code>SigninLogs</code>. <strong>Defender XDR (Advanced Hunting)</strong> utilise <code>Timestamp</code> et des tables comme <code>DeviceProcessEvents</code>. Interroger une table de l’autre contexte affiche une explication.</p>
-      <p>{DATASET_NOTE}</p>
-      <h2>Opérateurs pris en charge</h2>
+      <h2>{tr('Deux contextes distincts', 'Two distinct contexts')}</h2>
+      <p>
+        {tr(
+          <><strong>Sentinel / Log Analytics</strong> utilise <code>TimeGenerated</code> et des tables comme <code>SigninLogs</code>. <strong>Defender XDR (Advanced Hunting)</strong> utilise <code>Timestamp</code> et des tables comme <code>DeviceProcessEvents</code>. Interroger une table de l’autre contexte affiche une explication.</>,
+          <><strong>Sentinel / Log Analytics</strong> uses <code>TimeGenerated</code> and tables such as <code>SigninLogs</code>. <strong>Defender XDR (Advanced Hunting)</strong> uses <code>Timestamp</code> and tables such as <code>DeviceProcessEvents</code>. Querying a table from the other context shows an explanation.</>,
+        )}
+      </p>
+      <p>{datasetNote()}</p>
+      <h2>{tr('Opérateurs pris en charge', 'Supported operators')}</h2>
       <p>{SUPPORTED_OPERATOR_LIST.map((o) => <code key={o} style={{ marginRight: 6 }}>{o}</code>)}</p>
-      <h2>Agrégations</h2>
+      <h2>{tr('Agrégations', 'Aggregations')}</h2>
       <p>{SUPPORTED_AGGREGATES.map((o) => <code key={o} style={{ marginRight: 6 }}>{o}</code>)}</p>
-      <h2>Fonctions ({SUPPORTED_FUNCTIONS.length})</h2>
+      <h2>{tr('Fonctions', 'Functions')} ({SUPPORTED_FUNCTIONS.length})</h2>
       <p>{SUPPORTED_FUNCTIONS.map((o) => <code key={o} style={{ marginRight: 6 }}>{o}</code>)}</p>
-      <h2>Verdicts de correction</h2>
+      <h2>{tr('Verdicts de correction', 'Grading verdicts')}</h2>
       <ul>
-        <li><strong>Erreur de syntaxe</strong> : la requête ne peut pas être analysée.</li>
-        <li><strong>Exécutable mais résultat incorrect</strong> : la requête tourne, le résultat diffère de l’attendu (ou ne tient pas sur le second jeu de données).</li>
-        <li><strong>Résultat correct, raisonnement à revoir</strong> : par exemple un filtre exigé par l’énoncé est absent. XP réduits à 60 %.</li>
-        <li><strong>Correct mais optimisable</strong> : par exemple filtrer après <code>summarize</code>. XP à 90 %.</li>
+        <li>{tr(<><strong>Erreur de syntaxe</strong> : la requête ne peut pas être analysée.</>, <><strong>Syntax error</strong>: the query cannot be parsed.</>)}</li>
+        <li>{tr(<><strong>Exécutable mais résultat incorrect</strong> : la requête tourne, le résultat diffère de l’attendu (ou ne tient pas sur le second jeu de données).</>, <><strong>Runs but wrong result</strong>: the query runs, but the result differs from the expected one (or fails on the second dataset).</>)}</li>
+        <li>{tr(<><strong>Résultat correct, raisonnement à revoir</strong> : par exemple un filtre exigé par l’énoncé est absent. XP réduits à 60 %.</>, <><strong>Correct result, reasoning to review</strong>: for example a filter required by the statement is missing. XP reduced to 60%.</>)}</li>
+        <li>{tr(<><strong>Correct mais optimisable</strong> : par exemple filtrer après <code>summarize</code>. XP à 90 %.</>, <><strong>Correct but optimizable</strong>: for example filtering after <code>summarize</code>. XP at 90%.</>)}</li>
       </ul>
-      <h2>Vie privée</h2>
-      <p>La progression est enregistrée dans le stockage local de votre navigateur. Aucun compte, aucun suivi, aucun service tiers. Polices auto-hébergées.</p>
+      <h2>{tr('Vie privée', 'Privacy')}</h2>
+      <p>{tr('La progression est enregistrée dans le stockage local de votre navigateur. Aucun compte, aucun suivi, aucun service tiers. Polices auto-hébergées.', 'Progress is saved in your browser’s local storage. No account, no tracking, no third-party service. Self-hosted fonts.')}</p>
     </div>
   );
 }

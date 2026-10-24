@@ -1,5 +1,6 @@
 import type { ChoiceEx } from '../content/types.ts';
 import type { Verdict } from '../engine/validate.ts';
+import { tr } from '../i18n/lang.ts';
 
 interface Props {
   ex: ChoiceEx;
@@ -14,7 +15,7 @@ export function ChoiceMechanic({ ex, ids, onIds, disabled, verdict, onSubmit }: 
   return (
     <div className="stack">
       <fieldset style={{ border: 0, padding: 0, margin: 0 }} className="stack">
-        <legend className="sr-only">{ex.multi ? 'Plusieurs réponses possibles' : 'Une seule réponse'}</legend>
+        <legend className="sr-only">{ex.multi ? tr('Plusieurs réponses possibles', 'Several answers possible') : tr('Une seule réponse', 'Single answer')}</legend>
         {ex.choices.map((c) => {
           const on = ids.includes(c.id);
           const fb = verdict?.itemFeedback?.[c.id];
@@ -27,8 +28,8 @@ export function ChoiceMechanic({ ex, ids, onIds, disabled, verdict, onSubmit }: 
         })}
       </fieldset>
       <div className="row">
-        <button type="button" className="btn primary" onClick={onSubmit} disabled={disabled || ids.length === 0}>Valider</button>
-        {ex.multi && <span className="muted small">Plusieurs réponses sont possibles.</span>}
+        <button type="button" className="btn primary" onClick={onSubmit} disabled={disabled || ids.length === 0}>{tr('Valider', 'Submit')}</button>
+        {ex.multi && <span className="muted small">{tr('Plusieurs réponses sont possibles.', 'Several answers are possible.')}</span>}
       </div>
     </div>
   );

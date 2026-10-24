@@ -4,6 +4,7 @@ import { KqlError, Timespan } from './types.ts';
 import type { Dyn, Row, Table, Value } from './types.ts';
 import { escapeRegex, isDate, isObj, isSpan, looseEquals, compareValues, suggest, toNumber, toStr } from './values.ts';
 import type { Ty } from './types.ts';
+import { tr } from '../i18n/lang.ts';
 
 export interface Ctx {
   now: Date;
@@ -29,8 +30,8 @@ const semantic = (msg: string, e?: { pos: { line: number; col: number } }, hint?
 export function tick(ctx: Ctx, n = 1): void {
   ctx.budget.left -= n;
   if (ctx.budget.left < 0) {
-    throw new KqlError('limit', 'Limite de calcul du moteur local atteinte : la requête est trop coûteuse pour s’exécuter dans le navigateur.', {
-      hint: 'Ajoutez un filtre where plus tôt dans la requête, ou évitez les jointures produisant un très grand nombre de lignes.',
+    throw new KqlError('limit', tr('Limite de calcul du moteur local atteinte : la requête est trop coûteuse pour s’exécuter dans le navigateur.', 'Local engine compute limit reached: the query is too expensive to run in the browser.'), {
+      hint: tr('Ajoutez un filtre where plus tôt dans la requête, ou évitez les jointures produisant un très grand nombre de lignes.', 'Add a where filter earlier in the query, or avoid joins that produce a very large number of rows.'),
     });
   }
 }
@@ -55,7 +56,7 @@ function lookupScalarLet(name: string, env: Env): { found: boolean; value: Value
   if (!def || def.params !== null) return { found: false, value: null };
   const b = def.body;
   if (b.ops.length === 0 && b.source.kind === 'expr') {
-    if (env.ctx.depth > 30) throw new KqlError('limit', 'Récursion trop profonde dans les variables let.');
+    if (env.ctx.depth > 30) throw new KqlError('limit', tr('Récursion trop profonde dans les variables let.', 'Recursion too deep in let variables.'));
     const ctx = { ...env.ctx, depth: env.ctx.depth + 1 };
     return { found: true, value: evalExpr(b.source.expr, { ctx, row: null, params: null }) };
   }
@@ -70,12 +71,12 @@ export function unknownNameError(name: string, cols: string[], lets: string[], a
   const cand = suggest(name, [...cols, ...lets]);
   let hint = '';
   if (cand && cand !== name) {
-    hint = cand.toLowerCase() === name.toLowerCase() ? `Les noms de colonnes sont sensibles à la casse : vouliez-vous dire « ${cand} » ?` : `Vouliez-vous dire « ${cand} » ?`;
+    hint = cand.toLowerCase() === name.toLowerCase() ? tr(`Les noms de colonnes sont sensibles à la casse : vouliez-vous dire « ${cand} » ?`, `Column names are case-sensitive: did you mean “${cand}”?`) : tr(`Vouliez-vous dire « ${cand} » ?`, `Did you mean “${cand}”?`);
   } else {
-    hint = `Si « ${name} » est une valeur texte, mettez-la entre guillemets (par exemple "${name}").`;
+    hint = tr(`Si « ${name} » est une valeur texte, mettez-la entre guillemets (par exemple "${name}").`, `If “${name}” is a text value, put it in quotes (for example "${name}").`);
   }
-  const list = cols.length ? ` Colonnes disponibles : ${cols.slice(0, 24).join(', ')}${cols.length > 24 ? ', …' : ''}.` : '';
-  return new KqlError('semantic', `Nom « ${name} » introuvable.${list}`, { line: at?.pos.line, col: at?.pos.col, hint });
+  const list = cols.length ? tr(` Colonnes disponibles : ${cols.slice(0, 24).join(', ')}${cols.length > 24 ? ', …' : ''}.`, ` Available columns: ${cols.slice(0, 24).join(', ')}${cols.length > 24 ? ', …' : ''}.`) : '';
+  return new KqlError('semantic', tr(`Nom « ${name} » introuvable.${list}`, `Name “${name}” not found.${list}`), { line: at?.pos.line, col: at?.pos.col, hint });
 }
 
 /** Un identifiant qui désigne une table ou un let tabulaire (et non une colonne ni un scalaire). */
@@ -109,7 +110,7 @@ export function evalExpr(e: Expr, env: Env): Value {
       const r = lookupScalarLet(e.name, env);
       if (r.found) return r.value;
       if (env.ctx.tables[e.name] || (env.ctx.lets.get(e.name)?.params === null)) {
-        throw semantic(`« ${e.name} » est une table : elle ne peut pas être utilisée comme valeur scalaire ici.`, e, 'Utilisez toscalar(...) pour obtenir une valeur ou placez la table au début de la requête.');
+        throw semantic(tr(`« ${e.name} » est une table : elle ne peut pas être utilisée comme valeur scalaire ici.`, `“${e.name}” is a table: it cannot be used as a scalar value here.`), e, tr('Utilisez toscalar(...) pour obtenir une valeur ou placez la table au début de la requête.', 'Use toscalar(...) to get a value or put the table at the start of the query.'));
       }
       throw unknownNameError(e.name, columnsOf(env), [...env.ctx.lets.keys()], e);
     }
@@ -117,7 +118,7 @@ export function evalExpr(e: Expr, env: Env): Value {
       const o = evalExpr(e.obj, env);
       if (o === null) return null;
       if (typeof o === 'string') {
-        throw semantic(`Impossible d’accéder au champ « ${e.name} » : la valeur est une chaîne (string), pas un objet dynamic.`, e, 'Convertissez d’abord avec parse_json() ou todynamic() (ex. parse_json(Colonne).' + e.name + ').');
+        throw semantic(tr(`Impossible d’accéder au champ « ${e.name} » : la valeur est une chaîne (string), pas un objet dynamic.`, `Cannot access the field “${e.name}”: the value is a string, not a dynamic object.`), e, tr('Convertissez d’abord avec parse_json() ou todynamic() (ex. parse_json(Colonne).' + e.name + ').', 'Convert first with parse_json() or todynamic() (e.g. parse_json(Column).' + e.name + ').'));
       }
       if (isObj(o)) return Object.prototype.hasOwnProperty.call(o, e.name) ? (o[e.name] as Value) : null;
       return null;
@@ -134,22 +135,22 @@ export function evalExpr(e: Expr, env: Env): Value {
       }
       if (isObj(o)) return Object.prototype.hasOwnProperty.call(o, toStr(i)) ? (o[toStr(i)] as Value) : null;
       if (typeof o === 'string') {
-        throw semantic('Indexation impossible sur une chaîne.', e, 'Utilisez parse_json() ou split() pour obtenir un tableau.');
+        throw semantic(tr('Indexation impossible sur une chaîne.', 'Indexing is not possible on a string.'), e, tr('Utilisez parse_json() ou split() pour obtenir un tableau.', 'Use parse_json() or split() to get an array.'));
       }
       return null;
     }
     case 'star':
-      throw semantic('Le symbole * n’est pas valide ici.', e);
+      throw semantic(tr('Le symbole * n’est pas valide ici.', 'The * symbol is not valid here.'), e);
     case 'unary': {
       const v = evalExpr(e.e, env);
       if (v === null) return null;
       if (e.op === '+') return v;
       if (typeof v === 'number') return -v;
       if (isSpan(v)) return new Timespan(-v.ms);
-      throw semantic('L’opérateur unaire « - » attend un nombre ou une durée.', e);
+      throw semantic(tr('L’opérateur unaire « - » attend un nombre ou une durée.', 'The unary “-” operator expects a number or a duration.'), e);
     }
     case 'subquery':
-      throw semantic('Une sous-requête tabulaire ne peut pas être utilisée comme valeur scalaire.', e, 'Utilisez toscalar(...) ou « in (...) ».');
+      throw semantic(tr('Une sous-requête tabulaire ne peut pas être utilisée comme valeur scalaire.', 'A tabular subquery cannot be used as a scalar value.'), e, tr('Utilisez toscalar(...) ou « in (...) ».', 'Use toscalar(...) or “in (...)”.'));
     case 'in': {
       const l = evalExpr(e.l, env);
       const vals: Value[] = [];
@@ -157,7 +158,7 @@ export function evalExpr(e: Expr, env: Env): Value {
         const tab = it.k === 'subquery' ? it.q : isTabularName(it, env) ? { source: { kind: 'expr' as const, expr: it }, ops: [] } : null;
         if (tab) {
           const t = env.ctx.runPipeline(tab, env.params);
-          if (t.columns.length !== 1) throw semantic('La sous-requête de « in » doit retourner une seule colonne.', it, 'Ajoutez « | project Colonne ».');
+          if (t.columns.length !== 1) throw semantic(tr('La sous-requête de « in » doit retourner une seule colonne.', 'The “in” subquery must return a single column.'), it, tr('Ajoutez « | project Colonne ».', 'Add “| project Column”.'));
           for (const r of t.rows) vals.push(r[t.columns[0]]);
         } else {
           const v = evalExpr(it, env);
@@ -283,17 +284,17 @@ function stringOp(op: string, a: Value, b: Value, at: Expr): boolean {
       break;
     case 'matches regex': {
       if (t.length > 300 || /\((?:[^()\\]|\\.)*[+*](?:[^()\\]|\\.)*\)[+*{]/.test(t)) {
-        throw new KqlError('limit', 'Expression régulière trop longue ou risquée pour le moteur local.', { line: at.pos.line, col: at.pos.col });
+        throw new KqlError('limit', tr('Expression régulière trop longue ou risquée pour le moteur local.', 'Regular expression too long or risky for the local engine.'), { line: at.pos.line, col: at.pos.col });
       }
       try {
         r = new RegExp(t).test(s);
       } catch {
-        throw semantic(`Expression régulière invalide : « ${t} ».`, at);
+        throw semantic(tr(`Expression régulière invalide : « ${t} ».`, `Invalid regular expression: “${t}”.`), at);
       }
       break;
     }
     default:
-      throw semantic(`Opérateur inconnu : ${op}`, at);
+      throw semantic(tr(`Opérateur inconnu : ${op}`, `Unknown operator: ${op}`), at);
   }
   return neg ? !r : r;
 }
@@ -357,7 +358,7 @@ function compareEq(a: Value, b: Value): boolean {
 function arithmetic(op: string, a: Value, b: Value, e: Expr): Value {
   if (a === null || b === null) return null;
   if (typeof a === 'string' && typeof b === 'string' && op === '+') {
-    throw semantic('L’opérateur « + » ne concatène pas des chaînes en KQL.', e, 'Utilisez strcat(a, b) pour concaténer du texte.');
+    throw semantic(tr('L’opérateur « + » ne concatène pas des chaînes en KQL.', 'The “+” operator does not concatenate strings in KQL.'), e, tr('Utilisez strcat(a, b) pour concaténer du texte.', 'Use strcat(a, b) to concatenate text.'));
   }
   if (isDate(a) || isDate(b) || isSpan(a) || isSpan(b)) {
     if (isDate(a) && isDate(b) && op === '-') return new Timespan(a.getTime() - b.getTime());
@@ -376,12 +377,12 @@ function arithmetic(op: string, a: Value, b: Value, e: Expr): Value {
       if (op === '/') return b === 0 ? null : new Timespan(a.ms / b);
     }
     if (typeof a === 'number' && isSpan(b) && op === '*') return new Timespan(a * b.ms);
-    throw semantic(`Opération « ${op} » non valide entre ces types de valeurs (datetime/timespan).`, e);
+    throw semantic(tr(`Opération « ${op} » non valide entre ces types de valeurs (datetime/timespan).`, `Operation “${op}” is not valid between these value types (datetime/timespan).`), e);
   }
   const x = toNumber(a);
   const y = toNumber(b);
   if (x === null || y === null) {
-    throw semantic(`L’opérateur « ${op} » attend des nombres.`, e, 'Convertissez avec toint(), tolong() ou todouble().');
+    throw semantic(tr(`L’opérateur « ${op} » attend des nombres.`, `The “${op}” operator expects numbers.`), e, tr('Convertissez avec toint(), tolong() ou todouble().', 'Convert with toint(), tolong() or todouble().'));
   }
   switch (op) {
     case '+':
@@ -407,7 +408,7 @@ function evalCall(e: Extract<Expr, { k: 'call' }>, env: Env): Value {
         return toBoolValue(evalExpr(args[0], env)) === true ? evalExpr(args[1], env) : evalExpr(args[2], env);
       }
       case 'case': {
-        if (args.length < 3 || args.length % 2 === 0) throw semantic('case() attend des paires (condition, valeur) suivies d’une valeur par défaut.', e);
+        if (args.length < 3 || args.length % 2 === 0) throw semantic(tr('case() attend des paires (condition, valeur) suivies d’une valeur par défaut.', 'case() expects (condition, value) pairs followed by a default value.'), e);
         for (let i = 0; i + 1 < args.length; i += 2) {
           if (toBoolValue(evalExpr(args[i], env)) === true) return evalExpr(args[i + 1], env);
         }
@@ -429,14 +430,14 @@ function evalCall(e: Extract<Expr, { k: 'call' }>, env: Env): Value {
         return t.rows[0][t.columns[0]];
       }
       default:
-        throw semantic('materialize() ne peut être utilisé que comme source tabulaire (ex. let t = materialize(Table | ...)).', e);
+        throw semantic(tr('materialize() ne peut être utilisé que comme source tabulaire (ex. let t = materialize(Table | ...)).', 'materialize() can only be used as a tabular source (e.g. let t = materialize(Table | ...)).'), e);
     }
   }
 
   const def = env.ctx.lets.get(name);
   if (def && def.params !== null) {
     if (args.length !== def.params.length) {
-      throw semantic(`La fonction « ${name} » attend ${def.params.length} argument(s), ${args.length} fourni(s).`, e);
+      throw semantic(tr(`La fonction « ${name} » attend ${def.params.length} argument(s), ${args.length} fourni(s).`, `The function “${name}” expects ${def.params.length} argument(s), ${args.length} provided.`), e);
     }
     const params: Record<string, Value> = {};
     def.params.forEach((p, i) => {
@@ -444,34 +445,34 @@ function evalCall(e: Extract<Expr, { k: 'call' }>, env: Env): Value {
     });
     const b = def.body;
     if (b.ops.length === 0 && b.source.kind === 'expr') {
-      if (env.ctx.depth > 30) throw new KqlError('limit', 'Récursion trop profonde dans les fonctions let.');
+      if (env.ctx.depth > 30) throw new KqlError('limit', tr('Récursion trop profonde dans les fonctions let.', 'Recursion too deep in let functions.'));
       const ctx = { ...env.ctx, depth: env.ctx.depth + 1 };
       return evalExpr(b.source.expr, { ctx, row: null, params });
     }
-    throw semantic(`La fonction « ${name} » retourne une table : utilisez-la au début d’une requête, pas comme valeur scalaire.`, e);
+    throw semantic(tr(`La fonction « ${name} » retourne une table : utilisez-la au début d’une requête, pas comme valeur scalaire.`, `The function “${name}” returns a table: use it at the start of a query, not as a scalar value.`), e);
   }
 
   if (AGGREGATES.has(name) && !FUNCTIONS[name]) {
-    throw semantic(`${name}() est une fonction d’agrégation : elle n’est utilisable que dans summarize.`, e, `Exemple : | summarize ${name}(...) by Colonne`);
+    throw semantic(tr(`${name}() est une fonction d’agrégation : elle n’est utilisable que dans summarize.`, `${name}() is an aggregation function: it can only be used in summarize.`), e, tr(`Exemple : | summarize ${name}(...) by Colonne`, `Example: | summarize ${name}(...) by Column`));
   }
   const fd = FUNCTIONS[name];
   if (!fd) {
     if (UNSUPPORTED_FUNCTIONS.has(name)) {
-      throw new KqlError('unsupported', `La fonction « ${name}() » est valide en KQL mais n’est pas prise en charge par le moteur local.`, {
+      throw new KqlError('unsupported', tr(`La fonction « ${name}() » est valide en KQL mais n’est pas prise en charge par le moteur local.`, `The function “${name}()” is valid in KQL but is not supported by the local engine.`), {
         line: e.pos.line,
         col: e.pos.col,
-        hint: 'Consultez la page « Limites et opérateurs pris en charge ».',
+        hint: tr('Consultez la page « Limites et opérateurs pris en charge ».', 'See the “Limits and supported operators” page.'),
       });
     }
     const cand = suggest(name, [...Object.keys(FUNCTIONS), ...env.ctx.lets.keys()]);
-    throw semantic(`Fonction « ${name}() » inconnue.`, e, cand ? `Vouliez-vous dire « ${cand}() » ? Les noms de fonctions sont sensibles à la casse.` : undefined);
+    throw semantic(tr(`Fonction « ${name}() » inconnue.`, `Unknown function “${name}()”.`), e, cand ? tr(`Vouliez-vous dire « ${cand}() » ? Les noms de fonctions sont sensibles à la casse.`, `Did you mean “${cand}()”? Function names are case-sensitive.`) : undefined);
   }
   if (args.length < fd.min || (fd.max !== undefined && args.length > fd.max)) {
-    const exp = fd.max === undefined ? `au moins ${fd.min}` : fd.min === fd.max ? `${fd.min}` : `entre ${fd.min} et ${fd.max}`;
-    throw semantic(`${name}() attend ${exp} argument(s), ${args.length} fourni(s).`, e);
+    const exp = fd.max === undefined ? tr(`au moins ${fd.min}`, `at least ${fd.min}`) : fd.min === fd.max ? `${fd.min}` : tr(`entre ${fd.min} et ${fd.max}`, `between ${fd.min} and ${fd.max}`);
+    throw semantic(tr(`${name}() attend ${exp} argument(s), ${args.length} fourni(s).`, `${name}() expects ${exp} argument(s), ${args.length} provided.`), e);
   }
   const vals = args.map((a) => {
-    if (a.k === 'star') throw semantic(`Le symbole * n’est pas valide comme argument de ${name}().`, a);
+    if (a.k === 'star') throw semantic(tr(`Le symbole * n’est pas valide comme argument de ${name}().`, `The * symbol is not valid as an argument of ${name}().`), a);
     return evalExpr(a, env);
   });
   return fd.fn(vals, { now: env.ctx.now });

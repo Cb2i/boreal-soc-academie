@@ -1,4 +1,4 @@
-# Boréal SOC Académie
+# Boube SOC Académie
 
 Plateforme d'apprentissage interactive sur Azure, Microsoft Sentinel et KQL. Progression par niveaux, exercices variés, moteur KQL local sur données fictives, enquêtes SOC et labos Azure optionnels. Application statique : aucun compte, aucun serveur, aucun service payant.
 
@@ -28,6 +28,15 @@ Les chiffres exacts sont générés par `npm run coverage:matrix`.
 Accueil, catalogue filtrable, carte de progression, pages de cours, espace d'exercice avec éditeur, tableau de bord, favoris, reprise de session, indices progressifs, corrections expliquées, XP et badges liés aux compétences, mode révision (répétition espacée de 1, 3, 7, 14 et 30 jours), mode chronométré optionnel, thèmes sombre et clair, navigation au clavier, respect de `prefers-reduced-motion`. Chaque glisser-déposer a une alternative accessible (boutons et listes déroulantes).
 
 Déblocage : le niveau L s'ouvre quand au moins 60 % du niveau L-1 du même parcours est réussi, en plus des prérequis propres à chaque exercice. Le réglage « tout débloquer » le contourne.
+
+## Langues (français et anglais)
+
+Le bouton **EN / FR** de l'en-tête bascule toute l'interface et tout le contenu (parcours, cours, labs, exercices, indices, explications, messages du moteur KQL). Le choix est mémorisé dans le navigateur (clé `boreal.lang`) et l'attribut `lang` de la page suit la langue. Le français reste la langue de référence. Les traductions anglaises sont des « overlays » chargés à la demande (chunk séparé) : `src/content/en/`. Les blocs de code, les identifiants et les alias de colonnes des exercices restent identiques dans les deux langues, pour que les solutions de référence soient validées de la même façon.
+
+Ajouter ou modifier une traduction :
+
+1. Éditer le fichier concerné dans `src/content/en/` (une entrée par identifiant, mêmes `id` internes que le français).
+2. Lancer `npm run validate:i18n`. Le script vérifie que chaque champ traduisible existe, que les tableaux ont la même longueur, que le code est identique au français, qu'aucun mot français ne subsiste et qu'aucun tiret cadratin n'est utilisé.
 
 ## Démarrage
 
@@ -94,7 +103,8 @@ Publier le contenu de `dist/` (Netlify, Cloudflare Pages, Azure Static Web Apps,
 
 ## Tests
 
-- `npm test` : tests unitaires (moteur KQL, jeu de données, validation, progression, contenu).
+- `npm test` : tests unitaires (moteur KQL, jeu de données, validation, progression, contenu, bascule de langue).
+- `npm run validate:i18n` : complétude et cohérence des traductions anglaises.
 - `npm run e2e` : scénario Playwright (navigation, verrouillage, KQL incorrect puis correct, persistance, glisser-déposer natif et alternatives, enquête, thèmes, mobile 375 px). Playwright n'est pas une dépendance du projet : l'installer globalement (`npm i -g playwright`, puis `npx playwright install chromium`) et construire d'abord avec `npm run build`. Pour le sous-chemin : `VITE_BASE=/soc-academy/ npx vite build --outDir dist-sub` puis `E2E_SUBPATH=1 npm run e2e`.
 
 ## Sources et vérification

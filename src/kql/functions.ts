@@ -1,6 +1,7 @@
 import { KqlError, Timespan } from './types.ts';
 import type { Dyn, Ty, Value } from './types.ts';
 import { escapeRegex, isDate, isObj, isSpan, stableJson, toNumber, toStr } from './values.ts';
+import { tr } from '../i18n/lang.ts';
 
 export interface FnCtx {
   now: Date;
@@ -124,11 +125,11 @@ function str(v: Value): string {
   return toStr(v);
 }
 
-function num(v: Value, name: string, what = 'nombre'): number | null {
+function num(v: Value, name: string, what = tr('nombre', 'number')): number | null {
   if (v === null) return null;
   const n = toNumber(v);
   if (n === null) {
-    throw new KqlError('semantic', `${name}() attend un ${what}, reçu « ${toStr(v)} ».`);
+    throw new KqlError('semantic', tr(`${name}() attend un ${what}, reçu « ${toStr(v)} ».`, `${name}() expects a ${what}, received “${toStr(v)}”.`));
   }
   return n;
 }
@@ -149,7 +150,7 @@ function toDateValue(v: Value): Date | null {
 function needDate(v: Value, name: string): Date | null {
   if (v === null) return null;
   const d = toDateValue(v);
-  if (!d) throw new KqlError('semantic', `${name}() attend un datetime, reçu « ${toStr(v)} ».`);
+  if (!d) throw new KqlError('semantic', tr(`${name}() attend un datetime, reçu « ${toStr(v)} ».`, `${name}() expects a datetime, received “${toStr(v)}”.`));
   return d;
 }
 
@@ -158,17 +159,17 @@ function binNum(x: number, size: number): number {
 }
 
 function safeRegex(pattern: string, flags = ''): RegExp {
-  if (pattern.length > 300) throw new KqlError('limit', 'Expression régulière trop longue pour le moteur local.');
+  if (pattern.length > 300) throw new KqlError('limit', tr('Expression régulière trop longue pour le moteur local.', 'Regular expression too long for the local engine.'));
   // Heuristique simple contre le « catastrophic backtracking » : quantificateurs imbriqués.
   if (/\((?:[^()\\]|\\.)*[+*](?:[^()\\]|\\.)*\)[+*{]/.test(pattern)) {
-    throw new KqlError('limit', 'Expression régulière jugée risquée (quantificateurs imbriqués) : le moteur local la refuse.', {
-      hint: 'KQL utilise le moteur RE2 (sans retour arrière). Simplifiez le motif.',
+    throw new KqlError('limit', tr('Expression régulière jugée risquée (quantificateurs imbriqués) : le moteur local la refuse.', 'Regular expression judged risky (nested quantifiers): the local engine refuses it.'), {
+      hint: tr('KQL utilise le moteur RE2 (sans retour arrière). Simplifiez le motif.', 'KQL uses the RE2 engine (no backtracking). Simplify the pattern.'),
     });
   }
   try {
     return new RegExp(pattern, flags);
   } catch {
-    throw new KqlError('semantic', `Expression régulière invalide : « ${pattern} ».`);
+    throw new KqlError('semantic', tr(`Expression régulière invalide : « ${pattern} ».`, `Invalid regular expression: “${pattern}”.`));
   }
 }
 
@@ -201,7 +202,7 @@ function dateDiff(part: string, a: Date, b: Date): number {
   if (part === 'week') return Math.round((startOfWeek(a).getTime() - startOfWeek(b).getTime()) / (7 * DAY));
   if (part === 'millisecond') return a.getTime() - b.getTime();
   const ms = partMs(part);
-  if (ms === null) throw new KqlError('semantic', `Partie de date inconnue : « ${part} ». Valeurs : second, minute, hour, day, week, month, year.`);
+  if (ms === null) throw new KqlError('semantic', tr(`Partie de date inconnue : « ${part} ». Valeurs : second, minute, hour, day, week, month, year.`, `Unknown date part: “${part}”. Values: second, minute, hour, day, week, month, year.`));
   return Math.floor(a.getTime() / ms) - Math.floor(b.getTime() / ms);
 }
 
@@ -213,7 +214,7 @@ function dateAdd(part: string, n: number, d: Date): Date {
   else if (part === 'year') r.setUTCFullYear(r.getUTCFullYear() + n);
   else if (part === 'quarter') r.setUTCMonth(r.getUTCMonth() + 3 * n);
   else if (part === 'millisecond') return mkDate(d.getTime() + n);
-  else throw new KqlError('semantic', `Partie de date inconnue : « ${part} ».`);
+  else throw new KqlError('semantic', tr(`Partie de date inconnue : « ${part} ».`, `Unknown date part: “${part}”.`));
   return r;
 }
 
@@ -432,7 +433,7 @@ export const FUNCTIONS: Record<string, FnDef> = {
     min: 1,
     max: 1,
     fn: ([t], ctx) => {
-      if (!isSpan(t)) throw new KqlError('semantic', 'ago() attend une durée (ex. ago(1d), ago(30m)).');
+      if (!isSpan(t)) throw new KqlError('semantic', tr('ago() attend une durée (ex. ago(1d), ago(30m)).', 'ago() expects a duration (e.g. ago(1d), ago(30m)).'));
       return mkDate(ctx.now.getTime() - t.ms);
     },
   },
@@ -501,17 +502,17 @@ export const FUNCTIONS: Record<string, FnDef> = {
       if (x === null || size === null) return null;
       if (isDate(x)) {
         const s = isSpan(size) ? size.ms : toNumber(size);
-        if (!s || s <= 0) throw new KqlError('semantic', 'bin() : la taille de regroupement doit être positive.');
+        if (!s || s <= 0) throw new KqlError('semantic', tr('bin() : la taille de regroupement doit être positive.', 'bin(): the bin size must be positive.'));
         return mkDate(binNum(x.getTime(), s));
       }
       if (isSpan(x)) {
         const s = isSpan(size) ? size.ms : toNumber(size);
-        if (!s || s <= 0) throw new KqlError('semantic', 'bin() : la taille de regroupement doit être positive.');
+        if (!s || s <= 0) throw new KqlError('semantic', tr('bin() : la taille de regroupement doit être positive.', 'bin(): the bin size must be positive.'));
         return new Timespan(binNum(x.ms, s));
       }
       const n = toNumber(x);
       const s = toNumber(size);
-      if (n === null || s === null || s <= 0) throw new KqlError('semantic', 'bin() attend un nombre, un datetime ou un timespan et une taille positive.');
+      if (n === null || s === null || s <= 0) throw new KqlError('semantic', tr('bin() attend un nombre, un datetime ou un timespan et une taille positive.', 'bin() expects a number, a datetime or a timespan and a positive size.'));
       return binNum(n, s);
     },
   },

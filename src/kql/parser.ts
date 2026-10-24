@@ -3,6 +3,7 @@ import type { Token } from './lexer.ts';
 import type { Expr, LetDef, Named, Op, Pipeline, Pos, QueryAst, SortKey, Source } from './ast.ts';
 import { KqlError } from './types.ts';
 import type { Dyn } from './types.ts';
+import { tr } from '../i18n/lang.ts';
 
 export const SUPPORTED_OPERATORS = [
   'where',
@@ -55,15 +56,15 @@ const UNSUPPORTED_OPERATORS = new Set([
   'reduce',
 ]);
 
-const SQL_HINTS: Record<string, string> = {
-  select: "KQL n'a pas de SELECT : utilisez « project » pour choisir des colonnes.",
-  from: "KQL n'a pas de FROM : la requête commence directement par le nom de la table.",
-  group: 'Pour regrouper, utilisez « summarize <agrégation> by <colonne> ».',
-  having: 'KQL n’a pas de HAVING : placez un « where » après le « summarize ».',
-  insert: 'KQL est un langage de lecture seule : INSERT n’existe pas.',
-  update: 'KQL est un langage de lecture seule : UPDATE n’existe pas.',
-  delete: 'KQL est un langage de lecture seule : DELETE n’existe pas.',
-};
+const sqlHints = (): Record<string, string> => ({
+  select: tr("KQL n'a pas de SELECT : utilisez « project » pour choisir des colonnes.", 'KQL has no SELECT: use “project” to choose columns.'),
+  from: tr("KQL n'a pas de FROM : la requête commence directement par le nom de la table.", 'KQL has no FROM: the query starts directly with the table name.'),
+  group: tr('Pour regrouper, utilisez « summarize <agrégation> by <colonne> ».', 'To group, use “summarize <aggregation> by <column>”.'),
+  having: tr('KQL n’a pas de HAVING : placez un « where » après le « summarize ».', 'KQL has no HAVING: put a “where” after the “summarize”.'),
+  insert: tr('KQL est un langage de lecture seule : INSERT n’existe pas.', 'KQL is a read-only language: INSERT does not exist.'),
+  update: tr('KQL est un langage de lecture seule : UPDATE n’existe pas.', 'KQL is a read-only language: UPDATE does not exist.'),
+  delete: tr('KQL est un langage de lecture seule : DELETE n’existe pas.', 'KQL is a read-only language: DELETE does not exist.'),
+});
 
 const CMP_OPS = new Set(['==', '!=', '<>', '<', '<=', '>', '>=', '=~', '!~']);
 const WORD_CMP = new Set([
@@ -149,14 +150,14 @@ class Parser {
     throw new KqlError('syntax', msg, { line: t.line, col: t.col, hint });
   }
   describe(t: Token): string {
-    if (t.t === 'eof') return 'la fin de la requête';
-    if (t.t === 'str') return `la chaîne « ${t.v} »`;
-    return `« ${t.v} »`;
+    if (t.t === 'eof') return tr('la fin de la requête', 'the end of the query');
+    if (t.t === 'str') return tr(`la chaîne « ${t.v} »`, `the string “${t.v}”`);
+    return tr(`« ${t.v} »`, `“${t.v}”`);
   }
   expectP(v: string, ctx?: string): Token {
     if (!this.isP(v)) {
       const t = this.peek();
-      this.err(`Attendu « ${v} »${ctx ? ' ' + ctx : ''}, trouvé ${this.describe(t)}.`, t);
+      this.err(tr(`Attendu « ${v} »${ctx ? ' ' + ctx : ''}, trouvé ${this.describe(t)}.`, `Expected “${v}”${ctx ? ' ' + ctx : ''}, found ${this.describe(t)}.`), t);
     }
     return this.next();
   }
@@ -169,7 +170,7 @@ class Parser {
   }
   expectIdent(ctx: string): Token {
     const t = this.peek();
-    if (t.t !== 'ident') this.err(`Attendu un nom ${ctx}, trouvé ${this.describe(t)}.`, t);
+    if (t.t !== 'ident') this.err(tr(`Attendu un nom ${ctx}, trouvé ${this.describe(t)}.`, `Expected a name ${ctx}, found ${this.describe(t)}.`), t);
     return this.next();
   }
 
@@ -179,11 +180,11 @@ class Parser {
     while (this.isId('let')) {
       lets.push(this.parseLet());
       if (!this.acceptP(';')) {
-        this.err('Il manque un point-virgule « ; » à la fin de l’instruction let.', this.peek(), 'Chaque « let » se termine par « ; ».');
+        this.err(tr('Il manque un point-virgule « ; » à la fin de l’instruction let.', 'A semicolon “;” is missing at the end of the let statement.'), this.peek(), tr('Chaque « let » se termine par « ; ».', 'Each “let” ends with “;”.'));
       }
     }
     if (this.peek().t === 'eof') {
-      this.err('La requête est vide : il manque la requête principale (par exemple le nom d’une table).', this.peek());
+      this.err(tr('La requête est vide : il manque la requête principale (par exemple le nom d’une table).', 'The query is empty: the main query is missing (for example a table name).'), this.peek());
     }
     const body = this.parsePipeline();
     this.acceptP(';');
@@ -196,36 +197,36 @@ class Parser {
     if (t.t === 'ident') {
       const lower = t.v.toLowerCase();
       if ((SUPPORTED_OPERATORS as readonly string[]).includes(lower) || UNSUPPORTED_OPERATORS.has(lower)) {
-        this.err(`Opérateur « ${t.v} » inattendu : il manque probablement un « | » (pipe) devant.`, t, 'Chaque opérateur d’une requête est précédé de « | ».');
+        this.err(tr(`Opérateur « ${t.v} » inattendu : il manque probablement un « | » (pipe) devant.`, `Unexpected operator “${t.v}”: a “|” (pipe) is probably missing before it.`), t, tr('Chaque opérateur d’une requête est précédé de « | ».', 'Each operator in a query is preceded by “|”.'));
       }
     }
     if (t.t === 'punct' && t.v === '=') {
-      this.err('Symbole « = » inattendu.', t, 'Pour comparer deux valeurs, utilisez « == ». Le signe « = » sert à nommer une colonne calculée (extend, project, summarize).');
+      this.err(tr('Symbole « = » inattendu.', 'Unexpected “=” symbol.'), t, tr('Pour comparer deux valeurs, utilisez « == ». Le signe « = » sert à nommer une colonne calculée (extend, project, summarize).', 'To compare two values, use “==”. The “=” sign is used to name a computed column (extend, project, summarize).'));
     }
-    this.err(`Élément inattendu : ${this.describe(t)}.`, t, 'Vérifiez les virgules, parenthèses et pipes « | » de la requête.');
+    this.err(tr(`Élément inattendu : ${this.describe(t)}.`, `Unexpected element: ${this.describe(t)}.`), t, tr('Vérifiez les virgules, parenthèses et pipes « | » de la requête.', 'Check the commas, parentheses and pipes “|” in the query.'));
   }
 
   parseLet(): LetDef {
     const start = this.next(); // let
-    const name = this.expectIdent('après « let »');
-    this.expectP('=', 'après le nom de la variable');
+    const name = this.expectIdent(tr('après « let »', 'after “let”'));
+    this.expectP('=', tr('après le nom de la variable', 'after the variable name'));
     let params: LetDef['params'] = null;
     let body: Pipeline;
     if (this.isP('(') && this.looksLikeFunctionParams()) {
       this.next();
       params = [];
       while (!this.isP(')')) {
-        const pn = this.expectIdent('de paramètre');
+        const pn = this.expectIdent(tr('de paramètre', 'for a parameter'));
         let ty: string | undefined;
         if (this.acceptP(':')) ty = this.expectIdent('de type').v;
         params.push({ name: pn.v, ty });
         if (!this.acceptP(',')) break;
       }
       this.expectP(')');
-      this.expectP('{', 'avant le corps de la fonction');
+      this.expectP('{', tr('avant le corps de la fonction', 'before the function body'));
       body = this.parsePipeline();
       this.acceptP(';');
-      this.expectP('}', 'à la fin du corps de la fonction');
+      this.expectP('}', tr('à la fin du corps de la fonction', 'at the end of the function body'));
     } else {
       body = this.parsePipeline();
     }
@@ -281,21 +282,21 @@ class Parser {
     const cols: { name: string; ty: string }[] = [];
     while (!this.isP(')')) {
       const n = this.expectIdent('de colonne');
-      this.expectP(':', 'après le nom de colonne (ex. Nom:string)');
+      this.expectP(':', tr('après le nom de colonne (ex. Nom:string)', 'after the column name (e.g. Name:string)'));
       const ty = this.expectIdent('de type');
       cols.push({ name: n.v, ty: ty.v });
       if (!this.acceptP(',')) break;
     }
     this.expectP(')');
-    this.expectP('[', 'avant les valeurs du datatable');
+    this.expectP('[', tr('avant les valeurs du datatable', 'before the datatable values'));
     const values: Expr[] = [];
     while (!this.isP(']')) {
       values.push(this.parseExpr());
       if (!this.acceptP(',')) break;
     }
-    this.expectP(']', 'à la fin des valeurs du datatable');
+    this.expectP(']', tr('à la fin des valeurs du datatable', 'at the end of the datatable values'));
     if (cols.length === 0 || values.length % cols.length !== 0) {
-      this.err(`Le nombre de valeurs (${values.length}) n’est pas un multiple du nombre de colonnes (${cols.length}).`, start);
+      this.err(tr(`Le nombre de valeurs (${values.length}) n’est pas un multiple du nombre de colonnes (${cols.length}).`, `The number of values (${values.length}) is not a multiple of the number of columns (${cols.length}).`), start);
     }
     return { kind: 'datatable', cols, values, pos: pos(start) };
   }
@@ -324,7 +325,7 @@ class Parser {
         items.push(this.parsePipeline());
         this.expectP(')');
       } else {
-        const t = this.expectIdent('de table dans union');
+        const t = this.expectIdent(tr('de table dans union', 'for a table in union'));
         items.push({ source: { kind: 'expr', expr: { k: 'id', name: t.v, pos: pos(t) } }, ops: [] });
       }
     } while (this.acceptP(','));
@@ -335,22 +336,22 @@ class Parser {
   parseOp(): Op {
     const t = this.peek();
     if (t.t !== 'ident') {
-      this.err(`Après « | », un nom d’opérateur est attendu (where, project, summarize...), trouvé ${this.describe(t)}.`, t);
+      this.err(tr(`Après « | », un nom d’opérateur est attendu (where, project, summarize...), trouvé ${this.describe(t)}.`, `After “|”, an operator name is expected (where, project, summarize...), found ${this.describe(t)}.`), t);
     }
     const name = t.v;
     const p = pos(t);
     const lower = name.toLowerCase();
     if (name !== lower && ((SUPPORTED_OPERATORS as readonly string[]).includes(lower) || UNSUPPORTED_OPERATORS.has(lower))) {
-      this.err(`Opérateur « ${name} » inconnu.`, t, `KQL est sensible à la casse pour les opérateurs : écrivez « ${lower} » en minuscules.`);
+      this.err(tr(`Opérateur « ${name} » inconnu.`, `Unknown operator “${name}”.`), t, tr(`KQL est sensible à la casse pour les opérateurs : écrivez « ${lower} » en minuscules.`, `KQL is case-sensitive for operators: write “${lower}” in lowercase.`));
     }
-    if (SQL_HINTS[lower] && !(SUPPORTED_OPERATORS as readonly string[]).includes(lower)) {
-      this.err(`« ${name} » n'est pas un opérateur KQL.`, t, SQL_HINTS[lower]);
+    if (sqlHints()[lower] && !(SUPPORTED_OPERATORS as readonly string[]).includes(lower)) {
+      this.err(tr(`« ${name} » n'est pas un opérateur KQL.`, `“${name}” is not a KQL operator.`), t, sqlHints()[lower]);
     }
     if (UNSUPPORTED_OPERATORS.has(name)) {
-      throw new KqlError('unsupported', `L’opérateur « ${name} » est valide en KQL mais n’est pas pris en charge par le moteur local de cette plateforme.`, {
+      throw new KqlError('unsupported', tr(`L’opérateur « ${name} » est valide en KQL mais n’est pas pris en charge par le moteur local de cette plateforme.`, `The operator “${name}” is valid in KQL but is not supported by this platform’s local engine.`), {
         line: t.line,
         col: t.col,
-        hint: 'Consultez la page « Limites et opérateurs pris en charge ». Vous pouvez tester cet opérateur dans un vrai espace de travail Log Analytics (démo ou labo).',
+        hint: tr('Consultez la page « Limites et opérateurs pris en charge ». Vous pouvez tester cet opérateur dans un vrai espace de travail Log Analytics (démo ou labo).', 'See the “Limits and supported operators” page. You can try this operator in a real Log Analytics workspace (demo or lab).'),
       });
     }
     this.next();
@@ -359,7 +360,7 @@ class Parser {
       case 'filter': {
         const pred = this.parseExpr();
         if (this.isP('=')) {
-          this.err('Symbole « = » inattendu dans le filtre.', this.peek(), 'Pour tester l’égalité, utilisez « == » (ou « =~ » pour ignorer la casse). Le signe « = » sert uniquement à nommer une colonne.');
+          this.err(tr('Symbole « = » inattendu dans le filtre.', 'Unexpected “=” symbol in the filter.'), this.peek(), tr('Pour tester l’égalité, utilisez « == » (ou « =~ » pour ignorer la casse). Le signe « = » sert uniquement à nommer une colonne.', 'To test equality, use “==” (or “=~” to ignore case). The “=” sign is only used to name a column.'));
         }
         return { op: 'where', pred, pos: p };
       }
@@ -383,7 +384,7 @@ class Parser {
         const items: { to: string; from: string }[] = [];
         do {
           const to = this.expectIdent('de colonne').v;
-          this.expectP('=', 'dans project-rename (nouveauNom = ancienNom)');
+          this.expectP('=', tr('dans project-rename (nouveauNom = ancienNom)', 'in project-rename (newName = oldName)'));
           const from = this.expectIdent('de colonne').v;
           items.push({ to, from });
         } while (this.acceptP(','));
@@ -396,7 +397,7 @@ class Parser {
       }
       case 'top': {
         const n = this.parseExpr();
-        if (!this.isId('by')) this.err('Il manque « by » après le nombre dans « top » (ex. top 5 by Count desc).', this.peek());
+        if (!this.isId('by')) this.err(tr('Il manque « by » après le nombre dans « top » (ex. top 5 by Count desc).', '“by” is missing after the number in “top” (e.g. top 5 by Count desc).'), this.peek());
         this.next();
         const by = this.parseExpr();
         let desc = true;
@@ -415,7 +416,7 @@ class Parser {
       }
       case 'sort':
       case 'order': {
-        if (!this.isId('by')) this.err(`Il manque « by » après « ${name} » (ex. ${name} by TimeGenerated desc).`, this.peek());
+        if (!this.isId('by')) this.err(tr(`Il manque « by » après « ${name} » (ex. ${name} by TimeGenerated desc).`, `“by” is missing after “${name}” (e.g. ${name} by TimeGenerated desc).`), this.peek());
         this.next();
         const keys: SortKey[] = [];
         do {
@@ -490,7 +491,7 @@ class Parser {
           let ty: string | undefined;
           if (this.isId('to')) {
             this.next();
-            if (!this.isId('typeof')) this.err('Attendu « typeof(...) » après « to ».');
+            if (!this.isId('typeof')) this.err(tr('Attendu « typeof(...) » après « to ».', 'Expected “typeof(...)” after “to”.'));
             this.next();
             this.expectP('(');
             ty = this.expectIdent('de type').v;
@@ -501,7 +502,7 @@ class Parser {
         return { op: 'mv-expand', items, pos: p };
       }
       default:
-        this.err(`Opérateur « ${name} » inconnu.`, t, 'Opérateurs pris en charge : ' + SUPPORTED_OPERATORS.join(', ') + '.');
+        this.err(tr(`Opérateur « ${name} » inconnu.`, `Unknown operator “${name}”.`), t, tr('Opérateurs pris en charge : ', 'Supported operators: ') + SUPPORTED_OPERATORS.join(', ') + '.');
     }
   }
 
@@ -528,15 +529,15 @@ class Parser {
     if (this.isP('(')) {
       this.next();
       right = this.parsePipeline();
-      this.expectP(')', 'à la fin de la table de droite du join');
+      this.expectP(')', tr('à la fin de la table de droite du join', 'at the end of the right-hand table of the join'));
     } else {
       const t = this.peek();
-      if (t.t !== 'ident') this.err('Après « join », indiquez la table de droite (nom de table ou sous-requête entre parenthèses).', t);
+      if (t.t !== 'ident') this.err(tr('Après « join », indiquez la table de droite (nom de table ou sous-requête entre parenthèses).', 'After “join”, give the right-hand table (table name or subquery in parentheses).'), t);
       this.next();
       right = { source: { kind: 'expr', expr: { k: 'id', name: t.v, pos: pos(t) } }, ops: [] };
     }
     if (!this.isId('on')) {
-      this.err('Il manque « on » avec la clé de jointure (ex. join (Table2) on UserPrincipalName).', this.peek(), 'KQL n’autorise pas de jointure sans clé « on ».');
+      this.err(tr('Il manque « on » avec la clé de jointure (ex. join (Table2) on UserPrincipalName).', '“on” with the join key is missing (e.g. join (Table2) on UserPrincipalName).'), this.peek(), tr('KQL n’autorise pas de jointure sans clé « on ».', 'KQL does not allow a join without an “on” key.'));
     }
     this.next();
     const on: Expr[] = [];
@@ -627,15 +628,15 @@ class Parser {
         return { k: 'hasany', all: w === 'has_all', l, items, pos: p };
       }
       if (w === 'between') {
-        this.expectP('(', 'après « between »');
+        this.expectP('(', tr('après « between »', 'after “between”'));
         const lo = this.parseAdd();
-        this.expectP('..', 'entre les bornes de « between » (ex. between (1 .. 10))');
+        this.expectP('..', tr('entre les bornes de « between » (ex. between (1 .. 10))', 'between the bounds of “between” (e.g. between (1 .. 10))'));
         const hi = this.parseAdd();
         this.expectP(')');
         return { k: 'between', neg, l, lo, hi, pos: p };
       }
       if (w === 'matches') {
-        if (!this.isId('regex')) this.err('Attendu « regex » après « matches » (ex. x matches regex "^a.*").');
+        if (!this.isId('regex')) this.err(tr('Attendu « regex » après « matches » (ex. x matches regex "^a.*").', 'Expected “regex” after “matches” (e.g. x matches regex "^a.*").'));
         this.next();
         const r = this.parseAdd();
         return { k: 'bin', op: neg ? '!matches regex' : 'matches regex', l, r, pos: p };
@@ -644,20 +645,20 @@ class Parser {
       return { k: 'bin', op: neg ? '!' + w : w, l, r, pos: p };
     }
     if (t.t === 'punct' && t.v === '!' ) {
-      this.err('Symbole « ! » inattendu.', t, 'Pour la négation, utilisez « != », « !contains », « !has », « !in » ou la fonction not().');
+      this.err(tr('Symbole « ! » inattendu.', 'Unexpected “!” symbol.'), t, tr('Pour la négation, utilisez « != », « !contains », « !has », « !in » ou la fonction not().', 'For negation, use “!=”, “!contains”, “!has”, “!in” or the not() function.'));
     }
     return l;
   }
 
   parseListInParens(w: string): Expr[] {
-    this.expectP('(', `après « ${w} »`);
+    this.expectP('(', tr(`après « ${w} »`, `after “${w}”`));
     const items: Expr[] = [];
     if (!this.isP(')')) {
       do {
         items.push(this.parsePipelineOrExpr());
       } while (this.acceptP(','));
     }
-    this.expectP(')', `à la fin de la liste « ${w} »`);
+    this.expectP(')', tr(`à la fin de la liste « ${w} »`, `at the end of the “${w}” list`));
     return items;
   }
 
@@ -709,7 +710,7 @@ class Parser {
       } else if (t.t === 'punct' && t.v === '[') {
         this.next();
         const idx = this.parseExpr();
-        this.expectP(']', 'à la fin de l’indice');
+        this.expectP(']', tr('à la fin de l’indice', 'at the end of the index'));
         e = { k: 'index', obj: e, idx, pos: pos(t) };
       } else break;
     }
@@ -733,7 +734,7 @@ class Parser {
         if (t.v === '(') {
           this.next();
           const e = this.parsePipelineOrExpr();
-          this.expectP(')', 'pour fermer la parenthèse');
+          this.expectP(')', tr('pour fermer la parenthèse', 'to close the parenthesis'));
           return e;
         }
         if (t.v === '[' && this.peek(1).t === 'str' && this.isP(']', 2)) {
@@ -745,15 +746,15 @@ class Parser {
           this.next();
           return { k: 'star', pos: p };
         }
-        this.err(`Expression attendue, trouvé ${this.describe(t)}.`, t);
+        this.err(tr(`Expression attendue, trouvé ${this.describe(t)}.`, `Expression expected, found ${this.describe(t)}.`), t);
         break;
       }
       case 'ident':
         return this.parseIdentPrimary();
       case 'eof':
-        this.err('Expression attendue, mais la requête se termine ici.', t);
+        this.err(tr('Expression attendue, mais la requête se termine ici.', 'Expression expected, but the query ends here.'), t);
     }
-    return this.err(`Expression attendue, trouvé ${this.describe(t)}.`, t);
+    return this.err(tr(`Expression attendue, trouvé ${this.describe(t)}.`, `Expression expected, found ${this.describe(t)}.`), t);
   }
 
   parseIdentPrimary(): Expr {
@@ -766,7 +767,7 @@ class Parser {
       if (name === 'dynamic') {
         this.next();
         const v = this.parseDynamicValue();
-        this.expectP(')', 'à la fin de dynamic(...)');
+        this.expectP(')', tr('à la fin de dynamic(...)', 'at the end of dynamic(...)'));
         return { k: 'dyn', v, pos: p };
       }
       if (name === 'datetime' || name === 'time' || name === 'timespan') {
@@ -775,7 +776,7 @@ class Parser {
         let depth = 1;
         while (depth > 0) {
           const x = this.next();
-          if (x.t === 'eof') this.err(`Parenthèse fermante manquante après ${name}(`, t);
+          if (x.t === 'eof') this.err(tr(`Parenthèse fermante manquante après ${name}(`, `Closing parenthesis missing after ${name}(`), t);
           if (x.t === 'punct' && x.v === '(') depth++;
           if (x.t === 'punct' && x.v === ')') depth--;
         }
@@ -785,11 +786,11 @@ class Parser {
         if (raw === 'null') return { k: 'null', ty: name, pos: p };
         if (name === 'datetime') {
           const v = parseDatetimeLiteral(raw);
-          if (v === null) this.err(`Littéral datetime invalide : « ${raw} ».`, t, 'Format attendu : datetime(2026-03-12) ou datetime(2026-03-12 14:30:00).');
+          if (v === null) this.err(tr(`Littéral datetime invalide : « ${raw} ».`, `Invalid datetime literal: “${raw}”.`), t, tr('Format attendu : datetime(2026-03-12) ou datetime(2026-03-12 14:30:00).', 'Expected format: datetime(2026-03-12) or datetime(2026-03-12 14:30:00).'));
           return { k: 'datetime', v, pos: p };
         }
         const ms = parseTimespanLiteral(raw);
-        if (ms === null) this.err(`Littéral timespan invalide : « ${raw} ».`, t, 'Exemples : 30m, 1d, time(01:30:00).');
+        if (ms === null) this.err(tr(`Littéral timespan invalide : « ${raw} ».`, `Invalid timespan literal: “${raw}”.`), t, tr('Exemples : 30m, 1d, time(01:30:00).', 'Examples: 30m, 1d, time(01:30:00).'));
         return { k: 'span', ms, pos: p };
       }
       if (TYPED_NULLS.has(name) && this.peek(1).t === 'ident' && this.peek(1).v === 'null' && this.isP(')', 2)) {
@@ -807,7 +808,7 @@ class Parser {
           } else args.push(this.parseExpr());
         } while (this.acceptP(','));
       }
-      this.expectP(')', `à la fin de l’appel de « ${name}( »`);
+      this.expectP(')', tr(`à la fin de l’appel de « ${name}( »`, `at the end of the call to “${name}(”`));
       return { k: 'call', name, args, pos: p };
     }
     return { k: 'id', name, pos: p };
@@ -830,7 +831,7 @@ class Parser {
       const obj: { [k: string]: Dyn } = {};
       while (!this.isP('}')) {
         const kt = this.next();
-        if (kt.t !== 'str' && kt.t !== 'ident') this.err('Clé d’objet dynamic attendue.', kt);
+        if (kt.t !== 'str' && kt.t !== 'ident') this.err(tr('Clé d’objet dynamic attendue.', 'Dynamic object key expected.'), kt);
         this.expectP(':');
         obj[kt.v] = this.parseDynamicValue();
         if (!this.acceptP(',')) break;

@@ -292,3 +292,5 @@ table.results td.null { color: var(--muted); font-style: italic; }
 }
 main:focus { outline: none; }
 @media (min-width: 900px) { .hero { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); align-items: start; } }
+
+.lang-btn { font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.04em; min-width: 2.75rem; min-height: 2.75rem; }

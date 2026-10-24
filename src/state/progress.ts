@@ -1,3 +1,4 @@
+import { tr } from '../i18n/lang.ts';
 // Progression locale (localStorage), sans compte. Fonctions pures + petit store observable.
 
 export const STORAGE_KEY = 'boreal.progress.v1';
@@ -130,10 +131,10 @@ export function importProgress(text: string): Progress {
   try {
     raw = JSON.parse(text);
   } catch {
-    throw new Error('Le fichier n’est pas un JSON valide.');
+    throw new Error(tr('Le fichier n’est pas un JSON valide.', 'The file is not valid JSON.'));
   }
   if (!raw || typeof raw !== 'object' || (raw as { v?: unknown }).v !== SCHEMA_VERSION) {
-    throw new Error('Ce fichier n’est pas une sauvegarde de progression compatible (version attendue : 1).');
+    throw new Error(tr('Ce fichier n’est pas une sauvegarde de progression compatible (version attendue : 1).', 'This file is not a compatible progress backup (expected version: 1).'));
   }
   return sanitize(raw);
 }

@@ -15,13 +15,13 @@ import { LabsPage } from './pages/LabsPage.tsx';
 import { CoveragePage } from './pages/CoveragePage.tsx';
 import { LimitsPage } from './pages/LimitsPage.tsx';
 
-const NAV: [string, string][] = [
-  ['accueil', 'Accueil'],
-  ['catalogue', 'Catalogue'],
-  ['terrain', 'Terrain KQL'],
-  ['tableau', 'Tableau de bord'],
-  ['revision', 'Révision'],
-  ['labos', 'Labos'],
+const nav = (): [string, string][] => [
+  ['accueil', tr('Accueil', 'Home')],
+  ['catalogue', tr('Catalogue', 'Catalog')],
+  ['terrain', tr('Terrain KQL', 'KQL playground')],
+  ['tableau', tr('Tableau de bord', 'Dashboard')],
+  ['revision', tr('Révision', 'Review')],
+  ['labos', tr('Labos', 'Labs')],
 ];
 
 function Logo() {
@@ -33,15 +33,16 @@ function Logo() {
 function ErrorBoundaryFallback() {
   return (
     <div className="state" role="alert">
-      <h2>Une erreur est survenue</h2>
-      <p>Cette page n’a pas pu s’afficher. Votre progression n’est pas perdue.</p>
-      <a className="btn" href={href('accueil')}>Retour à l’accueil</a>
+      <h2>{tr('Une erreur est survenue', 'Something went wrong')}</h2>
+      <p>{tr('Cette page n’a pas pu s’afficher. Votre progression n’est pas perdue.', 'This page could not be displayed. Your progress is not lost.')}</p>
+      <a className="btn" href={href('accueil')}>{tr('Retour à l’accueil', 'Back to home')}</a>
     </div>
   );
 }
 
 import { Component } from 'react';
 import type { ReactNode } from 'react';
+import { tr, useLang, setLang } from './i18n/lang.ts';
 class Boundary extends Component<{ children: ReactNode; resetKey: string }, { failed: boolean; key: string }> {
   state = { failed: false, key: this.props.resetKey };
   static getDerivedStateFromError() {
@@ -57,6 +58,7 @@ class Boundary extends Component<{ children: ReactNode; resetKey: string }, { fa
 
 export function App() {
   const route = useRoute();
+  const lang = useLang();
   const p = useProgress();
   const xp = totalXp(p);
 
@@ -73,8 +75,8 @@ export function App() {
     window.scrollTo(0, 0);
     const h = document.getElementById('main');
     h?.focus({ preventScroll: true });
-    document.title = `Boréal : ${route.name === 'accueil' ? 'Azure, Sentinel et KQL' : route.name}`;
-  }, [route.name, route.params.join('/')]);
+    document.title = `Boube : ${route.name === 'accueil' ? tr('Azure, Sentinel et KQL', 'Azure, Sentinel and KQL') : route.name}`;
+  }, [route.name, route.params.join('/'), lang]);
 
   let page: ReactNode;
   switch (route.name) {
@@ -92,25 +94,35 @@ export function App() {
     default:
       page = (
         <div className="state" role="alert">
-          <h2>Page introuvable</h2>
-          <p>Cette adresse ne correspond à aucune page.</p>
-          <a className="btn" href={href('accueil')}>Retour à l’accueil</a>
+          <h2>{tr('Page introuvable', 'Page not found')}</h2>
+          <p>{tr('Cette adresse ne correspond à aucune page.', 'This address does not match any page.')}</p>
+          <a className="btn" href={href('accueil')}>{tr('Retour à l’accueil', 'Back to home')}</a>
         </div>
       );
   }
 
   return (
     <AnnouncerProvider>
-      <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus(); }}>Aller au contenu</a>
+      <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus(); }}>{tr('Aller au contenu', 'Skip to content')}</a>
       <header className="site-header">
         <div className="wrap">
-          <a className="brand" href={href('accueil')}><Logo /> Boréal</a>
-          <nav className="nav" aria-label="Navigation principale">
-            {NAV.map(([name, label]) => (
+          <a className="brand" href={href('accueil')}><Logo /> Boube</a>
+          <nav className="nav" aria-label={tr('Navigation principale', 'Main navigation')}>
+            {nav().map(([name, label]) => (
               <a key={name} href={href(name)} aria-current={route.name === name ? 'page' : undefined}>{label}</a>
             ))}
           </nav>
-          <span className="xp-chip" aria-label={`${xp} points d’expérience`}>{xp} XP</span>
+          <button
+            type="button"
+            className="btn small lang-btn"
+            lang={lang === 'fr' ? 'en' : 'fr'}
+            onClick={() => void setLang(lang === 'fr' ? 'en' : 'fr')}
+            aria-label={lang === 'fr' ? 'Switch the interface and content to English' : 'Passer l’interface et le contenu en français'}
+            title={lang === 'fr' ? 'English' : 'Français'}
+          >
+            {lang === 'fr' ? 'EN' : 'FR'}
+          </button>
+          <span className="xp-chip" aria-label={tr(`${xp} points d’expérience`, `${xp} experience points`)}>{xp} XP</span>
         </div>
       </header>
       <main id="main" tabIndex={-1} className="wrap">
@@ -118,8 +130,8 @@ export function App() {
       </main>
       <footer className="footer">
         <div className="wrap row" style={{ justifyContent: 'space-between' }}>
-          <span>Boréal, projet d’apprentissage indépendant. Non affilié à Microsoft. Données fictives.</span>
-          <span className="row"><a href={href('couverture')}>Couverture</a><a href={href('limites')}>Limites</a></span>
+          <span>{tr('Boube, projet d’apprentissage indépendant. Non affilié à Microsoft. Données fictives.', 'Boube, an independent learning project. Not affiliated with Microsoft. Fictional data.')}</span>
+          <span className="row"><a href={href('couverture')}>{tr('Couverture', 'Coverage')}</a><a href={href('limites')}>{tr('Limites', 'Limits')}</a></span>
         </div>
       </footer>
     </AnnouncerProvider>

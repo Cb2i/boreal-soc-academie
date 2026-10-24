@@ -1,5 +1,6 @@
 import type { MatchEx } from '../content/types.ts';
 import type { Verdict } from '../engine/validate.ts';
+import { tr } from '../i18n/lang.ts';
 
 interface Props {
   ex: MatchEx;
@@ -20,19 +21,19 @@ export function MatchMechanic({ ex, map, onMap, disabled, verdict, onSubmit }: P
             <li key={it.id} className={`dnd-item${fb === true ? ' good' : fb === false ? ' badc' : ''}`} style={{ cursor: 'default' }}>
               <label htmlFor={`m-${it.id}`} className="grow" style={{ fontWeight: 500 }}>{it.text}</label>
               <select id={`m-${it.id}`} value={map[it.id] ?? ''} disabled={disabled} onChange={(e) => onMap({ ...map, [it.id]: e.target.value })}>
-                <option value="">Choisir…</option>
+                <option value="">{tr('Choisir…', 'Choose…')}</option>
                 {ex.options.map((o) => (
                   <option key={o.id} value={o.id}>{o.text}</option>
                 ))}
               </select>
-              {fb === true && <span className="pill ok">juste</span>}
-              {fb === false && <span className="pill bad">à revoir</span>}
+              {fb === true && <span className="pill ok">{tr('juste', 'correct')}</span>}
+              {fb === false && <span className="pill bad">{tr('à revoir', 'review')}</span>}
             </li>
           );
         })}
       </ul>
       <div className="row">
-        <button type="button" className="btn primary" onClick={onSubmit} disabled={disabled}>Valider les associations</button>
+        <button type="button" className="btn primary" onClick={onSubmit} disabled={disabled}>{tr('Valider les associations', 'Submit matches')}</button>
       </div>
     </div>
   );

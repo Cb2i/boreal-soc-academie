@@ -2,6 +2,7 @@ import type { Exercise } from '../content/types.ts';
 import { COMPETENCIES } from '../content/competencies.ts';
 import type { Progress } from '../state/progress.ts';
 import { totalXp } from '../state/progress.ts';
+import { tr } from '../i18n/lang.ts';
 
 export const RANKS: { name: string; xp: number }[] = [
   { name: 'Recrue', xp: 0 },
@@ -12,12 +13,15 @@ export const RANKS: { name: string; xp: number }[] = [
   { name: 'Architecte', xp: 3000 },
 ];
 
+const RANK_EN = ['Recruit', 'Analyst T1', 'Analyst T2', 'Hunter', 'Detection engineer', 'Architect'];
+const rankName = (i: number) => tr(RANKS[i].name, RANK_EN[i]);
+
 export function rankFor(xp: number): { name: string; next: { name: string; xp: number } | null; pct: number } {
   let i = 0;
   for (let k = 0; k < RANKS.length; k++) if (xp >= RANKS[k].xp) i = k;
-  const next = RANKS[i + 1] ?? null;
+  const next = RANKS[i + 1] ? { name: rankName(i + 1), xp: RANKS[i + 1].xp } : null;
   const pct = next ? Math.round(((xp - RANKS[i].xp) / (next.xp - RANKS[i].xp)) * 100) : 100;
-  return { name: RANKS[i].name, next, pct };
+  return { name: rankName(i), next, pct };
 }
 
 export type Tier = 'none' | 'bronze' | 'argent' | 'or';
@@ -59,12 +63,12 @@ export function globalBadges(exs: Exercise[], p: Progress): GlobalBadge[] {
   const noHint = doneIds.filter((id) => p.done[id].hintsUsed === 0).length;
   const missions = exs.filter((e) => e.kind === 'mission' && p.done[e.id]).length;
   return [
-    { id: 'first', name: 'Premier signal', description: 'Réussir un premier exercice.', earned: doneIds.length >= 1 },
-    { id: 'ten', name: 'Dix exercices', description: 'Réussir 10 exercices.', earned: doneIds.length >= 10 },
-    { id: 'fifty', name: 'Cinquante exercices', description: 'Réussir 50 exercices.', earned: doneIds.length >= 50 },
-    { id: 'polyvalent', name: 'Polyvalent', description: 'Réussir 4 types d’exercices différents.', earned: types.size >= 4 },
-    { id: 'sans-indice', name: 'Sans filet', description: 'Réussir 5 exercices sans aucun indice.', earned: noHint >= 5 },
-    { id: 'mission', name: 'Mission accomplie', description: 'Terminer une mission finale.', earned: missions >= 1 },
-    { id: 'xp-500', name: '500 XP', description: 'Cumuler 500 points d’expérience.', earned: totalXp(p) >= 500 },
+    { id: 'first', name: tr('Premier signal', 'First signal'), description: tr('Réussir un premier exercice.', 'Complete your first exercise.'), earned: doneIds.length >= 1 },
+    { id: 'ten', name: tr('Dix exercices', 'Ten exercises'), description: tr('Réussir 10 exercices.', 'Complete 10 exercises.'), earned: doneIds.length >= 10 },
+    { id: 'fifty', name: tr('Cinquante exercices', 'Fifty exercises'), description: tr('Réussir 50 exercices.', 'Complete 50 exercises.'), earned: doneIds.length >= 50 },
+    { id: 'polyvalent', name: tr('Polyvalent', 'Versatile'), description: tr('Réussir 4 types d’exercices différents.', 'Complete 4 different exercise types.'), earned: types.size >= 4 },
+    { id: 'sans-indice', name: tr('Sans filet', 'No safety net'), description: tr('Réussir 5 exercices sans aucun indice.', 'Complete 5 exercises without any hint.'), earned: noHint >= 5 },
+    { id: 'mission', name: tr('Mission accomplie', 'Mission accomplished'), description: tr('Terminer une mission finale.', 'Finish a final mission.'), earned: missions >= 1 },
+    { id: 'xp-500', name: '500 XP', description: tr('Cumuler 500 points d’expérience.', 'Earn 500 experience points.'), earned: totalXp(p) >= 500 },
   ];
 }

@@ -1,12 +1,13 @@
 import { display } from '../kql/index.ts';
 import type { Table } from '../kql/index.ts';
+import { tr } from '../i18n/lang.ts';
 
 export function ResultTable({ table, limit = 200, caption }: { table: Table; limit?: number; caption?: string }) {
-  if (table.columns.length === 0) return <div className="state">Résultat sans colonnes.</div>;
+  if (table.columns.length === 0) return <div className="state">{tr('Résultat sans colonnes.', 'Result without columns.')}</div>;
   const rows = table.rows.slice(0, limit);
   return (
     <div>
-      <div className="table-wrap" tabIndex={0} role="region" aria-label={caption ?? 'Résultat de la requête'}>
+      <div className="table-wrap" tabIndex={0} role="region" aria-label={caption ?? tr('Résultat de la requête', 'Query result')}>
         <table className="results">
           <thead>
             <tr>
@@ -34,7 +35,7 @@ export function ResultTable({ table, limit = 200, caption }: { table: Table; lim
         </table>
       </div>
       <p className="muted small" style={{ marginTop: '0.4rem' }}>
-        {table.rows.length} ligne(s){table.rows.length > limit ? `, ${limit} affichées` : ''}.
+        {table.rows.length} {tr('ligne(s)', 'row(s)')}{table.rows.length > limit ? tr(`, ${limit} affichées`, `, ${limit} shown`) : ''}.
       </p>
     </div>
   );

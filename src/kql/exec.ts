@@ -6,6 +6,7 @@ import { AGGREGATES, FUNCTIONS } from './functions.ts';
 import { KqlError } from './types.ts';
 import type { Dyn, Row, RunOptions, Table, Ty, Value } from './types.ts';
 import { compareValues, normKey, suggest, toNumber, toStr, typeOfValue } from './values.ts';
+import { tr } from '../i18n/lang.ts';
 
 const semantic = (msg: string, at?: { pos: { line: number; col: number } }, hint?: string) =>
   new KqlError('semantic', msg, { line: at?.pos.line, col: at?.pos.col, hint });
@@ -66,7 +67,7 @@ function resolveNames(items: Named[], byClause = false): string[] {
   const seen = new Set<string>();
   names.forEach((n, i) => {
     if (seen.has(n)) {
-      throw semantic(`Nom de colonne dupliqué : « ${n} ».`, items[i], 'Donnez un nom différent avec « Nom = expression ».');
+      throw semantic(tr(`Nom de colonne dupliqué : « ${n} ».`, `Duplicate column name: “${n}”.`), items[i], tr('Donnez un nom différent avec « Nom = expression ».', 'Give it a different name with “Name = expression”.'));
     }
     seen.add(n);
   });
@@ -115,7 +116,7 @@ function dotNetType(k: string): string {
 // ------------------------------------------------------------------ pipeline
 
 export function runPipeline(ctx: Ctx, p: Pipeline, params: Params): Table {
-  if (ctx.depth > 40) throw new KqlError('limit', 'Imbrication de requêtes trop profonde.');
+  if (ctx.depth > 40) throw new KqlError('limit', tr('Imbrication de requêtes trop profonde.', 'Query nesting is too deep.'));
   let t = resolveSource(ctx, p.source, params);
   for (const op of p.ops) t = applyOp(ctx, op, t, params);
   return t;
@@ -198,14 +199,14 @@ function resolveExprSource(ctx: Ctx, e: Expr, params: Params): Table {
       const a = e.args[0];
       if (!a || a.k !== 'subquery') {
         if (a) return resolveExprSource(ctx, a, params);
-        throw semantic('materialize() attend une requête tabulaire.', e);
+        throw semantic(tr('materialize() attend une requête tabulaire.', 'materialize() expects a tabular query.'), e);
       }
       return runPipeline(ctx, a.q, params);
     }
     const def = ctx.lets.get(e.name);
     if (def && def.params !== null) {
       if (e.args.length !== def.params.length) {
-        throw semantic(`La fonction « ${e.name} » attend ${def.params.length} argument(s), ${e.args.length} fourni(s).`, e);
+        throw semantic(tr(`La fonction « ${e.name} » attend ${def.params.length} argument(s), ${e.args.length} fourni(s).`, `The function “${e.name}” expects ${def.params.length} argument(s), ${e.args.length} provided.`), e);
       }
       const p2: Record<string, Value> = {};
       def.params.forEach((p, i) => {
@@ -218,9 +219,9 @@ function resolveExprSource(ctx: Ctx, e: Expr, params: Params): Table {
         ctx.depth--;
       }
     }
-    throw semantic(`« ${e.name}() » ne retourne pas de table : une requête doit commencer par une table (ex. SigninLogs).`, e);
+    throw semantic(tr(`« ${e.name}() » ne retourne pas de table : une requête doit commencer par une table (ex. SigninLogs).`, `“${e.name}()” does not return a table: a query must start with a table (e.g. SigninLogs).`), e);
   }
-  throw semantic('Une requête doit commencer par le nom d’une table (ex. SigninLogs) ou une variable let tabulaire.', e as { pos: { line: number; col: number } });
+  throw semantic(tr('Une requête doit commencer par le nom d’une table (ex. SigninLogs) ou une variable let tabulaire.', 'A query must start with a table name (e.g. SigninLogs) or a tabular let variable.'), e as { pos: { line: number; col: number } });
 }
 
 function resolveTableName(ctx: Ctx, e: Extract<Expr, { k: 'id' }>, params: Params): Table {
@@ -232,7 +233,7 @@ function resolveTableName(ctx: Ctx, e: Extract<Expr, { k: 'id' }>, params: Param
     const b = def.body;
     // « let x = 5; » utilisé comme table : erreur explicite
     if (b.ops.length === 0 && b.source.kind === 'expr' && b.source.expr.k !== 'id' && b.source.expr.k !== 'subquery' && b.source.expr.k !== 'call') {
-      throw semantic(`« ${name} » est une valeur scalaire, pas une table.`, e);
+      throw semantic(tr(`« ${name} » est une valeur scalaire, pas une table.`, `“${name}” is a scalar value, not a table.`), e);
     }
     ctx.depth++;
     try {
@@ -244,19 +245,19 @@ function resolveTableName(ctx: Ctx, e: Extract<Expr, { k: 'id' }>, params: Param
     }
   }
   if (params && Object.prototype.hasOwnProperty.call(params, name)) {
-    throw semantic(`« ${name} » est un paramètre scalaire, pas une table.`, e);
+    throw semantic(tr(`« ${name} » est un paramètre scalaire, pas une table.`, `“${name}” is a scalar parameter, not a table.`), e);
   }
   const t = ctx.tables[name];
   if (t) return t;
   if (ctx.unavailable[name]) {
-    throw semantic(`La table « ${name} » n’existe pas dans ce contexte.`, e, ctx.unavailable[name]);
+    throw semantic(tr(`La table « ${name} » n’existe pas dans ce contexte.`, `The table “${name}” does not exist in this context.`), e, ctx.unavailable[name]);
   }
   const all = [...Object.keys(ctx.tables), ...[...ctx.lets.keys()]];
   const cand = suggest(name, all);
   throw semantic(
-    `Table « ${name} » introuvable. Tables disponibles : ${Object.keys(ctx.tables).join(', ')}.`,
+    tr(`Table « ${name} » introuvable. Tables disponibles : ${Object.keys(ctx.tables).join(', ')}.`, `Table “${name}” not found. Available tables: ${Object.keys(ctx.tables).join(', ')}.`),
     e,
-    cand ? (cand.toLowerCase() === name.toLowerCase() ? `Les noms de tables sont sensibles à la casse : vouliez-vous dire « ${cand} » ?` : `Vouliez-vous dire « ${cand} » ?`) : undefined,
+    cand ? (cand.toLowerCase() === name.toLowerCase() ? tr(`Les noms de tables sont sensibles à la casse : vouliez-vous dire « ${cand} » ?`, `Table names are case-sensitive: did you mean “${cand}”?`) : tr(`Vouliez-vous dire « ${cand} » ?`, `Did you mean “${cand}”?`)) : undefined,
   );
 }
 
@@ -291,7 +292,7 @@ function applyOp(ctx: Ctx, op: Op, t: Table, params: Params): Table {
         map.set(it.from, it.to);
       }
       const columns = t.columns.map((c) => map.get(c) ?? c);
-      if (new Set(columns).size !== columns.length) throw semantic('Le renommage crée un nom de colonne dupliqué.', op);
+      if (new Set(columns).size !== columns.length) throw semantic(tr('Le renommage crée un nom de colonne dupliqué.', 'The rename creates a duplicate column name.'), op);
       const types: Record<string, Ty> = {};
       t.columns.forEach((c) => (types[map.get(c) ?? c] = t.types[c]));
       const rows = t.rows.map((r) => {
@@ -352,7 +353,7 @@ function applyOp(ctx: Ctx, op: Op, t: Table, params: Params): Table {
       return mkTable(['ColumnName', 'ColumnOrdinal', 'DataType', 'ColumnType'], { ColumnName: 'string', ColumnOrdinal: 'number', DataType: 'string', ColumnType: 'string' }, rows);
     }
     case 'render':
-      ctx.notes.push('L’opérateur render est reconnu mais ignoré : le moteur local ne produit pas de graphiques (les résultats sont affichés en tableau).');
+      ctx.notes.push(tr('L’opérateur render est reconnu mais ignoré : le moteur local ne produit pas de graphiques (les résultats sont affichés en tableau).', 'The render operator is recognized but ignored: the local engine does not produce charts (results are shown as a table).'));
       return t;
     case 'join':
       return opJoin(ctx, op, t, params);
@@ -365,7 +366,7 @@ function applyOp(ctx: Ctx, op: Op, t: Table, params: Params): Table {
 
 function unknownCol(c: string, t: Table, at: { pos: { line: number; col: number } }): KqlError {
   const cand = suggest(c, t.columns);
-  return semantic(`Colonne « ${c} » introuvable. Colonnes disponibles : ${t.columns.join(', ')}.`, at, cand ? `Vouliez-vous dire « ${cand} » ?` : undefined);
+  return semantic(tr(`Colonne « ${c} » introuvable. Colonnes disponibles : ${t.columns.join(', ')}.`, `Column “${c}” not found. Available columns: ${t.columns.join(', ')}.`), at, cand ? tr(`Vouliez-vous dire « ${cand} » ?`, `Did you mean “${cand}”?`) : undefined);
 }
 
 function projectCols(t: Table, cols: string[]): Table {
@@ -388,7 +389,7 @@ function opWhere(ctx: Ctx, op: Extract<Op, { op: 'where' }>, t: Table, params: P
   typeCheck(op.pred, t.types, ctx);
   const ty = inferTy(op.pred, t.types, ctx);
   if (ty === 'string' || ty === 'number' || ty === 'datetime' || ty === 'timespan') {
-    throw semantic('Le filtre where attend une condition booléenne (vrai/faux).', op, 'Comparez la valeur à quelque chose, par exemple : where Colonne == "valeur".');
+    throw semantic(tr('Le filtre where attend une condition booléenne (vrai/faux).', 'The where filter expects a boolean condition (true/false).'), op, tr('Comparez la valeur à quelque chose, par exemple : where Colonne == "valeur".', 'Compare the value to something, for example: where Column == "value".'));
   }
   const rows: Row[] = [];
   for (const r of t.rows) {
@@ -402,7 +403,7 @@ function opProject(ctx: Ctx, op: Extract<Op, { op: 'project' }>, t: Table, param
   const names = resolveNames(op.items);
   const cols = colSet(t);
   op.items.forEach((it) => {
-    if (it.expr.k === 'star') throw semantic('« project * » n’existe pas en KQL : listez les colonnes ou utilisez project-away.', it);
+    if (it.expr.k === 'star') throw semantic(tr('« project * » n’existe pas en KQL : listez les colonnes ou utilisez project-away.', '“project *” does not exist in KQL: list the columns or use project-away.'), it);
     checkIdents(it.expr, cols, ctx, params);
     typeCheck(it.expr, t.types, ctx);
   });
@@ -522,9 +523,9 @@ function buildAgg(ctx: Ctx, item: Named, t: Table, byNames: string[], params: Pa
   const e = item.expr;
   if (e.k !== 'call' || !AGGREGATES.has(e.name)) {
     throw semantic(
-      'Dans summarize, chaque agrégation doit être un appel direct à une fonction d’agrégation (count(), dcount(...), sum(...), arg_max(...), etc.).',
+      tr('Dans summarize, chaque agrégation doit être un appel direct à une fonction d’agrégation (count(), dcount(...), sum(...), arg_max(...), etc.).', 'In summarize, each aggregation must be a direct call to an aggregation function (count(), dcount(...), sum(...), arg_max(...), etc.).'),
       item,
-      'Pour calculer à partir d’agrégats, faites un second opérateur (extend) après le summarize.',
+      tr('Pour calculer à partir d’agrégats, faites un second opérateur (extend) après le summarize.', 'To compute from aggregates, use a second operator (extend) after the summarize.'),
     );
   }
   const fn = e.name;
@@ -532,7 +533,7 @@ function buildAgg(ctx: Ctx, item: Named, t: Table, byNames: string[], params: Pa
   const cols = colSet(t);
   const need = (min: number, max = min) => {
     if (args.length < min || args.length > max) {
-      throw semantic(`${fn}() attend ${min === max ? min : `${min} à ${max}`} argument(s), ${args.length} fourni(s).`, e);
+      throw semantic(tr(`${fn}() attend ${min === max ? min : `${min} à ${max}`} argument(s), ${args.length} fourni(s).`, `${fn}() expects ${min === max ? min : `${min} to ${max}`} argument(s), ${args.length} provided.`), e);
     }
   };
   args.forEach((a) => {
@@ -570,7 +571,7 @@ function buildAgg(ctx: Ctx, item: Named, t: Table, byNames: string[], params: Pa
               if (fn === 'sumif' && toBoolValue(ev(args[1], r)) !== true) return;
               const v = ev(args[0], r);
               const n = toNumber(v);
-              if (v !== null && n === null) throw semantic(`${fn}() attend des valeurs numériques.`, e, 'Convertissez avec toint() ou todouble().');
+              if (v !== null && n === null) throw semantic(tr(`${fn}() attend des valeurs numériques.`, `${fn}() expects numeric values.`), e, tr('Convertissez avec toint() ou todouble().', 'Convert with toint() or todouble().'));
               if (n !== null) s += n;
             },
             result: () => [s],
@@ -589,7 +590,7 @@ function buildAgg(ctx: Ctx, item: Named, t: Table, byNames: string[], params: Pa
             add: (r) => {
               const v = ev(args[0], r);
               const x = toNumber(v);
-              if (v !== null && x === null) throw semantic('avg() attend des valeurs numériques.', e, 'Convertissez avec toint() ou todouble().');
+              if (v !== null && x === null) throw semantic(tr('avg() attend des valeurs numériques.', 'avg() expects numeric values.'), e, tr('Convertissez avec toint() ou todouble().', 'Convert with toint() or todouble().'));
               if (x !== null) {
                 s += x;
                 n++;
@@ -666,7 +667,7 @@ function buildAgg(ctx: Ctx, item: Named, t: Table, byNames: string[], params: Pa
     case 'percentile': {
       need(2);
       const p = toNumber(evalExpr(args[1], envOf(ctx, null, params)));
-      if (p === null || p < 0 || p > 100) throw semantic('percentile() : le centile doit être compris entre 0 et 100.', e);
+      if (p === null || p < 0 || p > 100) throw semantic(tr('percentile() : le centile doit être compris entre 0 et 100.', 'percentile(): the percentile must be between 0 and 100.'), e);
       return {
         names: [baseName],
         types: ['number'],
@@ -689,7 +690,7 @@ function buildAgg(ctx: Ctx, item: Named, t: Table, byNames: string[], params: Pa
     }
     case 'arg_max':
     case 'arg_min': {
-      if (args.length < 2) throw semantic(`${fn}() attend au moins 2 arguments : la valeur à maximiser/minimiser puis les colonnes à retourner (ou *).`, e);
+      if (args.length < 2) throw semantic(tr(`${fn}() attend au moins 2 arguments : la valeur à maximiser/minimiser puis les colonnes à retourner (ou *).`, `${fn}() expects at least 2 arguments: the value to maximize/minimize, then the columns to return (or *).`), e);
       const key = args[0];
       const keyName = simpleName(key) ?? `${fn === 'arg_max' ? 'max' : 'min'}_`;
       let outCols: { name: string; expr: Expr; ty: Ty }[] = [];
@@ -703,7 +704,7 @@ function buildAgg(ctx: Ctx, item: Named, t: Table, byNames: string[], params: Pa
       } else {
         for (const a of args.slice(1)) {
           const n = simpleName(a);
-          if (!n) throw semantic(`${fn}() : les colonnes retournées doivent être des noms de colonnes ou *.`, a);
+          if (!n) throw semantic(tr(`${fn}() : les colonnes retournées doivent être des noms de colonnes ou *.`, `${fn}(): the returned columns must be column names or *.`), a);
           if (n === keyName) continue;
           outCols.push({ name: n, expr: a, ty: inferTy(a, t.types, ctx) });
         }
@@ -731,7 +732,7 @@ function buildAgg(ctx: Ctx, item: Named, t: Table, byNames: string[], params: Pa
       };
     }
     default:
-      throw semantic(`Agrégation « ${fn}() » non reconnue.`, e);
+      throw semantic(tr(`Agrégation « ${fn}() » non reconnue.`, `Aggregation “${fn}()” not recognized.`), e);
   }
 }
 
@@ -754,7 +755,7 @@ function opSummarize(ctx: Ctx, op: Extract<Op, { op: 'summarize' }>, t: Table, p
       outTypes[name] = a.types[i];
     });
   });
-  if (new Set(outNames).size !== outNames.length) throw semantic('Noms de colonnes dupliqués dans summarize.', op);
+  if (new Set(outNames).size !== outNames.length) throw semantic(tr('Noms de colonnes dupliqués dans summarize.', 'Duplicate column names in summarize.'), op);
 
   interface Group {
     by: Value[];
@@ -814,7 +815,7 @@ function sideCol(e: Expr): { side: 'left' | 'right'; col: string } | null {
 
 function opJoin(ctx: Ctx, op: Extract<Op, { op: 'join' }>, left: Table, params: Params): Table {
   if (!JOIN_KINDS.includes(op.kind)) {
-    throw semantic(`Type de jointure inconnu : « ${op.kind} ».`, op, `Types pris en charge : ${JOIN_KINDS.join(', ')}.`);
+    throw semantic(tr(`Type de jointure inconnu : « ${op.kind} ».`, `Unknown join type: “${op.kind}”.`), op, tr(`Types pris en charge : ${JOIN_KINDS.join(', ')}.`, `Supported types: ${JOIN_KINDS.join(', ')}.`));
   }
   const right = runPipeline(ctx, op.right, params);
   const conds: Expr[] = [];
@@ -829,15 +830,15 @@ function opJoin(ctx: Ctx, op: Extract<Op, { op: 'join' }>, left: Table, params: 
       if (a && b && a.side !== b.side) {
         keys.push(a.side === 'left' ? { l: a.col, r: b.col } : { l: b.col, r: a.col });
       } else {
-        throw semantic('Condition de jointure invalide.', c, 'Utilisez « on Colonne » (même nom des deux côtés) ou « on $left.A == $right.B ».');
+        throw semantic(tr('Condition de jointure invalide.', 'Invalid join condition.'), c, tr('Utilisez « on Colonne » (même nom des deux côtés) ou « on $left.A == $right.B ».', 'Use “on Column” (same name on both sides) or “on $left.A == $right.B”.'));
       }
     } else {
-      throw semantic('Condition de jointure invalide.', c, 'Utilisez « on Colonne » (même nom des deux côtés) ou « on $left.A == $right.B ».');
+      throw semantic(tr('Condition de jointure invalide.', 'Invalid join condition.'), c, tr('Utilisez « on Colonne » (même nom des deux côtés) ou « on $left.A == $right.B ».', 'Use “on Column” (same name on both sides) or “on $left.A == $right.B”.'));
     }
   }
   for (const k of keys) {
-    if (!left.columns.includes(k.l)) throw semantic(`Colonne de jointure « ${k.l} » introuvable à gauche. Colonnes : ${left.columns.join(', ')}.`, op, 'Les noms doivent exister dans les deux tables, ou utilisez $left.A == $right.B.');
-    if (!right.columns.includes(k.r)) throw semantic(`Colonne de jointure « ${k.r} » introuvable à droite. Colonnes : ${right.columns.join(', ')}.`, op, 'Les noms doivent exister dans les deux tables, ou utilisez $left.A == $right.B.');
+    if (!left.columns.includes(k.l)) throw semantic(tr(`Colonne de jointure « ${k.l} » introuvable à gauche. Colonnes : ${left.columns.join(', ')}.`, `Join column “${k.l}” not found on the left. Columns: ${left.columns.join(', ')}.`), op, tr('Les noms doivent exister dans les deux tables, ou utilisez $left.A == $right.B.', 'The names must exist in both tables, or use $left.A == $right.B.'));
+    if (!right.columns.includes(k.r)) throw semantic(tr(`Colonne de jointure « ${k.r} » introuvable à droite. Colonnes : ${right.columns.join(', ')}.`, `Join column “${k.r}” not found on the right. Columns: ${right.columns.join(', ')}.`), op, tr('Les noms doivent exister dans les deux tables, ou utilisez $left.A == $right.B.', 'The names must exist in both tables, or use $left.A == $right.B.'));
   }
   const keyOf = (r: Row, side: 'l' | 'r'): string | null => {
     const vals = keys.map((k) => r[side === 'l' ? k.l : k.r]);
@@ -983,7 +984,7 @@ function opMvExpand(ctx: Ctx, op: Extract<Op, { op: 'mv-expand' }>, t: Table, pa
   const names = op.items.map((it) => it.name ?? simpleName(it.expr));
   op.items.forEach((it, i) => {
     checkIdents(it.expr, cols, ctx, params);
-    if (!names[i]) throw semantic('mv-expand : donnez un nom avec « Nom = expression » pour les expressions calculées.', op);
+    if (!names[i]) throw semantic(tr('mv-expand : donnez un nom avec « Nom = expression » pour les expressions calculées.', 'mv-expand: give a name with “Name = expression” for computed expressions.'), op);
   });
   const outCols = [...t.columns];
   const types: Record<string, Ty> = { ...t.types };
