@@ -55,7 +55,7 @@ export function AiHome() {
             {lv.n === 6 ? (
               <a className="card link" href={href('ia', 'projets')}><strong>{tr('Projets de synthèse', 'Capstone projects')}</strong><p className="muted small">{PROJECTS.filter((x) => x.module === 'final').length} {tr('projets complets, avec architecture, étapes, critères de réussite et garde-fous.', 'complete projects.')}</p></a>
             ) : (
-              <div className="grid cols-3">
+              <div className={`grid cols-3${mods.length === 4 ? ' n4' : ''}`}>
                 {mods.map((m) => {
                   const st = moduleStats(m, CAT, p, PROJECTS.filter((x) => x.module === m.id).map((x) => x.id));
                   const pct = Math.round(((st.lessonsSeen / st.lessons) * 0.4 + (st.exercisesPassed / st.exercises) * 0.6) * 100);

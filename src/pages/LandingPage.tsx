@@ -52,13 +52,13 @@ export function LandingPage() {
           <span className="btn primary">{aiSeen > 0 ? tr('Continuer', 'Continue') : tr('Commencer', 'Start')} →</span>
         </a>
       </div>
-      <section className="how card stack">
-        <h2 style={{ margin: 0 }}>{tr('Comment ça marche', 'How it works')}</h2>
-        <ul>
+      <section className="stack" aria-labelledby="how-h">
+        <h2 id="how-h" style={{ margin: 0 }}>{tr('Comment ça marche', 'How it works')}</h2>
+        <ol className="how">
           <li>{tr('Votre progression est enregistrée dans ce navigateur, séparément pour chaque section. Aucune synchronisation entre appareils : exportez puis importez un fichier pour en changer.', 'Progress is stored in this browser, separately for each section. No device sync.')}</li>
           <li>{tr('Les évaluations sont corrigées par des règles déterministes. Les travaux ouverts ont une grille d’autoévaluation, jamais une note automatique.', 'Assessments are graded by deterministic rules. Open work uses a self-assessment grid.')}</li>
           <li>{tr('Les actions sensibles (isoler un appareil, bloquer un compte, supprimer un message) sont toujours simulées.', 'Sensitive actions are always simulated.')}</li>
-        </ul>
+        </ol>
       </section>
     </div>
   );

@@ -455,6 +455,14 @@ main:focus { outline: none; }
 .section-card:hover { transform: translateY(-2px); border-color: var(--pc, var(--accent)); }
 .section-card h2 { margin: 0.1em 0 0; }
 .section-card .btn { justify-self: start; }
+.section-card { grid-template-rows: auto auto 1fr auto; }
+.section-card > .row { flex-wrap: nowrap; gap: 1rem; }
+.section-card > .row > :last-child { flex: none; }
+.landing .hero { padding-top: 2rem; }
+.landing .hero .pill { display: inline-block; margin-bottom: 1rem; }
+.landing .hero h1 { margin-top: 0; }
+.landing .how { margin-top: 0.25rem; }
+.landing .section-cards { margin-bottom: 1rem; }
 @media (max-width: 760px) {
   .sections { order: 9; flex: 0 0 auto; }
   .nav { order: 10; }
@@ -504,3 +512,12 @@ main:focus { outline: none; }
 }
 .dnd-item select { width: 100%; text-overflow: ellipsis; }
 .dnd-item .grow { flex: 1 1 12rem; }
+
+/* Section IA : grille de modules régulière et anneau de progression stable */
+.ai-level .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 900px) { .ai-level .grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .ai-level .grid.cols-3 { grid-template-columns: minmax(0, 1fr); } }
+.ai-mod { align-content: start; }
+.ai-mod > .row { flex-wrap: nowrap; gap: 0.75rem; }
+.ai-mod > .row > :last-child { flex: none; }
+@media (min-width: 901px) { .ai-level .grid.cols-3.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
