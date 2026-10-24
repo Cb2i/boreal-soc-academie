@@ -195,6 +195,17 @@ const ok = (name, cond, extra = '') => {
     ok(`mobile 375 px : pas de défilement horizontal (#/${r})`, overflow <= 1, 'débordement ' + overflow);
   }
 
+  await mp.goto(base);
+  await mp.waitForSelector('.site-header');
+  const hh = await mp.evaluate(() => document.querySelector('.site-header').getBoundingClientRect().height);
+  ok('mobile : en-tête compact (moins de 130 px)', hh < 130, Math.round(hh) + ' px');
+  const navRow = await mp.evaluate(() => { const n = document.querySelector('.nav'); return n.scrollWidth >= n.clientWidth && getComputedStyle(n).flexWrap === 'nowrap'; });
+  ok('mobile : menu sur une ligne, défilable', navRow);
+  await mp.goto(base + '#/exercice/kql-001');
+  await mp.waitForSelector('.ex-layout');
+  const order = await mp.evaluate(() => { const ed = document.querySelector('.ex-side').getBoundingClientRect().top; const hints = [...document.querySelectorAll('.ex-layout h2')].find((h) => /Indices|Hints/.test(h.textContent)).getBoundingClientRect().top; return ed < hints; });
+  ok('mobile : l’espace de travail vient avant les indices', order);
+
   // 11b. Langue : bouton EN / FR (contenu anglais chargé à la demande, choix mémorisé)
   const lctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const lp = await lctx.newPage();

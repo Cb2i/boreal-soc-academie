@@ -423,3 +423,29 @@ main:focus { outline: none; }
 /* Entrée dans un parcours */
 .path-actions { align-items: center; gap: 0.6rem; }
 .linklike { background: none; border: 0; padding: 0; color: var(--link, inherit); text-decoration: underline; cursor: pointer; font: inherit; }
+
+/* Téléphone : en-tête compact, navigation défilante sur une seule ligne */
+@media (max-width: 760px) {
+  .site-header { position: static; }
+  .site-header .wrap { gap: 0.4rem 0.45rem; min-height: 0; padding-block: 0.5rem; }
+  .brand { font-size: 1.1rem; margin-right: auto; }
+  .brand svg { width: 26px; height: 26px; }
+  .nav { order: 10; flex: 0 0 100%; flex-wrap: nowrap; overflow-x: auto; gap: 0.1rem; margin-inline: calc(var(--gutter, 1rem) * -1); padding-inline: var(--gutter, 1rem); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { white-space: nowrap; flex: 0 0 auto; }
+  .xp-chip, .streak-chip { font-size: 0.78rem; padding: 0.2rem 0.5rem; }
+  .lang-btn { padding: 0.2rem 0.55rem; }
+}
+
+/* Téléphone : l'énoncé, puis l'espace de travail, puis les indices */
+@media (max-width: 979px) {
+  .ex-layout { gap: 1rem; }
+  .ex-layout > section:first-child { display: contents; }
+  .ex-layout > section:first-child > .card:nth-child(1) { order: 1; }
+  .ex-layout > section:first-child > .card:nth-child(2) { order: 3; }
+  .ex-layout > .ex-side { order: 2; }
+}
+/* Écrans tactiles : pas de raccourcis clavier affichés */
+@media (hover: none) and (pointer: coarse) {
+  .btn kbd, .search-btn kbd { display: none; }
+}
