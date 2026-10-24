@@ -1,0 +1,11 @@
+id,cve,actif,criticite_actif,expose_internet,cvss,vpr,epss,kev,correctif_disponible,source
+F-01,CVE-2099-0001,srv-web-01,haute,oui,9.8,9.6,0.92,oui,oui,scanner-A
+F-02,CVE-2099-0002,srv-fichiers-02,moyenne,non,9.8,5.1,0.01,non,oui,scanner-A
+F-03,CVE-2099-0003,poste-compta-07,moyenne,non,7.5,7.9,0.34,non,oui,defender-vm
+F-04,CVE-2099-0004,vpn-gw-01,haute,oui,6.5,8.8,0.71,non,oui,scanner-A
+F-05,CVE-2099-0005,poste-dev-12,basse,non,8.8,3.2,0.02,non,oui,defender-vm
+F-06,CVE-2099-0006,srv-ad-01,haute,non,7.2,6.0,0.08,non,non,scanner-A
+F-07,CVE-2099-0007,imprimante-03,basse,non,5.3,,,non,oui,scanner-A
+F-08,CVE-2099-0008,srv-web-02,haute,oui,5.0,4.0,0.03,oui,oui,defender-vm
+F-09,CVE-2099-0009,poste-rh-03,moyenne,non,9.1,4.4,0.05,non,oui,defender-vm
+F-10,CVE-2099-0010,srv-sauvegarde-01,haute,non,8.1,7.0,0.12,non,oui,scanner-A
