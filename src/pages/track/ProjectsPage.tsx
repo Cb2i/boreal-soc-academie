@@ -1,22 +1,21 @@
 import { useState } from 'react';
-import { LEVELS, MODULE_BY_ID, MODULES, PROJECT_BY_ID, PROJECTS, RESOURCES } from '../../agentic/content/index.ts';
-import { aiStore, useAi } from '../../agentic/state.ts';
+import { useTrack } from '../../agentic/TrackContext.tsx';
 import type { ProjectStatus } from '../../agentic/state.ts';
 import { Inline } from '../../components/Markdown.tsx';
-import { href } from '../../router.ts';
 import { tr } from '../../i18n/lang.ts';
 
 const STATUS: { id: ProjectStatus; label: string }[] = [{ id: 'idee', label: 'Idée' }, { id: 'en-cours', label: 'En cours' }, { id: 'realise', label: 'Réalisé' }];
 
 export function ProjectsPage() {
-  const p = useAi();
+  const { c, p, meta, to } = useTrack();
+  const { MODULE_BY_ID, MODULES, PROJECTS } = c;
   const [mod, setMod] = useState('');
   const [level, setLevel] = useState('');
   const list = PROJECTS.filter((x) => (!mod || x.module === mod) && (!level || x.level === level));
   const done = PROJECTS.filter((x) => p.projects[x.id]?.status === 'realise').length;
   return (
     <div className="stack">
-      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={href('ia')}>Agentic AI</a> / <span aria-current="page">{tr('Projets', 'Projects')}</span></nav>
+      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={to()}>{tr(meta.navFr, meta.navEn)}</a> / <span aria-current="page">{tr('Projets', 'Projects')}</span></nav>
       <h1>{tr('Projets', 'Projects')}</h1>
       <p className="lead muted">{tr('Chaque projet décrit un problème, une architecture, des étapes, des critères de réussite et des garde-fous. Vous en suivez l’état vous-même : idée, en cours, réalisé.', 'Each project describes a problem, architecture, steps, success criteria and guardrails.')} <strong>{done}/{PROJECTS.length}</strong> {tr('réalisés.', 'done.')}</p>
       <div className="row filters">
@@ -27,7 +26,7 @@ export function ProjectsPage() {
         {list.map((x) => {
           const r = p.projects[x.id];
           return (
-            <a key={x.id} className="card link" href={href('ia', 'projet', x.id)}>
+            <a key={x.id} className="card link" href={to('projet', x.id)}>
               <div className="row"><span className="pill">{x.level}</span><span className="pill">{x.module === 'final' ? tr('Synthèse', 'Capstone') : `${tr('Module', 'Module')} ${MODULE_BY_ID[x.module]?.n}`}</span></div>
               <h3>{x.title}</h3>
               <p className="muted small">{x.problem}</p>
@@ -42,9 +41,10 @@ export function ProjectsPage() {
 }
 
 export function ProjectPage({ id }: { id: string }) {
-  const p = useAi();
+  const { c, p, meta, to, store: aiStore } = useTrack();
+  const { LEVELS, MODULE_BY_ID, PROJECT_BY_ID, RESOURCES } = c;
   const x = PROJECT_BY_ID[id];
-  if (!x) return <div className="state" role="alert"><h2>{tr('Projet introuvable', 'Project not found')}</h2><a className="btn" href={href('ia', 'projets')}>{tr('Tous les projets', 'All projects')}</a></div>;
+  if (!x) return <div className="state" role="alert"><h2>{tr('Projet introuvable', 'Project not found')}</h2><a className="btn" href={to('projets')}>{tr('Tous les projets', 'All projects')}</a></div>;
   const r = p.projects[x.id] ?? { status: 'idee' as ProjectStatus, checks: [], notes: '', at: 0 };
   const set = (patch: Partial<typeof r>) => aiStore.set((s) => ({ ...s, projects: { ...s.projects, [x.id]: { ...r, ...patch, at: Date.now() } } }));
   const lv = x.module === 'final' ? LEVELS[5] : LEVELS.find((l) => l.n === MODULE_BY_ID[x.module]?.level) ?? LEVELS[0];
@@ -53,9 +53,9 @@ export function ProjectPage({ id }: { id: string }) {
   const list = (a: string[], ordered = false) => (ordered ? <ol>{a.map((s, i) => <li key={i}><Inline text={s} /></li>)}</ol> : <ul>{a.map((s, i) => <li key={i}><Inline text={s} /></li>)}</ul>);
   return (
     <div className="stack" style={{ ['--pc' as string]: lv.accent }}>
-      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={href('ia')}>Agentic AI</a> / <a href={href('ia', 'projets')}>{tr('Projets', 'Projects')}</a> / <span aria-current="page">{x.title}</span></nav>
+      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={to()}>{tr(meta.navFr, meta.navEn)}</a> / <a href={to('projets')}>{tr('Projets', 'Projects')}</a> / <span aria-current="page">{x.title}</span></nav>
       <h1>{x.title}</h1>
-      <div className="row"><span className="pill">{x.level}</span>{x.module !== 'final' && <a className="pill" href={href('ia', 'module', x.module)}>{tr('Module', 'Module')} {MODULE_BY_ID[x.module]?.n}</a>}</div>
+      <div className="row"><span className="pill">{x.level}</span>{x.module !== 'final' && <a className="pill" href={to('module', x.module)}>{tr('Module', 'Module')} {MODULE_BY_ID[x.module]?.n}</a>}</div>
       <div className="card stack">
         <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{tr('Votre suivi', 'Your tracking')}</h2>
         <div className="row" role="radiogroup" aria-label={tr('État du projet', 'Project status')}>
@@ -91,7 +91,7 @@ export function ProjectPage({ id }: { id: string }) {
           <dt>{tr('Limites et contrôles humains', 'Limits and human controls')}</dt><dd><Inline text={x.connected.limits} /></dd>
         </dl>
       ))}
-      {res.length > 0 && sec(tr('Ressources', 'Resources'), <ul>{res.map((q) => <li key={q.id}><a href={href('ia', 'ressources') + '?r=' + q.id}>{q.title}</a> <span className={`pill ${q.status === 'teste' ? 'ok' : 'warn'}`}>{q.status === 'teste' ? 'testé' : 'à vérifier'}</span></li>)}</ul>)}
+      {res.length > 0 && sec(tr('Ressources', 'Resources'), <ul>{res.map((q) => <li key={q.id}><a href={to('ressources') + '?r=' + q.id}>{q.title}</a> <span className={`pill ${q.status === 'teste' ? 'ok' : 'warn'}`}>{q.status === 'teste' ? 'testé' : 'à vérifier'}</span></li>)}</ul>)}
     </div>
   );
 }

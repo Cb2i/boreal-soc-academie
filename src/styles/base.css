@@ -464,7 +464,8 @@ main:focus { outline: none; }
 .landing .how { margin-top: 0.25rem; }
 .landing .section-cards { margin-bottom: 1rem; }
 @media (max-width: 760px) {
-  .sections { order: 9; flex: 0 0 auto; }
+  .sections { order: 9; flex: 0 0 100%; max-width: 100%; box-sizing: border-box; display: flex; }
+  .sections a { flex: 0 0 auto; }
   .nav { order: 10; }
 }
 
@@ -540,5 +541,5 @@ main:focus { outline: none; }
 
 /* Accueil prêt pour d'autres sections (Defender XDR, Intune, Purview...) : la grille s'adapte au nombre de cartes */
 .landing .section-cards { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
-.sections { overflow-x: auto; scrollbar-width: none; }
+.sections { overflow-x: auto; scrollbar-width: none; max-width: 100%; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
 .sections::-webkit-scrollbar { display: none; }

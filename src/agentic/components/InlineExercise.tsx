@@ -3,7 +3,8 @@ import type { AiExercise } from '../types.ts';
 import { AI_TYPE_LABELS, DIM_LABELS, ROLE_LABELS } from '../types.ts';
 import { validateAi } from '../validate.ts';
 import type { AiAnswer, AiVerdict } from '../validate.ts';
-import { aiStore, recordItem, useAi } from '../state.ts';
+import { recordItem } from '../state.ts';
+import { useTrack } from '../TrackContext.tsx';
 import { AiExerciseView, initialAiAnswer } from './AiExerciseView.tsx';
 import { Inline, Markdown } from '../../components/Markdown.tsx';
 import { useAnnounce } from '../../components/Announcer.tsx';
@@ -15,7 +16,7 @@ export function verdictClass(v: AiVerdict): string {
 
 /** Un exercice qu'on fait et corrige sur place. Le résultat est enregistré dans la progression locale. */
 export function InlineExercise({ ex, compact = false }: { ex: AiExercise; compact?: boolean }) {
-  const p = useAi();
+  const { p, store } = useTrack();
   const announce = useAnnounce();
   const [answer, setAnswer] = useState<AiAnswer>(() => initialAiAnswer(ex));
   const [verdict, setVerdict] = useState<AiVerdict | null>(null);
@@ -33,10 +34,10 @@ export function InlineExercise({ ex, compact = false }: { ex: AiExercise; compac
     announce(`${v.title}. ${v.message}`);
     if (ex.type === 'open') {
       const a = answer as { checked: string[]; text: string };
-      aiStore.set((s) => ({ ...s, open: { ...s.open, [ex.id]: { checked: a.checked, text: a.text, at: Date.now() } } }));
+      store.set((s) => ({ ...s, open: { ...s.open, [ex.id]: { checked: a.checked, text: a.text, at: Date.now() } } }));
     }
     // Un exercice dont la correction a été consultée avant de répondre ne compte pas comme réussi.
-    aiStore.set((s) => recordItem(s, ex.id, v.score, v.correct && !revealed));
+    store.set((s) => recordItem(s, ex.id, v.score, v.correct && !revealed));
   };
 
   const retry = () => {

@@ -1,15 +1,14 @@
-import { CASE_BY_MODULE, EX_BY_ID, MODULE_BY_ID } from '../../agentic/content/index.ts';
-import { useAi } from '../../agentic/state.ts';
+import { useTrack } from '../../agentic/TrackContext.tsx';
 import { InlineExercise } from '../../agentic/components/InlineExercise.tsx';
 import { Markdown } from '../../components/Markdown.tsx';
-import { href } from '../../router.ts';
 import { tr } from '../../i18n/lang.ts';
 
 export function CasePage({ moduleId }: { moduleId: string }) {
-  const p = useAi();
+  const { c, p, meta, to } = useTrack();
+  const { CASE_BY_MODULE, EX_BY_ID, MODULE_BY_ID } = c;
   const m = MODULE_BY_ID[moduleId];
   const cs = CASE_BY_MODULE[moduleId];
-  if (!m || !cs) return <div className="state" role="alert"><h2>{tr('Cas pratique introuvable', 'Case not found')}</h2><a className="btn" href={href('ia')}>{tr('Retour', 'Back')}</a></div>;
+  if (!m || !cs) return <div className="state" role="alert"><h2>{tr('Cas pratique introuvable', 'Case not found')}</h2><a className="btn" href={to()}>{tr('Retour', 'Back')}</a></div>;
   const steps = cs.steps.map((id) => EX_BY_ID[id]).filter(Boolean);
   const firstOpen = steps.findIndex((e) => !p.items[e.id]);
   const visible = firstOpen === -1 ? steps.length : firstOpen + 1;
@@ -18,7 +17,7 @@ export function CasePage({ moduleId }: { moduleId: string }) {
   const deliverable = cs.deliverable ? EX_BY_ID[cs.deliverable] : null;
   return (
     <div className="stack">
-      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={href('ia')}>Agentic AI</a> / <a href={href('ia', 'module', m.id)}>{tr('Module', 'Module')} {m.n}</a> / <span aria-current="page">{tr('Cas pratique', 'Practical case')}</span></nav>
+      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={to()}>{tr(meta.navFr, meta.navEn)}</a> / <a href={to('module', m.id)}>{tr('Module', 'Module')} {m.n}</a> / <span aria-current="page">{tr('Cas pratique', 'Practical case')}</span></nav>
       <h1>{cs.title}</h1>
       <div className="card stack"><h2 style={{ margin: 0 }}>{tr('Contexte', 'Scenario')}</h2><Markdown source={cs.scenario} /><p className="muted small">{cs.minutes} min · {steps.length} {tr('étapes', 'steps')}{deliverable ? tr(' et un livrable à autoévaluer', ' and a deliverable to self-assess') : ''}</p></div>
       {score !== null && <div className="verdict ok"><strong>{Math.round(score * 100)} %</strong> {tr('sur l’ensemble des étapes (meilleurs scores). Les étapes se refont autant que vous voulez.', 'across all steps (best scores).')}</div>}
@@ -32,7 +31,7 @@ export function CasePage({ moduleId }: { moduleId: string }) {
       {deliverable && firstOpen === -1 && (
         <section className="stack"><h2>{tr('Livrable final', 'Final deliverable')}</h2><InlineExercise ex={deliverable} /></section>
       )}
-      <div className="row"><a className="btn" href={href('ia', 'module', m.id)}>{tr('Retour au module', 'Back to module')}</a></div>
+      <div className="row"><a className="btn" href={to('module', m.id)}>{tr('Retour au module', 'Back to module')}</a></div>
     </div>
   );
 }

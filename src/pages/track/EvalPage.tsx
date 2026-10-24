@@ -1,27 +1,26 @@
 import { useState } from 'react';
 import { DIM_LABELS } from '../../agentic/types.ts';
 import type { AiExercise, Dim } from '../../agentic/types.ts';
-import { EX_BY_ID, MODULE_BY_ID } from '../../agentic/content/index.ts';
 import { remediationFor } from '../../agentic/engine.ts';
 import { validateAi } from '../../agentic/validate.ts';
 import type { AiAnswer, AiVerdict } from '../../agentic/validate.ts';
-import { aiStore, recordEval, recordItem, useAi } from '../../agentic/state.ts';
+import { recordEval, recordItem } from '../../agentic/state.ts';
+import { useTrack } from '../../agentic/TrackContext.tsx';
 import { AiExerciseView, initialAiAnswer } from '../../agentic/components/AiExerciseView.tsx';
 import { verdictClass } from '../../agentic/components/InlineExercise.tsx';
 import { Inline, Markdown } from '../../components/Markdown.tsx';
-import { href } from '../../router.ts';
-import { CAT } from './AiHome.tsx';
 import { tr } from '../../i18n/lang.ts';
 
 /** Évaluation du module : on valide chaque réponse sans retour immédiat, puis on corrige tout à la fin. */
 export function EvalPage({ moduleId }: { moduleId: string }) {
-  const p = useAi();
+  const { c, p, cat: CAT, meta, to, store: aiStore } = useTrack();
+  const { EX_BY_ID, MODULE_BY_ID } = c;
   const m = MODULE_BY_ID[moduleId];
   const [answers, setAnswers] = useState<Record<string, AiAnswer>>({});
   const [locked, setLocked] = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, AiVerdict> | null>(null);
   const [run, setRun] = useState(0);
-  if (!m) return <div className="state" role="alert"><h2>{tr('Module introuvable', 'Module not found')}</h2><a className="btn" href={href('ia')}>{tr('Retour', 'Back')}</a></div>;
+  if (!m) return <div className="state" role="alert"><h2>{tr('Module introuvable', 'Module not found')}</h2><a className="btn" href={to()}>{tr('Retour', 'Back')}</a></div>;
   const exs = m.evaluation.map((id) => EX_BY_ID[id]).filter(Boolean) as AiExercise[];
   const answered = exs.filter((e) => locked[e.id]).length;
   const finish = () => {
@@ -50,7 +49,7 @@ export function EvalPage({ moduleId }: { moduleId: string }) {
     const rem = remediationFor(m.id, weakTagsList, CAT);
     return (
       <div className="stack">
-        <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={href('ia')}>Agentic AI</a> / <a href={href('ia', 'module', m.id)}>{tr('Module', 'Module')} {m.n}</a> / <span aria-current="page">{tr('Résultats', 'Results')}</span></nav>
+        <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={to()}>{tr(meta.navFr, meta.navEn)}</a> / <a href={to('module', m.id)}>{tr('Module', 'Module')} {m.n}</a> / <span aria-current="page">{tr('Résultats', 'Results')}</span></nav>
         <h1>{tr('Résultats de l’évaluation', 'Assessment results')} : {m.title}</h1>
         <div className="card stack">
           <h2 style={{ margin: 0 }}>{Math.round(score * 100)} % <span className="muted small">({exs.filter((e) => results[e.id].correct).length}/{exs.length} {tr('questions réussies', 'questions passed')})</span></h2>
@@ -60,11 +59,11 @@ export function EvalPage({ moduleId }: { moduleId: string }) {
             <div>
               <h3>{tr('Notions à revoir', 'Notions to review')}</h3>
               <p>{weakTagsList.map((t) => <span key={t} className="pill" style={{ marginRight: '0.3rem' }}>{t}</span>)}</p>
-              {rem.lessons.length > 0 && <p>{tr('Leçons à relire', 'Lessons to re-read')} : {rem.lessons.map((l, i) => <span key={l.id}>{i > 0 ? ', ' : ''}<a href={href('ia', 'cours', l.id)}>{l.title}</a></span>)}</p>}
-              <a className="btn" href={href('ia', 'module', m.id) + '#m-rem'}>{tr('Voir les exercices de remédiation', 'See remediation exercises')}</a>
+              {rem.lessons.length > 0 && <p>{tr('Leçons à relire', 'Lessons to re-read')} : {rem.lessons.map((l, i) => <span key={l.id}>{i > 0 ? ', ' : ''}<a href={to('cours', l.id)}>{l.title}</a></span>)}</p>}
+              <a className="btn" href={to('module', m.id) + '#m-rem'}>{tr('Voir les exercices de remédiation', 'See remediation exercises')}</a>
             </div>
           )}
-          <div className="row"><button type="button" className="btn" onClick={restart}>{tr('Repasser l’évaluation', 'Retake')}</button><a className="btn primary" href={href('ia', 'module', m.id)}>{tr('Retour au module', 'Back to module')}</a></div>
+          <div className="row"><button type="button" className="btn" onClick={restart}>{tr('Repasser l’évaluation', 'Retake')}</button><a className="btn primary" href={to('module', m.id)}>{tr('Retour au module', 'Back to module')}</a></div>
         </div>
         <h2>{tr('Corrections', 'Corrections')}</h2>
         {exs.map((e, i) => {
@@ -85,7 +84,7 @@ export function EvalPage({ moduleId }: { moduleId: string }) {
 
   return (
     <div className="stack" key={run}>
-      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={href('ia')}>Agentic AI</a> / <a href={href('ia', 'module', m.id)}>{tr('Module', 'Module')} {m.n}</a> / <span aria-current="page">{tr('Évaluation', 'Assessment')}</span></nav>
+      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={to()}>{tr(meta.navFr, meta.navEn)}</a> / <a href={to('module', m.id)}>{tr('Module', 'Module')} {m.n}</a> / <span aria-current="page">{tr('Évaluation', 'Assessment')}</span></nav>
       <h1>{tr('Évaluation du module', 'Module assessment')} {m.n} : {m.title}</h1>
       <p className="muted">{tr('Validez chaque réponse avec son bouton. Vous ne verrez les corrections qu’à la fin, comme dans une vraie évaluation. Aucune limite de temps.', 'Submit each answer with its button. Corrections appear at the end. No time limit.')}</p>
       <div className="bar" role="progressbar" aria-valuenow={answered} aria-valuemin={0} aria-valuemax={exs.length} aria-label={tr('Questions validées', 'Answered questions')}><span style={{ width: `${(answered / exs.length) * 100}%` }} /></div>

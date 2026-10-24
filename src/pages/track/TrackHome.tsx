@@ -1,14 +1,12 @@
-import { CASE_BY_MODULE, LEVELS, MODULES, PROJECTS, LESSONS, EXERCISES, COMPETENCIES } from '../../agentic/content/index.ts';
 import { moduleStats, recommend } from '../../agentic/engine.ts';
-import { useAi } from '../../agentic/state.ts';
-import { href } from '../../router.ts';
+import { useTrack } from '../../agentic/TrackContext.tsx';
 import { Ring } from '../../components/Ring.tsx';
+import { Inline } from '../../components/Markdown.tsx';
 import { tr } from '../../i18n/lang.ts';
 
-export const CAT = { modules: MODULES, lessons: LESSONS, exercises: EXERCISES, competencies: COMPETENCIES };
-
-export function AiHome() {
-  const p = useAi();
+export function TrackHome() {
+  const { c, p, cat: CAT, meta, to, track } = useTrack();
+  const { CASE_BY_MODULE, LEVELS, MODULES, PROJECTS, LESSONS, EXERCISES, COMPETENCIES } = c;
   const next = recommend(CAT, p);
   const totalLessons = LESSONS.length;
   const seen = LESSONS.filter((l) => p.lessonsSeen[l.id]).length;
@@ -16,15 +14,15 @@ export function AiHome() {
     const ev = EXERCISES.filter((e) => e.competency === c.id && (e.role === 'eval' || e.role === 'case') && e.type !== 'open');
     return ev.length > 0 && ev.every((e) => p.items[e.id]) && ev.reduce((a, e) => a + p.items[e.id].best, 0) / ev.length >= 0.7;
   }).length;
-  const link = next.kind === 'lesson' ? href('ia', 'cours', next.id) : next.kind === 'evaluation' ? href('ia', 'evaluation', next.module) : next.kind === 'case' ? href('ia', 'cas', next.module) : next.kind === 'remediation' ? href('ia', 'module', next.module) : href('ia', 'projets');
+  const link = next.kind === 'lesson' ? to('cours', next.id) : next.kind === 'evaluation' ? to('evaluation', next.module) : next.kind === 'case' ? to('cas', next.module) : next.kind === 'remediation' ? to('module', next.module) : to('projets');
   const label = next.kind === 'lesson' ? tr('Lire la leçon', 'Read the lesson') : next.kind === 'evaluation' ? tr('Passer l’évaluation', 'Take the assessment') : next.kind === 'case' ? tr('Ouvrir le cas pratique', 'Open the practical case') : next.kind === 'remediation' ? tr('Voir la remédiation', 'See remediation') : tr('Voir les projets', 'See the projects');
   return (
     <div className="stack ai-home">
       <section className="ai-hero reveal">
         <div>
-          <span className="kicker">{tr('Section 2', 'Section 2')}</span>
-          <h1>Agentic AI for Cybersecurity</h1>
-          <p className="lead muted">{tr('Une formation du débutant à l’expert : comprendre l’IA, distinguer automatisation, workflow avec LLM et agent, puis concevoir, tester, sécuriser et exploiter des workflows pour la cybersécurité. Tout fonctionne avec des simulations et des données fictives : aucun tenant réel, aucune API payante.', 'A course from beginner to expert. The content is written in French.')}</p>
+          <span className="kicker">{meta.kickerFr}</span>
+          <h1>{tr(meta.titleFr, meta.titleEn)}</h1>
+          <p className="lead muted">{track.home?.lead ?? tr(meta.descFr, meta.descEn)}</p>
           <div className="stats-row">
             <span><strong>{MODULES.length}</strong> {tr('modules', 'modules')}</span>
             <span><strong>{totalLessons}</strong> {tr('leçons', 'lessons')}</span>
@@ -32,6 +30,7 @@ export function AiHome() {
             <span><strong>{PROJECTS.length}</strong> {tr('projets', 'projects')}</span>
           </div>
           <p className="muted small">{tr('Le contenu de cette section est rédigé en français uniquement.', 'The content of this section is written in French only.')}</p>
+          {(track.home?.notes ?? []).map((n, i) => <p key={i} className="muted small"><Inline text={n} /></p>)}
         </div>
         <aside className="next-card" aria-label={tr('Votre prochaine étape', 'Your next step')}>
           <span className="kicker">{tr('Votre prochaine étape', 'Your next step')}</span>
@@ -46,21 +45,21 @@ export function AiHome() {
         </aside>
       </section>
 
-      {LEVELS.filter((lv) => lv.n === 6 || MODULES.some((m) => m.level === lv.n)).map((lv) => {
+      {LEVELS.filter((lv) => lv.capstone || MODULES.some((m) => m.level === lv.n)).map((lv) => {
         const mods = MODULES.filter((m) => m.level === lv.n);
         return (
           <section key={lv.n} className="ai-level" style={{ ['--pc' as string]: lv.accent }} aria-labelledby={`lv-${lv.n}`}>
             <h2 id={`lv-${lv.n}`}><span className="lvl-n">{lv.n}</span> {lv.title}</h2>
             <p className="muted">{lv.summary}</p>
             {lv.n === 6 ? (
-              <a className="card link" href={href('ia', 'projets')}><strong>{tr('Projets de synthèse', 'Capstone projects')}</strong><p className="muted small">{PROJECTS.filter((x) => x.module === 'final').length} {tr('projets complets, avec architecture, étapes, critères de réussite et garde-fous.', 'complete projects.')}</p></a>
+              <a className="card link" href={to('projets')}><strong>{tr('Projets de synthèse', 'Capstone projects')}</strong><p className="muted small">{PROJECTS.filter((x) => x.module === 'final').length} {tr('projets complets, avec architecture, étapes, critères de réussite et garde-fous.', 'complete projects.')}</p></a>
             ) : (
               <div className={`grid cols-3${mods.length === 4 ? ' n4' : ''}`}>
                 {mods.map((m) => {
                   const st = moduleStats(m, CAT, p, PROJECTS.filter((x) => x.module === m.id).map((x) => x.id));
                   const pct = Math.round(((st.lessonsSeen / st.lessons) * 0.4 + (st.exercisesPassed / st.exercises) * 0.6) * 100);
                   return (
-                    <a key={m.id} className="card link ai-mod" href={href('ia', 'module', m.id)}>
+                    <a key={m.id} className="card link ai-mod" href={to('module', m.id)}>
                       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                           <span className="muted small">{tr('Module', 'Module')} {m.n}</span>

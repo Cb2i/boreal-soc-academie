@@ -268,14 +268,16 @@ export interface AiLevel {
   title: string;
   summary: string;
   accent: string;
+  /** Niveau des projets de synthèse : affiche un lien vers les projets plutôt que des modules. */
+  capstone?: boolean;
 }
 
 export interface ResourceDef {
   id: string;
   title: string;
-  /** Chemin relatif sous public/ressources-ia/. */
+  /** Chemin relatif sous le répertoire de ressources du parcours (public/ressources-ia/, public/ressources-xdr/…). */
   file: string;
-  kind: 'json' | 'python' | 'prompt' | 'n8n' | 'config' | 'grille' | 'schema' | 'donnees' | 'logicapps' | 'markdown';
+  kind: 'json' | 'python' | 'prompt' | 'n8n' | 'config' | 'grille' | 'schema' | 'donnees' | 'logicapps' | 'markdown' | 'kql' | 'powershell' | 'checklist' | 'matrice' | 'rapport' | 'politique' | 'api';
   description: string;
   module: string;
   /** Statut honnête : testé (et comment) ou à vérifier avant usage. */

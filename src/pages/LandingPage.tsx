@@ -1,22 +1,47 @@
 import { ALL_EXERCISES, ALL_LESSONS } from '../content/index.ts';
 import { PATHS } from '../content/paths.ts';
-import { COMPETENCIES as AI_COMP, EXERCISES as AI_EX, LESSONS as AI_LESSONS, MODULES as AI_MODULES, PROJECTS as AI_PROJECTS } from '../agentic/content/index.ts';
-import { useAi } from '../agentic/state.ts';
+import { useStoreProgress } from '../agentic/state.ts';
+import { STORES } from '../tracks/stores.ts';
+import { TRACKS } from '../tracks/meta.ts';
+import { TRACK_ENTRIES } from '../tracks/entries.ts';
+import stats from '../tracks/stats.json';
 import { useProgress } from '../state/useProgress.ts';
 import { href } from '../router.ts';
 import { Ring } from '../components/Ring.tsx';
 import { tr } from '../i18n/lang.ts';
 
-/** Accueil du site : choix de la grande section. Les deux sections ont des contenus et des progressions indépendants. */
+type Stat = { modules: number; lessons: number; exercises: number; projects: number; competencies: number; resources: number };
+const STATS = stats as Record<string, Stat>;
+
+function TrackCard({ id, delay }: { id: string; delay: number }) {
+  const meta = TRACKS.find((t) => t.id === id)!;
+  const p = useStoreProgress(STORES[id]);
+  const st = STATS[id];
+  const seen = Object.keys(p.lessonsSeen).length;
+  const passed = Object.values(p.items).filter((r) => r.passed).length;
+  const pct = st && st.exercises ? Math.min(100, Math.round((passed / st.exercises) * 100)) : 0;
+  return (
+    <a className="section-card reveal" href={href(meta.route)} style={{ ['--pc' as string]: meta.accent, animationDelay: `${delay}s` }}>
+      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <span className="kicker">{meta.kickerFr}</span>
+          <h2>{tr(meta.titleFr, meta.titleEn)}</h2>
+        </div>
+        <Ring pct={pct} size={56} stroke={6} color={meta.accent}><span className="ring-num">{pct}%</span></Ring>
+      </div>
+      <p className="muted">{tr(meta.descFr, meta.descEn)}</p>
+      {st && <p className="muted small">{st.modules} {tr('modules', 'modules')} · {st.lessons} {tr('leçons', 'lessons')} · {st.exercises} {tr('exercices et questions', 'exercises and questions')} · {st.projects} {tr('projets', 'projects')} · {seen} {tr('leçons consultées', 'lessons viewed')} · {st.competencies} {tr('compétences', 'skills')}</p>}
+      <span className="btn primary">{seen > 0 ? tr('Continuer', 'Continue') : tr('Commencer', 'Start')} →</span>
+    </a>
+  );
+}
+
+/** Accueil du site : choix de la section. Chaque section a ses contenus et sa progression, stockés séparément. */
 export function LandingPage() {
   const az = useProgress();
-  const ai = useAi();
   const azDone = Object.keys(az.done).length;
   const azPct = Math.round((azDone / ALL_EXERCISES.length) * 100);
-  const aiSeen = AI_LESSONS.filter((l) => ai.lessonsSeen[l.id]).length;
-  const aiPassed = AI_EX.filter((e) => e.role !== 'eval' && ai.items[e.id]?.passed).length;
-  const aiTotal = AI_EX.filter((e) => e.role !== 'eval').length || 1;
-  const aiPct = Math.round((aiPassed / aiTotal) * 100);
+  const live = TRACKS.filter((t) => TRACK_ENTRIES[t.route]);
   return (
     <div className="stack landing">
       <section className="hero reveal" style={{ gridTemplateColumns: '1fr' }}>
@@ -39,18 +64,7 @@ export function LandingPage() {
           <p className="muted small">{PATHS.length} {tr('parcours', 'paths')} · {ALL_LESSONS.length} {tr('cours', 'lessons')} · {ALL_EXERCISES.length} {tr('exercices', 'exercises')} · {azDone} {tr('réussis', 'completed')}</p>
           <span className="btn primary">{azDone > 0 ? tr('Continuer', 'Continue') : tr('Commencer', 'Start')} →</span>
         </a>
-        <a className="section-card reveal" href={href('ia')} style={{ ['--pc' as string]: '#9b8cff', animationDelay: '0.12s' }}>
-          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <span className="kicker">{tr('Section 2', 'Section 2')}</span>
-              <h2>Agentic AI for Cybersecurity</h2>
-            </div>
-            <Ring pct={aiPct} size={56} stroke={6} color="#9b8cff"><span className="ring-num">{aiPct}%</span></Ring>
-          </div>
-          <p className="muted">{tr('Du débutant à l’expert : fondations de l’IA, automatisation et n8n, applications LLM, agents, cybersécurité, sécurité et production, projets.', 'From beginner to expert. Written in French.')}</p>
-          <p className="muted small">{AI_MODULES.length} {tr('modules', 'modules')} · {AI_LESSONS.length} {tr('leçons', 'lessons')} · {AI_EX.length} {tr('exercices et questions', 'exercises and questions')} · {AI_PROJECTS.length} {tr('projets', 'projects')} · {aiSeen} {tr('leçons consultées', 'lessons viewed')} · {AI_COMP.length} {tr('compétences', 'skills')}</p>
-          <span className="btn primary">{aiSeen > 0 ? tr('Continuer', 'Continue') : tr('Commencer', 'Start')} →</span>
-        </a>
+        {live.map((t, i) => <TrackCard key={t.id} id={t.id} delay={0.12 + i * 0.07} />)}
       </div>
       <section className="stack" aria-labelledby="how-h">
         <h2 id="how-h">{tr('Comment ça marche', 'How it works')}</h2>

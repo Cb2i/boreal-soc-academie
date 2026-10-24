@@ -5,6 +5,9 @@ import { isUnlocked } from '../engine/unlock.ts';
 import { href, navigate } from '../router.ts';
 import { useProgress } from '../state/useProgress.ts';
 import { tr, useLang } from '../i18n/lang.ts';
+import { TRACKS } from '../tracks/meta.ts';
+import { CONTENT_LOADERS } from '../tracks/loaders.ts';
+import type { TrackContent } from '../agentic/content/build.ts';
 
 interface Item { key: string; label: string; kind: string; hint: string; to: string; locked?: boolean; done?: boolean }
 
@@ -29,11 +32,13 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const opener = useRef<HTMLElement | null>(null);
-  // Contenu de la section Agentic AI : chargé à la première ouverture pour ne pas alourdir le chargement initial.
-  const [ai, setAi] = useState<typeof import('../agentic/content/index.ts') | null>(null);
+  // Contenu des parcours (IA, Defender XDR, Intune, scénarios) : chargé à la première ouverture pour ne pas alourdir l'accueil.
+  const [tracks, setTracks] = useState<Record<string, TrackContent> | null>(null);
   useEffect(() => {
-    if (open && !ai) void import('../agentic/content/index.ts').then(setAi);
-  }, [open, ai]);
+    if (open && !tracks) {
+      void Promise.all(TRACKS.filter((t) => CONTENT_LOADERS[t.id]).map(async (t) => [t.id, await CONTENT_LOADERS[t.id]()] as const)).then((e) => setTracks(Object.fromEntries(e)));
+    }
+  }, [open, tracks]);
 
   const items = useMemo<Item[]>(() => {
     const pages: Item[] = [
@@ -58,19 +63,25 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       locked: !isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll, p.startLevel[e.path]),
       done: !!p.done[e.id],
     }));
-    const aiItems: Item[] = ai
-      ? [
-          { key: 'ai-home', label: 'Agentic AI for Cybersecurity', kind: 'IA', hint: 'agents automatisation sécurité', to: href('ia') },
-          { key: 'ai-res', label: tr('Ressources téléchargeables (IA)', 'Downloadable resources (AI)'), kind: 'IA', hint: 'scripts prompts n8n', to: href('ia', 'ressources') },
-          { key: 'ai-proj', label: tr('Projets (IA)', 'Projects (AI)'), kind: 'IA', hint: 'projets de synthèse', to: href('ia', 'projets') },
-          ...ai.MODULES.map((m) => ({ key: `ai-m-${m.id}`, label: `${m.n}. ${m.title}`, kind: 'IA module', hint: m.summary, to: href('ia', 'module', m.id) })),
-          ...ai.LESSONS.map((l) => ({ key: `ai-l-${l.id}`, label: l.title, kind: 'IA cours', hint: l.summary, to: href('ia', 'cours', l.id) })),
-          ...ai.PROJECTS.map((x) => ({ key: `ai-p-${x.id}`, label: x.title, kind: 'IA projet', hint: x.problem, to: href('ia', 'projet', x.id) })),
-        ]
+    const short: Record<string, string> = { ia: 'IA', xdr: 'XDR', intune: 'Intune', scenarios: 'Scénarios' };
+    const aiItems: Item[] = tracks
+      ? TRACKS.flatMap((t) => {
+          const c = tracks[t.id];
+          if (!c) return [];
+          const k = short[t.id];
+          return [
+            { key: `${t.id}-home`, label: tr(t.titleFr, t.titleEn), kind: k, hint: t.descFr, to: href(t.route) } as Item,
+            { key: `${t.id}-res`, label: `${tr('Ressources', 'Resources')} (${k})`, kind: k, hint: 'scripts modèles données fictives', to: href(t.route, 'ressources') } as Item,
+            { key: `${t.id}-proj`, label: `${tr('Projets', 'Projects')} (${k})`, kind: k, hint: 'projets de synthèse', to: href(t.route, 'projets') } as Item,
+            ...c.MODULES.map((m) => ({ key: `${t.id}-m-${m.id}`, label: `${m.n}. ${m.title}`, kind: `${k} module`, hint: m.summary, to: href(t.route, 'module', m.id) })),
+            ...c.LESSONS.map((l) => ({ key: `${t.id}-l-${l.id}`, label: l.title, kind: `${k} cours`, hint: l.summary, to: href(t.route, 'cours', l.id) })),
+            ...c.PROJECTS.map((x) => ({ key: `${t.id}-p-${x.id}`, label: x.title, kind: `${k} projet`, hint: x.problem, to: href(t.route, 'projet', x.id) })),
+          ];
+        })
       : [];
     return [...pages, ...paths, ...lessons, ...labs, ...exs, ...aiItems];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang, p.done, p.lessonsDone, p.settings.unlockAll, p.startLevel, ai]);
+  }, [lang, p.done, p.lessonsDone, p.settings.unlockAll, p.startLevel, tracks]);
 
   const results = useMemo(() => {
     const terms = norm(q).split(/\s+/).filter(Boolean);

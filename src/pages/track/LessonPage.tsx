@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
-import { EX_BY_ID, LESSON_BY_ID, MODULE_BY_ID, MODULES, LESSONS, RESOURCES, LEVELS } from '../../agentic/content/index.ts';
-import { aiStore, markLessonSeen, useAi } from '../../agentic/state.ts';
+import { markLessonSeen } from '../../agentic/state.ts';
+import { useTrack } from '../../agentic/TrackContext.tsx';
 import { InlineExercise } from '../../agentic/components/InlineExercise.tsx';
 import { Markdown } from '../../components/Markdown.tsx';
-import { href } from '../../router.ts';
 import { tr } from '../../i18n/lang.ts';
 
 export function LessonPage({ id }: { id: string }) {
-  const p = useAi();
+  const { c, p, meta, to, store } = useTrack();
+  const { EX_BY_ID, LESSON_BY_ID, MODULE_BY_ID, MODULES, LESSONS, RESOURCES, LEVELS } = c;
   const l = LESSON_BY_ID[id];
   useEffect(() => {
     if (!l) return;
-    aiStore.set((s) => ({ ...markLessonSeen(s, l.id), last: { route: href('ia', 'cours', l.id), title: l.title, at: Date.now() } }));
+    store.set((s) => ({ ...markLessonSeen(s, l.id), last: { route: to('cours', l.id), title: l.title, at: Date.now() } }));
   }, [l?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const [revision, setRevision] = useState(false);
-  if (!l) return <div className="state" role="alert"><h2>{tr('Leçon introuvable', 'Lesson not found')}</h2><a className="btn" href={href('ia')}>{tr('Retour à la formation', 'Back to the course')}</a></div>;
+  if (!l) return <div className="state" role="alert"><h2>{tr('Leçon introuvable', 'Lesson not found')}</h2><a className="btn" href={to()}>{tr('Retour à la formation', 'Back to the course')}</a></div>;
   const m = MODULE_BY_ID[l.module];
   const lv = LEVELS.find((x) => x.n === m.level)!;
   const idx = LESSONS.findIndex((x) => x.id === l.id);
@@ -24,7 +24,7 @@ export function LessonPage({ id }: { id: string }) {
   const related = RESOURCES.filter((r) => r.lessons?.includes(l.id));
   return (
     <article className="stack lesson" style={{ ['--pc' as string]: lv.accent }}>
-      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={href('ia')}>Agentic AI</a> / <a href={href('ia', 'module', m.id)}>{tr('Module', 'Module')} {m.n}</a> / <span aria-current="page">{l.title}</span></nav>
+      <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={to()}>{tr(meta.navFr, meta.navEn)}</a> / <a href={to('module', m.id)}>{tr('Module', 'Module')} {m.n}</a> / <span aria-current="page">{l.title}</span></nav>
       <header>
         <h1>{l.title}</h1>
         <p className="lead muted">{l.summary}</p>
@@ -79,7 +79,7 @@ export function LessonPage({ id }: { id: string }) {
       {related.length > 0 && (
         <section className="card stack" aria-labelledby="h-res">
           <h2 id="h-res" style={{ margin: 0 }}>{tr('Ressources de cette leçon', 'Resources for this lesson')}</h2>
-          <ul>{related.map((r) => <li key={r.id}><a href={href('ia', 'ressources') + '?r=' + r.id}>{r.title}</a> <span className={`pill ${r.status === 'teste' ? 'ok' : 'warn'}`}>{r.status === 'teste' ? 'testé' : 'à vérifier'}</span></li>)}</ul>
+          <ul>{related.map((r) => <li key={r.id}><a href={to('ressources') + '?r=' + r.id}>{r.title}</a> <span className={`pill ${r.status === 'teste' ? 'ok' : 'warn'}`}>{r.status === 'teste' ? 'testé' : 'à vérifier'}</span></li>)}</ul>
         </section>
       )}
 
@@ -89,8 +89,8 @@ export function LessonPage({ id }: { id: string }) {
       </section>
 
       <footer className="row" style={{ justifyContent: 'space-between' }}>
-        {prev ? <a className="btn" href={href('ia', 'cours', prev.id)}>← {prev.title}</a> : <span />}
-        {next ? <a className="btn primary" href={href('ia', 'cours', next.id)}>{next.title} →</a> : <a className="btn primary" href={href('ia', 'module', MODULES[MODULES.length - 1].id)}>{tr('Retour au module', 'Back to module')}</a>}
+        {prev ? <a className="btn" href={to('cours', prev.id)}>← {prev.title}</a> : <span />}
+        {next ? <a className="btn primary" href={to('cours', next.id)}>{next.title} →</a> : <a className="btn primary" href={to('module', MODULES[MODULES.length - 1].id)}>{tr('Retour au module', 'Back to module')}</a>}
       </footer>
     </article>
   );

@@ -1,4 +1,5 @@
-// Progression de la section Agentic AI : stockée à part de la section Azure (clé distincte, aucune migration nécessaire).
+// Progression des parcours « moteur d'exercices » (Agentic AI, Defender XDR, Intune Sécurité, scénarios croisés).
+// Chaque parcours a sa clé de stockage : aucune migration nécessaire, aucune donnée existante n'est touchée.
 import { useSyncExternalStore } from 'react';
 
 export const AI_STORAGE_KEY = 'boube.agentic.v1';
@@ -124,28 +125,40 @@ export function recordEval(p: AiProgress, moduleId: string, items: Record<string
   return { ...p, evals: { ...p.evals, [moduleId]: { at: now, score, items, attempts: (prev?.attempts ?? 0) + 1, best: Math.max(prev?.best ?? 0, score) } } };
 }
 
-export function exportAi(p: AiProgress): string {
-  return JSON.stringify(p, null, 2);
+export function exportAi(p: AiProgress, storageKey?: string): string {
+  return JSON.stringify(storageKey ? { track: storageKey, ...p } : p, null, 2);
 }
 
-export function importAi(text: string): AiProgress {
+export function importProgress(text: string, label: string, storageKey?: string): AiProgress {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
   } catch {
     throw new Error('Le fichier n’est pas un JSON valide.');
   }
-  if (!raw || typeof raw !== 'object' || (raw as { v?: unknown }).v !== AI_SCHEMA) throw new Error('Ce fichier n’est pas une sauvegarde de la section Agentic AI (version attendue : 1).');
+  if (!raw || typeof raw !== 'object' || (raw as { v?: unknown }).v !== AI_SCHEMA) throw new Error(`Ce fichier n’est pas une sauvegarde de la section ${label} (version attendue : 1).`);
+  const from = (raw as { track?: unknown }).track;
+  if (storageKey && typeof from === 'string' && from !== storageKey) throw new Error(`Cette sauvegarde appartient à un autre parcours (${from}) : importez-la dans le parcours correspondant.`);
   return sanitizeAi(raw);
+}
+
+export function importAi(text: string): AiProgress {
+  return importProgress(text, 'Agentic AI');
 }
 
 // ----------------------------------------------------------------- store
 
 type Listener = () => void;
-let state: AiProgress = emptyAi();
-let loaded = false;
-let storageOk = true;
-const listeners = new Set<Listener>();
+
+export interface ProgressStore {
+  key: string;
+  get(): AiProgress;
+  set(updater: (p: AiProgress) => AiProgress): void;
+  subscribe(l: Listener): () => void;
+  storageAvailable(): boolean;
+  reset(): void;
+  reload(): void;
+}
 
 function storage(): Storage | null {
   try {
@@ -155,80 +168,93 @@ function storage(): Storage | null {
   }
 }
 
-function load(): void {
-  if (loaded) return;
-  loaded = true;
-  const s = storage();
-  if (!s) {
-    storageOk = false;
-    return;
-  }
-  try {
-    const t = s.getItem(AI_STORAGE_KEY);
-    if (t) state = sanitizeAi(JSON.parse(t));
-  } catch {
-    state = emptyAi();
-  }
-}
+/** Fabrique un magasin de progression indépendant, adossé à sa propre clé localStorage. */
+export function createProgressStore(key: string): ProgressStore {
+  let state: AiProgress = emptyAi();
+  let loaded = false;
+  let storageOk = true;
+  const listeners = new Set<Listener>();
 
-function persist(): void {
-  const s = storage();
-  if (!s) {
-    storageOk = false;
-    return;
-  }
-  try {
-    s.setItem(AI_STORAGE_KEY, JSON.stringify(state));
-    storageOk = true;
-  } catch {
-    storageOk = false;
-  }
-}
-
-export const aiStore = {
-  get(): AiProgress {
-    load();
-    return state;
-  },
-  set(updater: (p: AiProgress) => AiProgress): void {
-    load();
-    state = updater(state);
-    persist();
-    listeners.forEach((l) => l());
-  },
-  subscribe(l: Listener): () => void {
-    listeners.add(l);
-    return () => listeners.delete(l);
-  },
-  storageAvailable(): boolean {
-    load();
-    return storageOk;
-  },
-  reset(): void {
-    state = emptyAi();
+  const load = (): void => {
+    if (loaded) return;
     loaded = true;
-    persist();
-    listeners.forEach((l) => l());
-  },
-  reload(): void {
     const s = storage();
-    if (!s) return;
-    try {
-      const t = s.getItem(AI_STORAGE_KEY);
-      state = t ? sanitizeAi(JSON.parse(t)) : emptyAi();
-      listeners.forEach((l) => l());
-    } catch {
-      /* ignore */
+    if (!s) {
+      storageOk = false;
+      return;
     }
-  },
-};
+    try {
+      const t = s.getItem(key);
+      if (t) state = sanitizeAi(JSON.parse(t));
+    } catch {
+      state = emptyAi();
+    }
+  };
+  const persist = (): void => {
+    const s = storage();
+    if (!s) {
+      storageOk = false;
+      return;
+    }
+    try {
+      s.setItem(key, JSON.stringify(state));
+      storageOk = true;
+    } catch {
+      storageOk = false;
+    }
+  };
+  const store: ProgressStore = {
+    key,
+    get() {
+      load();
+      return state;
+    },
+    set(updater) {
+      load();
+      state = updater(state);
+      persist();
+      listeners.forEach((l) => l());
+    },
+    subscribe(l) {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
+    storageAvailable() {
+      load();
+      return storageOk;
+    },
+    reset() {
+      state = emptyAi();
+      loaded = true;
+      persist();
+      listeners.forEach((l) => l());
+    },
+    reload() {
+      const s = storage();
+      if (!s) return;
+      try {
+        const t = s.getItem(key);
+        state = t ? sanitizeAi(JSON.parse(t)) : emptyAi();
+        listeners.forEach((l) => l());
+      } catch {
+        /* ignore */
+      }
+    },
+  };
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (e) => {
+      if (e.key === key) store.reload();
+    });
+  }
+  return store;
+}
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (e) => {
-    if (e.key === AI_STORAGE_KEY) aiStore.reload();
-  });
+export const aiStore = createProgressStore(AI_STORAGE_KEY);
+
+export function useStoreProgress(store: ProgressStore): AiProgress {
+  return useSyncExternalStore(store.subscribe, store.get, store.get);
 }
 
 export function useAi(): AiProgress {
-  return useSyncExternalStore(aiStore.subscribe, aiStore.get, aiStore.get);
+  return useStoreProgress(aiStore);
 }

@@ -1,11 +1,12 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRoute, href } from './router.ts';
 import { AnnouncerProvider } from './components/Announcer.tsx';
 import { useProgress } from './state/useProgress.ts';
 import { totalXp } from './state/progress.ts';
 import { HomePage } from './pages/HomePage.tsx';
 import { LandingPage } from './pages/LandingPage.tsx';
-const AiRouter = lazy(() => import('./pages/ia/AiRouter.tsx').then((m) => ({ default: m.AiRouter })));
+import { TRACKS, TRACK_BY_ROUTE } from './tracks/meta.ts';
+import { TRACK_ENTRIES } from './tracks/entries.ts';
 import { CatalogPage } from './pages/CatalogPage.tsx';
 import { PathPage } from './pages/PathPage.tsx';
 import { LessonPage } from './pages/LessonPage.tsx';
@@ -18,8 +19,9 @@ import { CoveragePage } from './pages/CoveragePage.tsx';
 import { LimitsPage } from './pages/LimitsPage.tsx';
 import { CommandPalette, SearchButton } from './components/CommandPalette.tsx';
 
-type Section = 'home' | 'azure' | 'ia';
-const sectionOf = (name: string): Section => (name === 'accueil' ? 'home' : name === 'ia' ? 'ia' : 'azure');
+type Section = string;
+/** 'home', 'azure' ou la route d'un parcours (ia, xdr, intune, scenarios). */
+const sectionOf = (name: string): Section => (name === 'accueil' ? 'home' : TRACK_BY_ROUTE[name] ? name : 'azure');
 
 interface NavItem { to: string; label: string; active: boolean }
 const navFor = (section: Section, route: { name: string; params: string[] }): NavItem[] => {
@@ -34,16 +36,13 @@ const navFor = (section: Section, route: { name: string; params: string[] }): Na
     ];
     return items.map(([name, label]) => ({ to: href(name), label, active: route.name === name }));
   }
-  if (section === 'ia') {
+  const meta = TRACK_BY_ROUTE[section];
+  if (meta) {
     const sub = route.params[0];
-    const items: [string | undefined, string, string[]][] = [
-      [undefined, tr('Formation', 'Course'), ['module', 'cours', 'exercice', 'evaluation', 'cas']],
-      ['suivi', tr('Suivi', 'Tracking'), []],
-      ['projets', tr('Projets', 'Projects'), ['projet']],
-      ['ressources', tr('Ressources', 'Resources'), []],
-      ['couverture', tr('Couverture', 'Coverage'), []],
-    ];
-    return items.map(([s, label, also]) => ({ to: s ? href('ia', s) : href('ia'), label, active: s ? sub === s || also.includes(sub ?? '') : sub === undefined || also.includes(sub) }));
+    return meta.nav.map((it) => {
+      const also = it.also ?? [];
+      return { to: it.sub ? href(meta.route, it.sub) : href(meta.route), label: tr(it.fr, it.en), active: it.sub ? sub === it.sub || also.includes(sub ?? '') : sub === undefined || also.includes(sub) };
+    });
   }
   return [];
 };
@@ -125,14 +124,14 @@ export function App() {
     window.scrollTo(0, 0);
     const h = document.getElementById('main');
     h?.focus({ preventScroll: true });
-    document.title = `Boube : ${route.name === 'accueil' ? tr('Cybersécurité Microsoft et IA agentique', 'Microsoft security and agentic AI') : route.name === 'azure' ? tr('Azure, Sentinel et KQL', 'Azure, Sentinel and KQL') : route.name === 'ia' ? 'Agentic AI for Cybersecurity' : route.name}`;
+    const tm = TRACK_BY_ROUTE[route.name];
+    document.title = `Boube : ${route.name === 'accueil' ? tr('Cybersécurité Microsoft et IA agentique', 'Microsoft security and agentic AI') : route.name === 'azure' ? tr('Azure, Sentinel et KQL', 'Azure, Sentinel and KQL') : tm ? tr(tm.titleFr, tm.titleEn) : route.name}`;
   }, [route.name, route.params.join('/'), lang]);
 
   let page: ReactNode;
   switch (route.name) {
     case 'accueil': page = <LandingPage />; break;
     case 'azure': page = <HomePage />; break;
-    case 'ia': page = <Suspense fallback={<p className="muted" role="status">{tr('Chargement de la section…', 'Loading the section…')}</p>}><AiRouter route={route} /></Suspense>; break;
     case 'catalogue': page = <CatalogPage />; break;
     case 'parcours': page = route.params[0] ? <PathPage id={route.params[0]} /> : <CatalogPage />; break;
     case 'cours': page = <LessonPage id={route.params[0] ?? ''} />; break;
@@ -145,7 +144,12 @@ export function App() {
     case 'labos': page = <LabsPage />; break;
     case 'couverture': page = <CoveragePage />; break;
     case 'limites': page = <LimitsPage />; break;
-    default:
+    default: {
+      const Entry = TRACK_ENTRIES[route.name];
+      if (Entry) {
+        page = <Suspense fallback={<p className="muted" role="status">{tr('Chargement de la section…', 'Loading the section…')}</p>}><Entry route={route} /></Suspense>;
+        break;
+      }
       page = (
         <div className="state" role="alert">
           <h2>{tr('Page introuvable', 'Page not found')}</h2>
@@ -153,6 +157,7 @@ export function App() {
           <a className="btn" href={href('accueil')}>{tr('Retour à l’accueil', 'Back to home')}</a>
         </div>
       );
+    }
   }
 
   return (
@@ -163,7 +168,7 @@ export function App() {
           <a className="brand" href={href('accueil')}><Logo /> Boube</a>
           <nav className="sections" aria-label={tr('Sections du site', 'Site sections')}>
             <a href={href('azure')} aria-current={section === 'azure' ? 'true' : undefined}>{tr('Azure, Sentinel, KQL', 'Azure, Sentinel, KQL')}</a>
-            <a href={href('ia')} aria-current={section === 'ia' ? 'true' : undefined}>Agentic AI</a>
+            {TRACKS.filter((t) => TRACK_ENTRIES[t.route]).map((t) => <a key={t.id} href={href(t.route)} aria-current={section === t.route ? 'true' : undefined}>{tr(t.navFr, t.navEn)}</a>)}
           </nav>
           {section !== 'home' && (
             <nav className="nav" aria-label={tr('Navigation de la section', 'Section navigation')}>
