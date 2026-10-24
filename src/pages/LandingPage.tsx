@@ -23,10 +23,10 @@ export function LandingPage() {
         <div>
           <span className="pill info">{tr('Gratuit, sans compte, données fictives', 'Free, no account, fictional data')}</span>
           <h1>{tr('Apprendre la cybersécurité Microsoft et l’IA agentique', 'Learn Microsoft security and agentic AI')}</h1>
-          <p className="lead muted">{tr('Deux sections indépendantes, chacune avec ses cours, ses exercices, ses évaluations et sa progression. Tout s’exécute dans votre navigateur : aucun abonnement Azure, aucune API payante.', 'Two independent sections, each with its own lessons, exercises, assessments and progress. Everything runs in your browser.')}</p>
+          <p className="lead muted">{tr('Des sections indépendantes, chacune avec ses cours, ses exercices, ses évaluations et sa progression. Tout s’exécute dans votre navigateur : aucun abonnement Azure, aucune API payante.', 'Independent sections, each with its own lessons, exercises, assessments and progress. Everything runs in your browser.')}</p>
         </div>
       </section>
-      <div className="grid cols-2 section-cards">
+      <div className="grid section-cards">
         <a className="section-card reveal" href={href('azure')} style={{ ['--pc' as string]: '#3fd0c9', animationDelay: '0.05s' }}>
           <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>

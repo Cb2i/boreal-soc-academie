@@ -537,3 +537,8 @@ main:focus { outline: none; }
 .ai-home .ai-level > h2 { margin-bottom: 0.4rem; }
 .ai-home .ai-level > p { margin-bottom: 1.25rem; }
 .ai-home .grid { gap: 1.25rem; }
+
+/* Accueil prêt pour d'autres sections (Defender XDR, Intune, Purview...) : la grille s'adapte au nombre de cartes */
+.landing .section-cards { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+.sections { overflow-x: auto; scrollbar-width: none; }
+.sections::-webkit-scrollbar { display: none; }
