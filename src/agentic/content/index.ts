@@ -9,9 +9,10 @@ import { m04 } from './m04.ts';
 import { m05 } from './m05.ts';
 import { m06 } from './m06.ts';
 import { m07 } from './m07.ts';
+import { m08 } from './m08.ts';
 
 /** Tous les modules livrés, dans l'ordre pédagogique. */
-export const MODULE_CONTENT: ModuleContent[] = [m01, m02, m03, m04, m05, m06, m07];
+export const MODULE_CONTENT: ModuleContent[] = [m01, m02, m03, m04, m05, m06, m07, m08];
 
 export const LEVELS = AI_LEVELS;
 export const MODULES: AiModule[] = MODULE_CONTENT.map((m) => m.module);
