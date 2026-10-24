@@ -7,6 +7,8 @@ import { useProgress } from '../state/useProgress.ts';
 import { href } from '../router.ts';
 import { EXERCISE_BY_ID } from '../content/index.ts';
 import { tr } from '../i18n/lang.ts';
+import { streak, weeklyCount } from '../engine/streak.ts';
+import { pathCompletion } from './CertificatePage.tsx';
 
 export function DashboardPage() {
   const p = useProgress();
@@ -48,6 +50,37 @@ export function DashboardPage() {
         <div className="card"><p className="muted small">{tr('Exercices réussis', 'Completed exercises')}</p><h2 style={{ margin: 0 }}>{Object.keys(p.done).length} / {ALL_EXERCISES.length}</h2></div>
         <div className="card"><p className="muted small">{tr('À réviser aujourd’hui', 'To review today')}</p><h2 style={{ margin: 0 }}>{due.length}</h2>{due.length > 0 && <a href={href('revision')}>{tr('Ouvrir la révision', 'Open review')}</a>}</div>
       </div>
+
+      <section aria-labelledby="sg">
+        <h2 id="sg">{tr('Série et objectif de la semaine', 'Streak and weekly goal')}</h2>
+        <div className="grid cols-3">
+          <div className="card"><p className="muted small">{tr('Série actuelle', 'Current streak')}</p><h2 style={{ margin: 0 }}>{streak(p).current} {tr('jour(s)', 'day(s)')}</h2><p className="muted small">{tr('Meilleure série', 'Best streak')} : {streak(p).best}</p></div>
+          <div className="card">
+            <p className="muted small">{tr('Cette semaine', 'This week')}</p>
+            <h2 style={{ margin: 0 }}>{weeklyCount(p)} / {p.settings.weeklyGoal}</h2>
+            <div className="bar" style={{ margin: '0.5rem 0' }}><span style={{ width: `${Math.min(100, (weeklyCount(p) / p.settings.weeklyGoal) * 100)}%` }} /></div>
+          </div>
+          <div className="card">
+            <label htmlFor="goal" className="muted small">{tr('Objectif : réussites par semaine', 'Goal: completions per week')}</label>
+            <input id="goal" type="number" min={1} max={50} value={p.settings.weeklyGoal} onChange={(e) => { const n = Math.min(50, Math.max(1, Math.round(Number(e.target.value) || 1))); store.set((s) => ({ ...s, settings: { ...s.settings, weeklyGoal: n } })); }} />
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="ct">
+        <h2 id="ct">{tr('Certificats', 'Certificates')}</h2>
+        <ul className="cert-list">
+          {PATHS.map((pa) => {
+            const c = pathCompletion(pa.id, p);
+            return (
+              <li key={pa.id}>
+                <span>{pa.short} <span className="muted small">({c.done}/{c.total})</span></span>
+                {c.complete ? <a className="btn small" href={href('certificat', pa.id)}>{tr('Voir le certificat', 'View certificate')}</a> : <span className="muted small">{tr('Parcours à terminer', 'Finish the path first')}</span>}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
       <section aria-labelledby="pp">
         <h2 id="pp">{tr('Par parcours', 'By path')}</h2>

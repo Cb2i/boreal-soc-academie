@@ -9,6 +9,7 @@ import { nextStep, recommendedPath } from '../engine/next.ts';
 import type { Step } from '../engine/next.ts';
 import { Ring } from '../components/Ring.tsx';
 import { tr } from '../i18n/lang.ts';
+import { DailyChallenge } from '../components/DailyChallenge.tsx';
 
 function stepLink(s: Step): { to: string; title: string; kicker: string } {
   return s.kind === 'lesson'
@@ -84,6 +85,8 @@ export function HomePage() {
           </div>
         </aside>
       </section>
+
+      {doneCount > 0 && <div className="reveal" style={{ animationDelay: '0.12s' }}><DailyChallenge compact /></div>}
 
       {doneCount < 3 && (
         <section className="stack reveal" style={{ animationDelay: '0.15s' }} aria-labelledby="start-h">

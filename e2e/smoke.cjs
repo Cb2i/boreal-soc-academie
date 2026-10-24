@@ -279,6 +279,71 @@ const ok = (name, cond, extra = '') => {
   ok('repères : aucune erreur de console', werrors.length === 0, werrors.join(' | '));
   await wctx.close();
 
+  // 11d. Série, objectif, défi du jour et certificat
+  const sctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const sp = await sctx.newPage();
+  const serrors = [];
+  sp.on('pageerror', (e) => serrors.push('pageerror: ' + e.message));
+  sp.on('console', (m) => { if (m.type() === 'error') serrors.push('console: ' + m.text()); });
+  await sp.goto(base);
+  await sp.waitForSelector('.streak-chip');
+  ok('série : pastille visible dans l’en-tête à 0 jour', /0\s*j/.test(await sp.textContent('.streak-chip')));
+  await sp.evaluate(() => localStorage.setItem('boreal.progress.v1', JSON.stringify({ v: 1, settings: { unlockAll: true } })));
+  await sp.goto(base + '#/parcours/azure-foundations');
+  await sp.reload();
+  await sp.waitForSelector('.node');
+  const ids = await sp.$$eval('a[href^="#/exercice/"]', (as) => [...new Set(as.map((a) => decodeURIComponent(a.getAttribute('href').split('/').pop())))]);
+  ok('certificat : liste des exercices du parcours lue', ids.length > 5, String(ids.length));
+  await sp.goto(base + '#/certificat/azure-foundations');
+  await sp.waitForSelector('.state');
+  ok('certificat : refusé tant que le parcours n’est pas terminé', (await sp.$$('.cert')).length === 0);
+  const nowMs = Date.now();
+  await sp.evaluate(([list, now]) => {
+    const done = {};
+    list.forEach((id, i) => { done[id] = { xp: 10, firstAt: now - 86400000, lastAt: now - (i % 2) * 0, attempts: 1, hintsUsed: 0, status: 'perfect', box: 1, due: now - 1000 }; });
+    localStorage.setItem('boreal.progress.v1', JSON.stringify({ v: 1, done, settings: { unlockAll: true, weeklyGoal: 3 } }));
+  }, [ids, nowMs]);
+  await sp.goto(base);
+  await sp.reload();
+  await sp.waitForSelector('.streak-chip');
+  ok('série : 2 jours consécutifs reconstitués à partir de l’historique', /2\s*j/.test(await sp.textContent('.streak-chip')), await sp.textContent('.streak-chip'));
+  await sp.waitForSelector('.daily');
+  ok('défi du jour : 5 exercices sur l’accueil', (await sp.$$('.daily-list li')).length === 5);
+  const first = await sp.$$eval('.daily-list li a', (as) => as.map((a) => a.getAttribute('href')));
+  await sp.reload();
+  await sp.waitForSelector('.daily');
+  const again = await sp.$$eval('.daily-list li a', (as) => as.map((a) => a.getAttribute('href')));
+  ok('défi du jour : liste stable après rechargement', JSON.stringify(first) === JSON.stringify(again));
+  ok('défi du jour : mémorisé dans la progression', (await sp.evaluate(() => JSON.parse(localStorage.getItem('boreal.progress.v1')).daily)).ids.length === 5);
+  await sp.goto(base + '#/revision');
+  await sp.waitForSelector('.daily');
+  ok('défi du jour : présent sur la page de révision', (await sp.$$('.daily-list li')).length === 5);
+  await sp.goto(base + '#/tableau');
+  await sp.waitForSelector('.cert-list');
+  ok('tableau : objectif hebdomadaire modifiable', (await sp.inputValue('#goal')) === '3');
+  await sp.fill('#goal', '7');
+  ok('tableau : objectif enregistré', (await sp.evaluate(() => JSON.parse(localStorage.getItem('boreal.progress.v1')).settings.weeklyGoal)) === 7);
+  ok('tableau : lien de certificat pour le parcours terminé', (await sp.$$('.cert-list a[href="#/certificat/azure-foundations"]')).length === 1);
+  await sp.goto(base + '#/certificat/azure-foundations');
+  await sp.waitForSelector('.cert');
+  await sp.fill('#cert-name', 'Jeanne Tremblay');
+  ok('certificat : le nom saisi apparaît', /Jeanne Tremblay/.test(await sp.textContent('.cert-name')));
+  ok('certificat : le nom est conservé localement', (await sp.evaluate(() => JSON.parse(localStorage.getItem('boreal.progress.v1')).certName)) === 'Jeanne Tremblay');
+  await sp.emulateMedia({ media: 'print' });
+  const hid = await sp.evaluate(() => getComputedStyle(document.querySelector('.site-header')).display === 'none' && getComputedStyle(document.querySelector('.no-print')).display === 'none');
+  ok('certificat : en-tête et commandes masqués à l’impression', hid);
+  await sp.pdf({ path: path.join(__dirname, '..', 'dist', '.cert-test.pdf'), landscape: true, printBackground: true }).catch(() => {});
+  const pdfSize = fs.existsSync(path.join(ROOT, '.cert-test.pdf')) ? fs.statSync(path.join(ROOT, '.cert-test.pdf')).size : 0;
+  if (!SUB) ok('certificat : PDF paysage généré', pdfSize > 5000, String(pdfSize));
+  try { fs.unlinkSync(path.join(__dirname, '..', 'dist', '.cert-test.pdf')); } catch { /* ignore */ }
+  await sp.emulateMedia({ media: 'screen' });
+  await sp.evaluate(() => localStorage.setItem('boreal.lang', 'en'));
+  await sp.reload();
+  await sp.waitForSelector('.cert');
+  ok('certificat : version anglaise', /Certificate of completion/.test(await sp.textContent('.cert')));
+  ok('série et défi : aucune erreur de console', serrors.length === 0, serrors.join(' | '));
+  await sctx.close();
+
   // 12. Clavier : tabulation atteint un élément interactif et le lien d'évitement existe
   await page.goto(base);
   await page.waitForSelector('h1');

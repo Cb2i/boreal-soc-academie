@@ -391,3 +391,31 @@ main:focus { outline: none; }
 
 .card.link { position: relative; }
 .card.link:focus-visible, .next-banner:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+/* Série, défi du jour, certificat */
+.streak-chip { display: inline-flex; align-items: center; gap: 0.35rem; font-family: var(--font-mono); font-size: 0.85rem; border: 1px solid var(--border); background: var(--surface); padding: 0.25rem 0.6rem; border-radius: 999px; text-decoration: none; color: inherit; }
+.streak-chip .streak-flame { color: var(--accent, #3fd0c9); }
+.streak-chip.at-risk { border-style: dashed; }
+.streak-chip.reached { border-color: var(--accent, #3fd0c9); }
+.streak-chip .streak-goal { opacity: 0.7; }
+.daily { display: grid; gap: 0.6rem; }
+.daily > .btn { justify-self: start; }
+.daily-list { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.3rem; }
+.daily-list li { display: list-item; }
+.daily-list li.is-done a { text-decoration: line-through; opacity: 0.7; }
+.cert-list { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
+.cert-list li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border: 1px solid var(--border); border-radius: 10px; padding: 0.6rem 0.9rem; }
+.cert { background: #fff; color: #14202b; border: 6px double var(--pc, #3fd0c9); border-radius: 6px; padding: 2.5rem 2rem; text-align: center; display: grid; gap: 0.6rem; max-width: 900px; margin: 0 auto; }
+.cert-brand { font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--pc, #3fd0c9); }
+.cert-kicker { font-size: 1.6rem; margin: 0; font-weight: 600; }
+.cert-line, .cert-meta, .cert-fine { margin: 0; color: #435260; }
+.cert-name { font-size: 2.2rem; margin: 0.2rem 0; font-weight: 700; border-bottom: 1px solid #9aa7b3; padding-bottom: 0.3rem; justify-self: center; min-width: 50%; }
+.cert-path { margin: 0.2rem 0; }
+.cert-fine { font-size: 0.75rem; margin-top: 1rem; }
+@media print {
+  @page { size: landscape; margin: 12mm; }
+  html, body { background: #fff !important; }
+  .site-header, .footer, .skip, .no-print, .cmd-overlay { display: none !important; }
+  main { padding: 0 !important; max-width: none !important; }
+  .cert { break-inside: avoid; border-width: 8px; }
+}

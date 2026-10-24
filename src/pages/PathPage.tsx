@@ -8,6 +8,7 @@ import { useProgress } from '../state/useProgress.ts';
 import { nextStep, orderedPath } from '../engine/next.ts';
 import { Ring } from '../components/Ring.tsx';
 import { tr } from '../i18n/lang.ts';
+import { pathCompletion } from './CertificatePage.tsx';
 
 export function PathPage({ id }: { id: string }) {
   const p = useProgress();
@@ -32,6 +33,13 @@ export function PathPage({ id }: { id: string }) {
         </div>
       </div>
       <div className="bar" role="progressbar" aria-valuenow={done} aria-valuemin={0} aria-valuemax={exs.length || 1} aria-label={tr('Progression du parcours', 'Path progress')}><span style={{ width: `${pct}%` }} /></div>
+      {pathCompletion(path.id, p).complete && (
+        <a className="next-banner" href={href('certificat', path.id)}>
+          <span className="kicker">{tr('Parcours terminé', 'Path completed')}</span>
+          <strong>{tr('Obtenir votre certificat', 'Get your certificate')}</strong>
+          <span className="go">{tr('Ouvrir', 'Open')} →</span>
+        </a>
+      )}
       {step && (
         <a className="next-banner" href={step.kind === 'lesson' ? href('cours', step.lesson.id) : href('exercice', step.ex.id)}>
           <span className="kicker">{done === 0 ? tr('Commencez ici', 'Start here') : tr('Prochaine étape', 'Next step')}</span>

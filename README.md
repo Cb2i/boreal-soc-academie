@@ -31,6 +31,14 @@ Accueil, catalogue filtrable, carte de progression, pages de cours, espace d'exe
 
 Déblocage : le niveau L s'ouvre quand au moins 60 % du niveau L-1 du même parcours est réussi, en plus des prérequis propres à chaque exercice. Le réglage « tout débloquer » le contourne.
 
+## Série, défi du jour et certificats
+
+- **Série et objectif** : la pastille de l'en-tête affiche les jours consécutifs avec au moins une réussite et l'avancement de l'objectif de la semaine (lundi à dimanche, heure locale). L'objectif se règle dans le tableau de bord. Les anciennes sauvegardes sont reconstituées à partir des dates de réussite.
+- **Défi du jour** : 5 exercices déjà réussis, choisis d'abord parmi ceux à réviser, puis les échecs, puis les réussites fragiles. La liste est figée pour la journée et enregistrée localement.
+- **Certificat** : disponible quand tous les exercices d'un parcours sont réussis (`#/certificat/<parcours>`). Le nom saisi reste dans la progression locale. Le bouton d'impression ouvre la boîte du navigateur : choisir « Enregistrer au format PDF », orientation paysage. Le certificat est une attestation personnelle, non officielle.
+
+Tout reste local (aucun compte, aucun serveur). Le format d'export de la progression reste en version 1 : les nouveaux champs sont facultatifs à l'import.
+
 ## Langues (français et anglais)
 
 Le bouton **EN / FR** de l'en-tête bascule toute l'interface et tout le contenu (parcours, cours, labs, exercices, indices, explications, messages du moteur KQL). Le choix est mémorisé dans le navigateur (clé `boreal.lang`) et l'attribut `lang` de la page suit la langue. Le français reste la langue de référence. Les traductions anglaises sont des « overlays » chargés à la demande (chunk séparé) : `src/content/en/`. Les blocs de code, les identifiants et les alias de colonnes des exercices restent identiques dans les deux langues, pour que les solutions de référence soient validées de la même façon.

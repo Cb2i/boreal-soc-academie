@@ -43,6 +43,8 @@ function ErrorBoundaryFallback() {
 
 import { Component } from 'react';
 import type { ReactNode } from 'react';
+import { CertificatePage } from './pages/CertificatePage.tsx';
+import { StreakChip } from './components/StreakChip.tsx';
 import { tr, useLang, setLang } from './i18n/lang.ts';
 class Boundary extends Component<{ children: ReactNode; resetKey: string }, { failed: boolean; key: string }> {
   state = { failed: false, key: this.props.resetKey };
@@ -109,6 +111,7 @@ export function App() {
     case 'cours': page = <LessonPage id={route.params[0] ?? ''} />; break;
     case 'exercice': page = <ExercisePage id={route.params[0] ?? ''} />; break;
     case 'revision': page = route.params[0] ? <ExercisePage id={route.params[0]} review /> : <ReviewPage />; break;
+    case 'certificat': page = <CertificatePage id={route.params[0] ?? ''} />; break;
     case 'tableau': page = <DashboardPage />; break;
     case 'terrain': page = <PlaygroundPage route={route} />; break;
     case 'labos': page = <LabsPage />; break;
@@ -146,6 +149,7 @@ export function App() {
           >
             {lang === 'fr' ? 'EN' : 'FR'}
           </button>
+          <StreakChip />
           <span className="xp-chip" aria-label={tr(`${xp} points d’expérience`, `${xp} experience points`)}>{xp} XP</span>
         </div>
       </header>

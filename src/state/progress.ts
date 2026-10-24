@@ -21,6 +21,8 @@ export interface Settings {
   unlockAll: boolean;
   timed: boolean;
   reducedMotion: 'auto' | 'on' | 'off';
+  /** Objectif hebdomadaire : nombre de réussites par semaine (1 à 50). */
+  weeklyGoal: number;
 }
 
 export interface Progress {
@@ -36,10 +38,23 @@ export interface Progress {
   labsChecked: Record<string, string[]>;
   last: { route: string; title: string; at: number } | null;
   settings: Settings;
+  /** Activité par jour local (AAAA-MM-JJ) : nombre de réussites. Sert à la série et à l'objectif. */
+  activity: Record<string, number>;
+  /** Nom affiché sur les certificats. Reste sur cet appareil. */
+  certName: string;
+  /** Défi du jour figé pour la journée, afin que la liste reste stable pendant qu'on la complète. */
+  daily: { day: string; ids: string[] } | null;
   createdAt: number;
 }
 
 export const DAY = 86_400_000;
+export const DEFAULT_WEEKLY_GOAL = 5;
+
+/** Clé de jour local AAAA-MM-JJ. */
+export function dayKey(ms: number): string {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 export const LEITNER_DAYS = [1, 3, 7, 14, 30];
 
 export function emptyProgress(now = Date.now()): Progress {
@@ -53,9 +68,22 @@ export function emptyProgress(now = Date.now()): Progress {
     steps: {},
     labsChecked: {},
     last: null,
-    settings: { theme: 'auto', unlockAll: false, timed: false, reducedMotion: 'auto' },
+    settings: { theme: 'auto', unlockAll: false, timed: false, reducedMotion: 'auto', weeklyGoal: DEFAULT_WEEKLY_GOAL },
+    activity: {},
+    certName: '',
+    daily: null,
     createdAt: now,
   };
+}
+
+function cleanActivity(x: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (x && typeof x === 'object' && !Array.isArray(x)) {
+    for (const [k, v] of Object.entries(x as Record<string, unknown>)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === 'number' && Number.isFinite(v) && v > 0) out[k] = Math.min(9999, Math.floor(v));
+    }
+  }
+  return out;
 }
 
 export function sanitize(raw: unknown): Progress {
@@ -80,7 +108,11 @@ export function sanitize(raw: unknown): Progress {
       unlockAll: s.unlockAll === true,
       timed: s.timed === true,
       reducedMotion: s.reducedMotion === 'on' || s.reducedMotion === 'off' ? s.reducedMotion : 'auto',
+      weeklyGoal: typeof s.weeklyGoal === 'number' && Number.isFinite(s.weeklyGoal) ? Math.min(50, Math.max(1, Math.round(s.weeklyGoal))) : DEFAULT_WEEKLY_GOAL,
     },
+    activity: cleanActivity(r.activity),
+    certName: typeof r.certName === 'string' ? r.certName.slice(0, 60) : '',
+    daily: r.daily && typeof r.daily === 'object' && typeof r.daily.day === 'string' && Array.isArray(r.daily.ids) ? { day: r.daily.day, ids: arr(r.daily.ids).slice(0, 10) } : null,
     createdAt: typeof r.createdAt === 'number' ? r.createdAt : base.createdAt,
   };
 }
@@ -98,7 +130,8 @@ export function recordSuccess(p: Progress, id: string, xp: number, status: strin
     box,
     due: now + LEITNER_DAYS[box - 1] * DAY,
   };
-  return { ...p, done: { ...p.done, [id]: rec } };
+  const k = dayKey(now);
+  return { ...p, done: { ...p.done, [id]: rec }, activity: { ...p.activity, [k]: (p.activity[k] ?? 0) + 1 } };
 }
 
 export function recordFailure(p: Progress, id: string): Progress {
