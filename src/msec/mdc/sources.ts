@@ -171,5 +171,8 @@ export const MDC_SOURCES: SourceDef[] = [
   S('aws-sentinel', 'Connect a Sentinel connected AWS account to Defender for Cloud', 'sentinel-connected-aws', 'Compte AWS déjà connecté à Sentinel'),
   S('aws-db-verify', 'Verify protection for open-source relational databases on AWS', 'verify-protection-open-source-relational-databases-aws', 'Vérifier la protection des bases libres sur AWS'),
   S('containers-troubleshoot', 'Troubleshoot Microsoft Defender for Containers', 'defender-for-containers-troubleshoot', 'Dépannage de Defender for Containers (EKS)'),
+  S('arc-troubleshoot', 'Troubleshoot Azure Connected Machine agent connection problems', 'https://learn.microsoft.com/azure/azure-arc/servers/troubleshoot-agent-onboard', 'Codes AZCM et problèmes de connexion de l’agent Arc', 'reference'),
+  S('arc-proxy', 'Manage Azure Connected Machine agent proxy settings', 'https://learn.microsoft.com/azure/azure-arc/servers/manage-agent-proxy-settings', 'Proxy et contournement pour points de terminaison privés', 'reference'),
+  S('arc-prereq', 'Azure Arc-enabled servers prerequisites', 'https://learn.microsoft.com/azure/azure-arc/servers/prerequisites', 'Systèmes pris en charge, fournisseurs de ressources et rôles', 'reference', 'Consulté par les liens de la documentation Defender for Cloud; relire la page à la date de mise en œuvre.'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
