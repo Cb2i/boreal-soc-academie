@@ -1,0 +1,223 @@
+// Module 6 : Pare-feu et sécurité réseau (niveau 2).
+import type { AiCompetency, AiLesson, AiProject } from '../../agentic/types.ts';
+import { assemble } from '../assemble.ts';
+import { kit } from '../kit.ts';
+import { sref } from '../sources.ts';
+
+const md = (...lines: string[]) => lines.join('\n');
+const { a, Q, M } = kit('i06');
+const c1 = { comp: 'i06-c1', lesson: 'i06-l1', tags: ['pare-feu-windows', 'profils-reseau', 'macos-firewall'] };
+const c2 = { comp: 'i06-c2', lesson: 'i06-l2', tags: ['regles-pare-feu', 'blocs-atomiques', 'depannage'] };
+const c3 = { comp: 'i06-c3', lesson: 'i06-l3', tags: ['natif-ou-autre-service', 'fqdn', 'limites'] };
+
+const l1: AiLesson = {
+  id: 'i06-l1', module: 'i06', title: 'Le pare-feu des postes : profils réseau, macOS, Windows Server et état réel', minutes: 45,
+  summary: 'Configurer le pare-feu natif des postes avec Endpoint security et lire son état réel plutôt que la seule politique.',
+  objectives: ['Situer les profils Windows Firewall, Windows Firewall rules et macOS firewall.', 'Raisonner par profil réseau (domaine, privé, public).', 'Lire le rapport d’état du pare-feu et ses limites.'],
+  prerequisites: ['Modules 2 et 5'],
+  body: md(
+    '## Ce que gère Intune',
+    'La politique **Pare-feu** d’Endpoint security configure le pare-feu intégré des appareils **Windows** et **macOS**. Plateformes : Windows, Windows Server 2012 R2 ou plus récent (uniquement par la gestion des paramètres de sécurité de Defender for Endpoint, vue au module 5) et toute version prise en charge de macOS. Pour Windows, deux profils principaux, au format du catalogue de paramètres : **Windows Firewall** (réglages de Windows Firewall with Advanced Security, pare-feu bidirectionnel sur l’hôte) et **Windows Firewall rules** (règles précises par port, protocole, application, réseau). Un troisième profil, **Windows Hyper-V Firewall Rules**, vise les conteneurs Hyper-V, y compris des applications comme WSL ou WSA (voir le module 13 pour WSL). Les anciens profils « Windows 10 et plus » ne se créent plus, mais ceux qui existent restent modifiables.',
+    '## Raisonner par profil réseau',
+    'Windows applique trois profils : **domaine**, **privé**, **public**. Une règle peut viser un ou plusieurs types de réseau ; si aucun n’est choisi, elle s’applique aux trois. Le réseau public est le plus hostile (café, hôtel) : on y active le pare-feu et on y garde le **mode furtif** (sa désactivation peut exposer l’appareil). Le **mode blindé** isole l’appareil et bloque tout le trafic : à réserver aux situations d’urgence ou d’isolement planifié, pas à un profil de tous les jours. Pour « Non configuré », le client revient à son défaut, qui est d’activer le pare-feu.',
+    '## macOS',
+    'Le profil **macOS firewall** active le pare-feu, peut **bloquer toutes les connexions entrantes** (sauf services de base comme DHCP, Bonjour, IPsec, ce qui bloque tous les partages), activer le **mode furtif** et définir des applications par **identifiant de bundle** avec autorisation ou blocage des connexions entrantes. Le pare-feu macOS est centré sur les connexions entrantes par application : ne promettez pas l’équivalent des règles Windows par port.',
+    '## Lire l’état réel',
+    'Le rapport d’état du pare-feu, alimenté par le CSP DeviceStatus Windows, affiche : **Activé** (en marche et rapporte), **Désactivé**, **Limité** (ne surveille pas tous les réseaux ou certaines règles sont désactivées), **Temporairement désactivé** (la valeur par défaut) et **Non applicable** (appareil sans rapport de pare-feu). Un appareil « Limité » n’est pas conforme à votre intention même si la politique est reçue. Rappel du module 3 : politique reçue n’est pas protection opérationnelle.',
+    '## Conflits de source',
+    'Les mêmes réglages de pare-feu existent aussi dans les profils d’Endpoint protection de configuration d’appareils, qui contiennent d’autres catégories sans lien et compliquent la tâche. Pour le pare-feu seul, préférez la politique Endpoint security, et ne mettez pas le même réglage dans deux types de profil (module 2). Sur les contrôleurs de domaine, les politiques de pare-feu ne sont pas prises en charge par la gestion des paramètres de sécurité.',
+  ),
+  demo: { title: 'État du pare-feu par appareil', body: md(
+    'Extrait **fictif** du rapport :',
+    '```text',
+    'Activé                  : 412',
+    'Désactivé               : 3',
+    'Limité                  : 9',
+    'Temporairement désactivé: 14',
+    'Non applicable          : 22',
+    '```',
+    '**Lecture commentée.** Les 9 appareils limités et les 3 désactivés demandent une enquête : règle désactivée, réseau non surveillé ou autre outil de gestion.',
+    '**Ce que la démo ne prouve pas.** Aucun appareil réel n’a été interrogé.') },
+  guided: 'i06-g1', autonomous: 'i06-a1', quiz: ['i06-q1a', 'i06-q1b', 'i06-q1c'],
+  revision: md('## Fiche : pare-feu des postes', '- Windows Firewall, Windows Firewall rules, Hyper-V Firewall Rules, macOS firewall.', '- Trois profils réseau ; aucune sélection = les trois.', '- Mode furtif conservé ; mode blindé = tout bloquer.', '- États du rapport : activé, désactivé, limité, temporairement désactivé, non applicable.', '- Pas de pare-feu géré sur les contrôleurs de domaine par la gestion des paramètres.'),
+  links: [sref('intune-firewall'), sref('intune-firewall-settings'), sref('intune-mde-ssm'), sref('intune-endpoint-security')], teaches: ['pare-feu-windows', 'profils-reseau', 'macos-firewall'],
+};
+
+const l2: AiLesson = {
+  id: 'i06-l2', module: 'i06', title: 'Règles de pare-feu : granularité, blocs atomiques et dépannage', minutes: 50,
+  summary: 'Écrire des règles de pare-feu applicables par Intune sans qu’un profil entier échoue silencieusement.',
+  objectives: ['Écrire une règle par application, port, protocole et réseau.', 'Expliquer le comportement tout ou rien d’un bloc de règles.', 'Diagnostiquer les erreurs de paramètres courantes dans le journal.'],
+  prerequisites: ['Leçon 1'],
+  body: md(
+    '## Anatomie d’une règle',
+    'Une règle précise la **direction** (entrante ou sortante), l’**action** (bloquer ou autoriser ; « Non configuré » laisse le défaut, qui autorise), les **types de réseau**, les **applications** (par chemin de fichier, nom de famille de paquet via `Get-AppxPackage`, ou nom court de service via `Get-Service`), les **ports et protocoles** (TCP est 6, UDP est 17, ou un numéro de protocole de 0 à 255) et les **adresses** locales et distantes. Plus une règle est précise, moins elle a d’effets de bord : une règle « bloquer sortant » sans application ni port est un coup de marteau.',
+    '## Limite de 150 et échec collectif',
+    'Chaque instance du profil **Windows Firewall rules** accepte jusqu’à **150 règles personnalisées**. Dans l’ancien modèle d’Endpoint protection, **si une règle échoue, toutes les règles du profil échouent** et aucune ne s’applique, et Intune ne peut pas dire laquelle a échoué. Conséquence de conception : découpez en **petits profils cohérents** (par exemple un profil par application ou par fonction), de sorte qu’une erreur n’invalide pas tout le parc de règles.',
+    '## Blocs atomiques',
+    'Le CSP du pare-feu traite les règles d’un « bloc atomique » : depuis **Windows 11 21H2, Windows 11 22H2 et Windows 10 21H2**, l’application est **tout ou rien** pour chaque bloc. Sur des versions plus anciennes, le CSP applique les règles une à une ; s’il rencontre un problème, il **arrête** l’application des règles suivantes **sans annuler** celles déjà posées, ce qui peut donner un déploiement **partiel**. Sur un parc hétérogène, ne tenez donc pas pour acquis le tout ou rien.',
+    '## Erreurs fréquentes dans le journal des événements',
+    '1. **RemotePortRanges ou LocalPortRanges « The parameter is incorrect »** : plages dans le désordre (1-5 est correct, 5-1 non), hors de 0 à 65535, ou plages de ports sans protocole 6 ou 17. 2. **Erreur sur le nom** : un « edge traversal » activé exige une règle **entrante**. 3. **Erreur sur InterfaceTypes** : si le type d’interface « Tous » est choisi, ne sélectionnez pas les autres. Le blogue Intune Customer Success décrit aussi comment tracer la création de règles.',
+    '## Valider avant de généraliser',
+    'Après chaque vague, comparez trois sources : le statut de la politique dans Intune, l’état du pare-feu dans le rapport et l’effet réel sur l’application visée (test de connexion simulé en laboratoire). Si l’une des trois diverge, ne passez pas à la vague suivante. Gardez aussi un profil de retour arrière prêt, qui rétablit les règles précédentes, parce que supprimer un profil ne remet pas toujours l’état antérieur (module 2).',
+    '## Règles liées à une application par étiquette',
+    'Le réglage **Policy App Id** exige un déploiement préalable de la **réunion d’étiquettes AppId** par App Control for Business : on étiquette des applications, puis on écrit des règles qui visent les processus portant l’étiquette. C’est puissant mais dépend d’un autre contrôle (module 11).',
+  ),
+  demo: { title: 'Lire une erreur', body: md(
+    'Extrait **fictif** du journal :',
+    '```text',
+    'Rule: Bloquer-Sortant-App-X',
+    'RemotePortRanges: 8080-80',
+    'Result: The parameter is incorrect',
+    '```',
+    '**Lecture commentée.** La plage est descendante. Corriger en 80-8080, et vérifier que le protocole est 6 ou 17.',
+    '**Ce que la démo ne prouve pas.** Aucun journal réel n’a été lu.') },
+  guided: 'i06-g2', autonomous: 'i06-a2', quiz: ['i06-q2a', 'i06-q2b', 'i06-q2c'],
+  revision: md('## Fiche : règles de pare-feu', '- Direction, action, réseau, application, port, protocole, adresses.', '- 150 règles par profil ; petits profils cohérents.', '- Blocs atomiques tout ou rien sur Windows 11 21H2 et 22H2 et Windows 10 21H2 ; partiel avant.', '- Plages ascendantes dans 0 à 65535 ; protocole 6 ou 17 avec plages.', '- Edge traversal : entrant seulement.'),
+  links: [sref('intune-firewall'), sref('intune-endpoint-protection-fw'), sref('intune-firewall-settings'), sref('win-firewall-rules')], teaches: ['regles-pare-feu', 'blocs-atomiques', 'depannage'],
+};
+
+const l3: AiLesson = {
+  id: 'i06-l3', module: 'i06', title: 'Ce qui est natif, ce qui exige un autre service : FQDN, filtrage Web et limites', minutes: 45,
+  summary: 'Distinguer ce que le pare-feu d’Intune fait nativement de ce qui demande une autre fonction, un autre produit ou une autre licence.',
+  objectives: ['Classer un besoin réseau en natif, intégration, dépendance ou service distinct.', 'Expliquer pourquoi une règle sortante par nom de domaine est limitée.', 'Rédiger une réponse honnête quand la fonction demandée n’existe pas dans Intune.'],
+  prerequisites: ['Leçons 1 et 2'],
+  body: md(
+    '## Le piège du « pare-feu d’Intune »',
+    'On entend souvent « on va filtrer cela avec Intune ». Or Intune **configure le pare-feu de l’hôte** : il ne fournit pas un pare-feu d’entreprise, un filtre Web complet, ni une passerelle. Pour chaque besoin, classez la réponse : **natif** (le pare-feu de l’hôte via Intune), **intégration** (une autre fonction Defender qui se configure par Intune, comme la protection réseau du module 4), **dépendance** (une fonction qui exige une autre licence ou un prérequis) ou **service distinct** (un produit réseau hors Intune). Cette classification devient la colonne « nature » de la matrice de couverture.',
+    '## Règles sortantes par nom de domaine',
+    'Les règles de pare-feu de l’hôte reposent surtout sur des **adresses IP**. Les **groupes de paramètres réutilisables** permettent d’y associer des plages d’adresses distantes et des **définitions FQDN avec résolution automatique**, mais la documentation consultée les décrit en **préversion**, et précise que les règles FQDN **entrantes** ne sont pas prises en charge nativement. Les adresses de services comme Windows Update changent et ne sont pas toutes publiées sous forme de listes stables : une règle sortante stricte vers « un service Microsoft » est donc fragile. Validez l’état de la fonction avant de bâtir une architecture dessus.',
+    '## Filtrage Web et réputation',
+    'Bloquer des domaines malveillants relève de la **protection réseau** (réputation) et, pour des catégories de contenu, d’une fonction Defender distincte dont les prérequis sont dans sa propre documentation. Un pare-feu d’hôte ne remplace pas un contrôle de contenu. Quand un besoin dépasse l’hôte, dites-le : les balises FQDN d’Azure Firewall sont un exemple de contrôle placé dans le réseau, avec son propre service et sa propre facturation.',
+    '## Application par étiquette',
+    'La règle liée à une application par étiquette (Policy App Id) est une **dépendance** : sans déploiement d’étiquettes AppId par App Control for Business, la règle ne peut pas fonctionner.',
+    '## Cas concret : le domaine de confiance',
+    'Une organisation veut que les postes ne parlent qu’à une liste de services approuvés. Côté hôte, on peut bloquer le trafic sortant par application, port et réseau, ce qui réduit déjà les mouvements latéraux et les connexions inattendues. Mais maintenir une liste d’adresses de services infonuagiques à jour dépasse ce que le pare-feu d’hôte gère confortablement : c’est ce qui pousse à un contrôle placé dans le réseau. Le bon livrable est donc une recommandation en deux couches (hôte et réseau), chacune avec son propriétaire, ses limites et sa preuve.',
+    '## Répondre honnêtement',
+    'Quand la fonction n’existe pas ou n’est pas native, la bonne réponse est un tableau court : besoin, mécanisme possible, nature (native, intégration, dépendance, licence supplémentaire, non pris en charge), prérequis, limite, alternative. Ne promettez jamais une fonction pour faire plaisir : c’est la première cause de projets qui échouent à la validation.',
+  ),
+  demo: { title: 'Classer un besoin', body: md(
+    'Exemple **fictif** :',
+    '```text',
+    'Besoin   : bloquer l’accès sortant à tout sauf aux services Microsoft 365',
+    'Natif    : règles sortantes par IP (fragile)',
+    'Mieux    : contrôle réseau distinct, nature = service distinct',
+    'Limite   : FQDN en préversion, entrant non pris en charge',
+    '```',
+    '**Lecture commentée.** Le besoin dépasse le pare-feu d’hôte et l’alternative est un service réseau.',
+    '**Ce que la démo ne prouve pas.** Aucune architecture n’a été validée.') },
+  guided: 'i06-g3', autonomous: 'i06-a3', quiz: ['i06-q3a', 'i06-q3b', 'i06-q3c'],
+  revision: md('## Fiche : natif ou autre service', '- Intune configure le pare-feu de l’hôte, pas un pare-feu d’entreprise.', '- Natif, intégration, dépendance, service distinct, non pris en charge.', '- FQDN réutilisables en préversion ; entrant non pris en charge nativement.', '- Policy App Id exige l’étiquetage App Control.', '- Répondre par un tableau honnête, jamais par une promesse.'),
+  links: [sref('intune-reusable-groups'), sref('intune-firewall'), sref('azure-fqdn-tags'), sref('mde-network-protection'), sref('win-firewall-rules')], teaches: ['natif-ou-autre-service', 'fqdn', 'limites'],
+};
+
+const exercises = [
+  a.match({ id: 'i06-g1', title: 'Profil et usage', comp: c1.comp, tags: c1.tags, role: 'guided', dim: 'comprendre', lesson: 'i06-l1',
+    st: 'Associez chaque besoin au profil de pare-feu.', items: [['p1', 'Régler l’état du pare-feu par type de réseau'], ['p2', 'Bloquer une application précise'], ['p3', 'Bloquer toutes les connexions entrantes d’un Mac']],
+    options: [['s1', 'Windows Firewall'], ['s2', 'Windows Firewall rules'], ['s3', 'macOS firewall']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Windows Firewall pour l’état, Windows Firewall rules pour une application, macOS firewall pour le Mac.' }),
+  a.config({ id: 'i06-a1', title: 'Pare-feu des postes nomades', comp: c1.comp, tags: c1.tags, role: 'autonomous', dim: 'securiser', lesson: 'i06-l1',
+    st: 'Paramétrez le pare-feu des postes nomades.',
+    fields: [
+      { id: 'pub', label: 'Pare-feu activé sur le réseau public', kind: 'toggle', accept: ['on'], why: 'Réseau le plus hostile.' },
+      { id: 'stealth', label: 'Désactiver le mode furtif', kind: 'toggle', accept: ['off'], why: 'Le désactiver expose l’appareil.' },
+      { id: 'report', label: 'Suivre le rapport d’état du pare-feu', kind: 'toggle', accept: ['on'], why: 'Politique reçue n’est pas protection active.' },
+    ], solution: { pub: 'on', stealth: 'off', report: 'on' }, exp: 'Pare-feu public actif, furtif conservé et rapport suivi.' }),
+  Q('i06-q1a', 'quiz', 'comprendre', c1, 'Aucun réseau', 'Une règle sans type de réseau sélectionné s’applique à quoi ?', ['Aux trois types : domaine, privé et public.', 'Comportement documenté.'], [['À aucun.', 'Faux.'], ['Au domaine seulement.', 'Faux.'], ['Au public seulement.', 'Faux.']], 'Sans sélection, la règle vaut pour les trois types.'),
+  Q('i06-q1b', 'quiz', 'fonctionner', c1, 'État limité', 'Que signifie l’état Limité ?', ['Le pare-feu ne surveille pas tous les réseaux ou certaines règles sont désactivées.', 'À investiguer.'], [['Tout va bien.', 'Faux.'], ['Le pare-feu est supprimé.', 'Faux.'], ['L’appareil est hors ligne.', 'Faux.']], 'Limité signale une couverture incomplète.'),
+  Q('i06-q1c', 'quiz', 'maintenir', c1, 'Serveurs', 'Comment gérer le pare-feu d’un serveur Windows non inscrit ?', ['Par la gestion des paramètres de sécurité de Defender for Endpoint.', 'Intune natif ne couvre pas les serveurs.'], [['Par Intune natif directement.', 'Non.'], ['Aucune voie.', 'Faux.'], ['Par courriel.', 'Faux.']], 'Les serveurs passent par la gestion des paramètres de sécurité.'),
+
+  a.fix({ id: 'i06-g2', title: 'Corriger une règle', comp: c2.comp, tags: c2.tags, role: 'guided', dim: 'fonctionner', lesson: 'i06-l2', language: 'json',
+    st: 'Corrigez la règle : plage ascendante et protocole TCP.',
+    starter: JSON.stringify({ direction: 'sortante', plageDistante: '8080-80', protocole: 'aucun' }, null, 2),
+    rules: [{ kind: 'equals', path: 'plageDistante', value: '80-8080', message: 'Mettre la plage en ordre ascendant.', dim: 'fonctionner' }, { kind: 'equals', path: 'protocole', value: 'TCP', message: 'Ajouter le protocole TCP (6).', dim: 'fonctionner' }, { kind: 'equals', path: 'direction', value: 'sortante', message: 'Garder la direction.', dim: 'comprendre' }],
+    solution: JSON.stringify({ direction: 'sortante', plageDistante: '80-8080', protocole: 'TCP' }, null, 2), exp: 'La plage doit être ascendante et le protocole défini.' }),
+  a.workflow({ id: 'i06-a2', title: 'Déployer des règles', comp: c2.comp, tags: c2.tags, role: 'autonomous', dim: 'securiser', lesson: 'i06-l2',
+    st: 'Ordonnez le déploiement de règles de pare-feu.',
+    blocks: [['b1', 'Découper en petits profils cohérents'], ['b2', 'Valider les plages et les protocoles'], ['b3', 'Piloter sur un groupe de test'], ['b4', 'Lire le journal des événements'], ['b5', 'Étendre par vagues'], ['b6', 'Mettre 150 règles dans un seul profil sans test']],
+    required: ['b1', 'b2', 'b3', 'b4', 'b5'], forbidden: ['b6'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4'], ['b4', 'b5']], notes: { b6: 'Une erreur invalide tout le profil.' }, solution: ['b1', 'b2', 'b3', 'b4', 'b5'],
+    exp: 'Petits profils, validation, pilote, lecture des journaux puis vagues.' }),
+  Q('i06-q2a', 'quiz', 'comprendre', c2, 'Limite', 'Combien de règles par instance du profil Windows Firewall rules ?', ['150.', 'Au-delà, créer un autre profil.'], [['10.', 'Faux.'], ['1 000.', 'Faux.'], ['Illimité.', 'Faux.']], 'La limite est de 150 règles.'),
+  Q('i06-q2b', 'quiz', 'fonctionner', c2, 'Blocs atomiques', 'Que peut produire un CSP ancien qui rencontre une erreur ?', ['Un déploiement partiel : les règles déjà posées ne sont pas annulées.', 'Versions antérieures à 21H2.'], [['Un retour arrière complet.', 'Faux.'], ['Une mise à jour de Windows.', 'Faux.'], ['Aucune règle.', 'Faux.']], 'Sur d’anciennes versions, le déploiement peut être partiel.'),
+  Q('i06-q2c', 'quiz', 'maintenir', c2, 'Edge traversal', 'Quelle contrainte pèse sur edge traversal ?', ['La règle doit être entrante.', 'Sinon erreur de paramètre.'], [['Elle doit être sortante.', 'Faux.'], ['Elle exige un service.', 'Faux.'], ['Aucune.', 'Faux.']], 'Edge traversal exige une règle entrante.'),
+
+  a.match({ id: 'i06-g3', title: 'Besoin et nature', comp: c3.comp, tags: c3.tags, role: 'guided', dim: 'comprendre', lesson: 'i06-l3',
+    st: 'Associez chaque besoin à sa nature.', items: [['p1', 'Bloquer une application sortante sur un port'], ['p2', 'Bloquer les domaines de faible réputation'], ['p3', 'Contrôler tout le trafic Internet de l’entreprise']],
+    options: [['s1', 'Natif (pare-feu de l’hôte)'], ['s2', 'Intégration (protection réseau)'], ['s3', 'Service distinct']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Pare-feu d’hôte, protection réseau et service distinct couvrent trois besoins différents.' }),
+  a.inspect({ id: 'i06-a3', title: 'Relire des promesses', comp: c3.comp, tags: c3.tags, role: 'autonomous', dim: 'securiser', lesson: 'i06-l3', language: 'text',
+    st: 'Plan fictif. Repérez les promesses fragiles.',
+    lines: [['p1', 'Nous bloquerons tout trafic sortant sauf Windows Update avec une règle sur son adresse IP.', { ok: 'a1', fixes: [['a1', 'Reconnaître que ces adresses changent et prévoir un autre mécanisme'], ['a2', 'Accepter']] }], ['p2', 'Les règles FQDN réutilisables sont en production partout.', { ok: 'b1', fixes: [['b1', 'Valider l’état de la fonction avant de s’y fier'], ['b2', 'Accepter']] }], ['p3', 'Intune sera notre filtre Web.', { ok: 'c1', fixes: [['c1', 'Classer le besoin et nommer le service adapté'], ['c2', 'Accepter']] }]],
+    exp: 'Adresses supposées stables, fonction préversion et filtre Web imaginé sont trois promesses fragiles.' }),
+  Q('i06-q3a', 'quiz', 'comprendre', c3, 'Nature', 'Quelle nature a une règle Policy App Id ?', ['Une dépendance : elle exige l’étiquetage AppId par App Control.', 'Sans cela, elle ne fonctionne pas.'], [['Native sans prérequis.', 'Faux.'], ['Service distinct.', 'Faux.'], ['Non pertinente.', 'Faux.']], 'C’est une dépendance.'),
+  Q('i06-q3b', 'quiz', 'fonctionner', c3, 'FQDN entrant', 'Les règles FQDN entrantes sont-elles prises en charge nativement ?', ['Non, selon la documentation consultée.', 'Il existe des contournements.'], [['Oui, toujours.', 'Faux.'], ['Seulement sur macOS.', 'Faux.'], ['Seulement la nuit.', 'Faux.']], 'Les règles FQDN entrantes ne sont pas prises en charge nativement.'),
+  Q('i06-q3c', 'quiz', 'maintenir', c3, 'Honnêteté', 'Que faire quand la fonction demandée n’existe pas ?', ['Répondre par un tableau : mécanisme, nature, prérequis, limite, alternative.', 'Jamais de promesse.'], [['Promettre quand même.', 'Non.'], ['Ignorer la demande.', 'Non.'], ['Désactiver le pare-feu.', 'Non.']], 'On documente honnêtement la limite et l’alternative.'),
+
+  Q('i06-ev1', 'eval', 'comprendre', c1, 'Mode blindé', 'Que fait le mode blindé ?', ['Il isole l’appareil du réseau en bloquant tout le trafic.', 'Pour isolement ou urgence.'], [['Il accélère le réseau.', 'Faux.'], ['Il chiffre les paquets.', 'Faux.'], ['Il active le VPN.', 'Faux.']], 'Le mode blindé bloque tout le trafic.'),
+  M('i06-ev2', 'eval', 'fonctionner', c2, 'Erreurs de règle', 'Cochez les causes d’erreur « parameter is incorrect ».', [['Plage de ports descendante.', 'Documenté.'], ['Plage de ports sans protocole 6 ou 17.', 'Documenté.']], [['Nom de règle trop court.', 'Faux.'], ['Pare-feu activé.', 'Faux.']], 'Plage descendante et protocole manquant.'),
+  a.order({ id: 'i06-ev3', title: 'Classer un besoin', comp: c3.comp, tags: c3.tags, role: 'eval', dim: 'comprendre', lesson: 'i06-l3',
+    st: 'Ordonnez l’analyse d’un besoin réseau.',
+    items: [['s1', 'Formuler le besoin et la menace'], ['s2', 'Chercher le mécanisme natif'], ['s3', 'Vérifier prérequis et licences'], ['s4', 'Classer la nature'], ['s5', 'Documenter limite et alternative']], correct: ['s1', 's2', 's3', 's4', 's5'],
+    exp: 'On formule, on cherche, on vérifie, on classe puis on documente.' }),
+  a.fix({ id: 'i06-ev4', title: 'Corriger une politique de pare-feu', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'securiser', lesson: 'i06-l1', language: 'json',
+    st: 'Corrigez : pare-feu public actif et furtif conservé.',
+    starter: JSON.stringify({ pareFeuPublic: 'desactive', modeFurtif: 'desactive', suiviEtat: 'aucun' }, null, 2),
+    rules: [{ kind: 'equals', path: 'pareFeuPublic', value: 'active', message: 'Activer le pare-feu public.', dim: 'securiser' }, { kind: 'equals', path: 'modeFurtif', value: 'active', message: 'Garder le mode furtif.', dim: 'securiser' }, { kind: 'equals', path: 'suiviEtat', value: 'rapport', message: 'Suivre le rapport d’état.', dim: 'maintenir' }],
+    solution: JSON.stringify({ pareFeuPublic: 'active', modeFurtif: 'active', suiviEtat: 'rapport' }, null, 2), exp: 'Pare-feu public actif, furtif conservé et rapport suivi.' }),
+  a.match({ id: 'i06-ev5', title: 'Symptôme et cause', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'maintenir', lesson: 'i06-l2',
+    st: 'Associez chaque symptôme à sa cause probable.', items: [['p1', 'Aucune règle du profil appliquée'], ['p2', 'Quelques règles appliquées seulement'], ['p3', 'Règle liée à une application sans effet']],
+    options: [['s1', 'Une règle a échoué et fait échouer tout le profil'], ['s2', 'Ancienne version de Windows et bloc partiel'], ['s3', 'Étiquetage AppId non déployé']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Échec collectif, déploiement partiel ancien et dépendance AppId expliquent ces symptômes.' }),
+  a.workflow({ id: 'i06-ev6', title: 'Répondre à une demande irréaliste', comp: c3.comp, tags: c3.tags, role: 'eval', dim: 'securiser', lesson: 'i06-l3',
+    st: 'Ordonnez la réponse à une demande irréaliste.',
+    blocks: [['b1', 'Reformuler le besoin réel'], ['b2', 'Identifier le mécanisme natif et ses limites'], ['b3', 'Nommer le service distinct éventuel'], ['b4', 'Présenter le tableau au demandeur'], ['b5', 'Promettre la fonction sans vérifier']],
+    required: ['b1', 'b2', 'b3', 'b4'], forbidden: ['b5'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4']], notes: { b5: 'La promesse crée l’échec de validation.' }, solution: ['b1', 'b2', 'b3', 'b4'],
+    exp: 'On reformule, on documente les limites, on nomme l’alternative puis on présente.' }),
+  a.short({ id: 'i06-ev7', title: 'Règles par profil', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'comprendre', lesson: 'i06-l2',
+    st: 'Quel est le nombre maximal de règles personnalisées par instance du profil Windows Firewall rules ? (nombre)', accepted: ['150'], numeric: { value: 150 }, ph: 'un nombre',
+    exp: 'Chaque instance du profil accepte jusqu’à 150 règles personnalisées.' }),
+  a.short({ id: 'i06-ev8', title: 'Protocole UDP', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'comprendre', lesson: 'i06-l2',
+    st: 'Quel numéro de protocole désigne UDP dans une règle de pare-feu ? (nombre)', accepted: ['17'], numeric: { value: 17 }, ph: 'un nombre',
+    exp: 'UDP porte le numéro de protocole 17 dans les règles de pare-feu.' }),
+
+  a.inspect({ id: 'i06-cs1', title: 'Cas : pare-feu chez Aurore Logistique', comp: c1.comp, tags: c1.tags, role: 'case', dim: 'securiser', lesson: 'i06-l1', language: 'text',
+    st: 'Plan fictif. Repérez les défauts.',
+    lines: [['p1', 'Le mode furtif est désactivé sur le réseau public pour faciliter le dépannage.', { ok: 'a1', fixes: [['a1', 'Garder le mode furtif et dépanner autrement'], ['a2', 'Accepter']] }], ['p2', 'Un rapport « Limité » est jugé acceptable.', { ok: 'b1', fixes: [['b1', 'Enquêter sur chaque appareil limité'], ['b2', 'Accepter']] }], ['p3', 'Les mêmes réglages sont dans deux types de profils.', { ok: 'c1', fixes: [['c1', 'Garder un seul type de profil'], ['c2', 'Accepter']] }]],
+    exp: 'Furtif désactivé, état limité toléré et double source sont trois défauts.' }),
+  a.workflow({ id: 'i06-cs2', title: 'Cas : règles pour une application métier', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'securiser', lesson: 'i06-l2',
+    st: 'Ordonnez la création de règles pour une application métier.',
+    blocks: [['t1', 'Documenter les flux nécessaires'], ['t2', 'Écrire des règles par application, port et protocole'], ['t3', 'Placer les règles dans un petit profil'], ['t4', 'Piloter et lire le journal'], ['t5', 'Étendre'], ['t6', 'Bloquer tout le trafic sortant sans inventaire']],
+    required: ['t1', 't2', 't3', 't4', 't5'], forbidden: ['t6'], before: [['t1', 't2'], ['t2', 't3'], ['t3', 't4'], ['t4', 't5']], notes: { t6: 'Coupe des flux légitimes.' }, solution: ['t1', 't2', 't3', 't4', 't5'],
+    exp: 'Inventaire, règles précises, petit profil, pilote puis extension.' }),
+  a.match({ id: 'i06-cs3', title: 'Cas : natures', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i06-l3',
+    st: 'Associez chaque fonction à sa nature.', items: [['p1', 'Règle de pare-feu d’hôte par port'], ['p2', 'Règle liée à une étiquette AppId'], ['p3', 'Passerelle de filtrage de tout le trafic']],
+    options: [['s1', 'Native'], ['s2', 'Dépendance'], ['s3', 'Service distinct']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Native, dépendance et service distinct : trois natures à ne pas confondre.' }),
+  a.open({ id: 'i06-cs-open', title: 'Cas : stratégie réseau des postes', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i06-l3',
+    st: 'Rédigez la stratégie réseau des postes d’une organisation fictive.',
+    deliverable: 'Un document : pare-feu par profil réseau, règles, découpage en profils, limites et fonctions qui exigent un autre service.',
+    rubric: [['r1', 'Les profils réseau et le mode furtif sont traités.', 'securiser'], ['r2', 'Le découpage des règles tient compte de l’échec collectif.', 'fonctionner'], ['r3', 'Chaque besoin est classé par nature.', 'comprendre'], ['r4', 'Les fonctions en préversion sont signalées.', 'maintenir'], ['r5', 'La réponse reste honnête sur ce qui n’existe pas.', 'maintenir']],
+    exp: 'Pas de note automatique : on juge la cohérence et l’honnêteté de la stratégie.' }),
+
+  Q('i06-rm1', 'remediation', 'comprendre', c1, 'Remédiation : état', 'Pourquoi lire l’état du pare-feu et pas seulement la politique ?', ['La politique reçue ne garantit pas un pare-feu réellement actif.', 'États Limité et Désactivé.'], [['La politique suffit.', 'Faux.'], ['L’état est décoratif.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'L’état réel peut différer de la politique.'),
+  Q('i06-rm2', 'remediation', 'fonctionner', c2, 'Remédiation : profils', 'Pourquoi découper les règles en petits profils ?', ['Une erreur peut faire échouer tout le profil.', 'Limiter l’impact.'], [['Pour économiser des licences.', 'Faux.'], ['Pour accélérer le réseau.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Un échec collectif est limité par de petits profils.'),
+  Q('i06-rm3', 'remediation', 'securiser', c3, 'Remédiation : promesse', 'Pourquoi ne pas promettre une fonction avant de la vérifier ?', ['Elle peut être en préversion, dépendante ou inexistante.', 'Échec de validation.'], [['Parce que c’est interdit.', 'Faux.'], ['Parce que ça coûte cher.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Vérifier évite l’échec de validation.'),
+];
+
+const competencies: AiCompetency[] = [
+  { id: 'i06-c1', module: 'i06', name: 'Configurer le pare-feu des postes', description: 'Profils, réseaux, état.', criteria: [{ id: 'i06-c1-1', text: 'Je raisonne par profil réseau.' }, { id: 'i06-c1-2', text: 'Je lis l’état réel du pare-feu.' }, { id: 'i06-c1-3', text: 'Je choisis la bonne voie pour les serveurs.' }] },
+  { id: 'i06-c2', module: 'i06', name: 'Écrire et dépanner des règles', description: 'Règles précises, blocs atomiques, journaux.', criteria: [{ id: 'i06-c2-1', text: 'J’écris des règles précises.' }, { id: 'i06-c2-2', text: 'Je découpe en petits profils.' }, { id: 'i06-c2-3', text: 'Je diagnostique les erreurs de paramètres.' }] },
+  { id: 'i06-c3', module: 'i06', name: 'Classer natif ou autre service', description: 'Nature, limites, honnêteté.', criteria: [{ id: 'i06-c3-1', text: 'Je classe un besoin par nature.' }, { id: 'i06-c3-2', text: 'Je signale les fonctions en préversion.' }, { id: 'i06-c3-3', text: 'Je rédige une réponse honnête.' }] },
+];
+
+const projects: AiProject[] = [
+  { id: 'i06-p1', module: 'i06', level: 'débutant', title: 'Tableau des profils réseau', problem: 'Dresser le tableau des réglages de pare-feu par profil réseau et par plateforme.', architecture: 'Tableau d’une page.', tools: ['Tableur'], data: 'Réglages fictifs.', steps: ['Lister les réglages.', 'Choisir par profil.', 'Définir la preuve d’état.'], success: ['Chaque réglage a une preuve.'], risks: ['Furtif désactivé.'], extensions: ['Ajouter macOS.'] },
+  { id: 'i06-p2', module: 'i06', level: 'intermédiaire', title: 'Plan de règles par application', problem: 'Concevoir les règles d’une application métier, leur découpage en profils et leur pilote.', architecture: 'Plan avec flux, règles, profils et pilote.', tools: ['Tableur'], data: 'Application fictive.', steps: ['Documenter les flux.', 'Écrire les règles.', 'Découper les profils.', 'Planifier le pilote.'], success: ['Aucun profil de plus de 150 règles.'], risks: ['Plages invalides.'], extensions: ['Ajouter des vérifications du journal.'],
+    connected: { accounts: 'Un locataire de test avec Intune et un appareil Windows de test.', permissions: 'Endpoint Security Manager dans le locataire de test.', costs: 'Licences de test.', secrets: 'Aucun secret.', cleanup: 'Retirer les profils de pare-feu de test.', limits: 'Facultatif : ne testez jamais une règle de blocage sortant sur un poste dont vous avez besoin.' } },
+  { id: 'i06-p3', module: 'i06', level: 'avancé', title: 'Matrice des besoins réseau', problem: 'Classer vingt besoins réseau par nature et proposer les alternatives honnêtes.', architecture: 'Matrice besoin par nature, prérequis, limite et alternative.', tools: ['Tableur'], data: 'Besoins fictifs.', steps: ['Lister les besoins.', 'Classer la nature.', 'Documenter prérequis et limites.', 'Rédiger les alternatives.'], success: ['Aucun besoin sans nature.'], risks: ['Promesse non vérifiée.'], extensions: ['Relier à la matrice de couverture.'] },
+];
+
+export const i06 = assemble({ id: 'i06', level: 2, n: 6, title: 'Pare-feu et sécurité réseau',
+  summary: 'Pare-feu Windows et macOS, profils réseau, règles et blocs atomiques, dépannage, FQDN et limites, et distinction entre fonctions natives et autres services.',
+  lessons: [l1, l2, l3], exercises, competencies, projects,
+  caseTitle: 'Concevoir la stratégie réseau chez Aurore Logistique',
+  caseScenario: 'Vous configurez le pare-feu des postes, écrivez des règles et classez des demandes réseau par nature. Actions simulées.', caseMinutes: 45 });
