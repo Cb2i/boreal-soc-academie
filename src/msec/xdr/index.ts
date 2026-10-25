@@ -10,9 +10,10 @@ import { x06 } from './x06.ts';
 import { x07 } from './x07.ts';
 import { x08 } from './x08.ts';
 import { x09 } from './x09.ts';
+import { x10 } from './x10.ts';
 import { XDR_FINAL } from './final.ts';
 import { XDR_RESOURCES } from './resources.ts';
 
-export const XDR_MODULES: ModuleContent[] = [x01, x02, x03, x04, x05, x06, x07, x08, x09];
+export const XDR_MODULES: ModuleContent[] = [x01, x02, x03, x04, x05, x06, x07, x08, x09, x10];
 const resources: ResourceDef[] = XDR_RESOURCES;
 export const CONTENT = buildContent(XDR_LEVELS, XDR_MODULES, XDR_FINAL, resources);
