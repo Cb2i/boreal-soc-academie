@@ -93,14 +93,14 @@ function routeEdges(flow: Flow, idx: Record<string, number>, L: ReturnType<typeo
     const ra = L.row(a), rb = L.row(b), ca = L.col(a), cb = L.col(b);
     const pk = a < b ? `${a}-${b}` : `${b}-${a}`;
     const n = (pairSeen[pk] = (pairSeen[pk] ?? -1) + 1);
-    const po = n === 0 ? 0 : (n % 2 ? 9 : -9) * (a < b ? 1 : -1); // lignes parallèles pour l'aller et le retour
+    const po = n === 0 || n > 2 ? 0 : (n === 1 ? 26 : -26) * (a < b ? 1 : -1); // aller et retour : lignes parallèles côte à côte; au-delà de 3, on contourne par un couloir
     let pts: Pt[];
     if (a === b) {
       pts = [{ x: A.x - 20, y: A.y - hh - stub }, { x: A.x - 20, y: A.y - hh - 18 }, { x: A.x + 20, y: A.y - hh - 18 }, { x: A.x + 20, y: A.y - hh - stub }];
-    } else if (ra === rb && Math.abs(ca - cb) === 1) {
+    } else if (ra === rb && Math.abs(ca - cb) === 1 && n < 3) {
       const dir = B.x > A.x ? 1 : -1;
       pts = [{ x: A.x + dir * (hw + stub), y: A.y + po }, { x: B.x - dir * (hw + stub), y: A.y + po }];
-    } else if (ca === cb && Math.abs(ra - rb) === 1) {
+    } else if (ca === cb && Math.abs(ra - rb) === 1 && n < 3) {
       const dir = B.y > A.y ? 1 : -1;
       pts = [{ x: A.x + po, y: A.y + dir * (hh + stub) }, { x: A.x + po, y: B.y - dir * (hh + stub) }];
     } else if (ra === rb) {
@@ -139,15 +139,17 @@ function routeEdges(flow: Flow, idx: Record<string, number>, L: ReturnType<typeo
     return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
   };
   const placed: Pt[] = [];
+  const nodeRects = flow.nodes.map((_, i) => { const q = L.pos(i); return { x: q.x - hw, y: q.y - hh, w: L.NW, h: NH }; });
   return routes.map((pts, ei) => {
     let best = { x: pts[0].x, y: pts[0].y }, bestScore = Infinity;
     for (let i = 0; i < pts.length - 1; i++) {
       const len = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y);
       if (len < 26 && pts.length > 2) continue;
-      for (const t of [0.5, 0.35, 0.65, 0.2, 0.8]) {
+      for (const t of [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.12, 0.88]) {
         const c = { x: pts[i].x + (pts[i + 1].x - pts[i].x) * t, y: pts[i].y + (pts[i + 1].y - pts[i].y) * t };
         let sc = (0.5 - Math.abs(t - 0.5)) * -10 - Math.min(len, 120) / 12 + Math.abs(t - 0.5) * 30;
-        for (const q of placed) if (Math.hypot(q.x - c.x, q.y - c.y) < 30) sc += 1000;
+        for (const q of placed) if (Math.hypot(q.x - c.x, q.y - c.y) < 27) sc += 1000;
+        for (const nd of nodeRects) if (c.x > nd.x - 12 && c.x < nd.x + nd.w + 12 && c.y > nd.y - 12 && c.y < nd.y + nd.h + 12) sc += 2000;
         routes.forEach((o, oj) => { if (oj === ei) return; for (let k = 0; k < o.length - 1; k++) if (segDist(c, o[k], o[k + 1]) < 15) sc += 400; });
         for (let k = 0; k < pts.length - 1; k++) if (k !== i && segDist(c, pts[k], pts[k + 1]) < 15) sc += 300;
         if (sc < bestScore) { bestScore = sc; best = c; }
