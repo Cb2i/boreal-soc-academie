@@ -1,0 +1,17 @@
+import { G1 } from './xdr/g1.ts';
+import { G2 } from './xdr/g2.ts';
+import { G3 } from './xdr/g3.ts';
+import { G4 } from './xdr/g4.ts';
+import { G5 } from './xdr/g5.ts';
+import { G6 } from './xdr/g6.ts';
+import { G7 } from './xdr/g7.ts';
+import { G8 } from './xdr/g8.ts';
+import { G9 } from './xdr/g9.ts';
+import { G10 } from './xdr/g10.ts';
+import { G11 } from './xdr/g11.ts';
+import { G12 } from './xdr/g12.ts';
+import { G13 } from './xdr/g13.ts';
+import { G14 } from './xdr/g14.ts';
+import { G15 } from './xdr/g15.ts';
+import type { Flow } from './types.ts';
+export const FLOWS_XDR: Flow[] = [...G1,...G2,...G3,...G4,...G5,...G6,...G7,...G8,...G9,...G10,...G11,...G12,...G13,...G14,...G15];
