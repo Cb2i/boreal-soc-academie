@@ -162,5 +162,11 @@ export const MDC_SOURCES: SourceDef[] = [
   S('prompt-shields', 'Prompt Shields in Microsoft Foundry', 'https://learn.microsoft.com/azure/foundry/openai/concepts/content-filter-prompt-shields', 'Prompt Shields et filtres de contenu (mécanisme de la plateforme IA)', 'ga'),
   S('agent365-transition', 'Transition agent security capabilities to Microsoft Agent 365', 'https://learn.microsoft.com/defender-xdr/security-for-ai/transition-agent-security-to-agent-365', 'Licence Agent 365 pour la sécurité des agents (2026-07-01)', 'ga'),
   S('agent-detection', 'Detect and investigate threats to AI agents using Microsoft Defender', 'https://learn.microsoft.com/defender-xdr/security-for-ai/ai-agent-detection-protection', 'Détection de menaces sur agents IA', 'preview', 'Préversion : fonctions et licences susceptibles de changer.'),
+  S('dspm-prepare', 'Support and prerequisites for data security posture management', 'concept-data-security-posture-prepare', 'Prérequis et prise en charge du DSPM'),
+  S('dspm-enable', 'Enable data security posture management for Azure datastores', 'data-security-posture-enable', 'Activer le DSPM Azure'),
+  S('dspm-sensitivity', 'Data sensitivity settings', 'data-sensitivity-settings', 'Paramètres de sensibilité des données'),
+  S('ciem-enable', 'Enable cloud infrastructure entitlement management (CIEM)', 'enable-permissions-management', 'Activer le CIEM Azure, AWS, GCP'),
+  S('cloudtrail', 'Integrate AWS CloudTrail logs with Defender for Cloud', 'integrate-cloud-trail', 'Ingestion CloudTrail pour le CIEM', 'preview', 'Préversion : fonctions susceptibles de changer.'),
+  S('logging-ingestion', 'GCP Cloud Logging ingestion', 'logging-ingestion', 'Ingestion Cloud Logging pour le CIEM', 'preview', 'Préversion : fonctions susceptibles de changer.'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];

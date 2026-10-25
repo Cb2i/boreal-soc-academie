@@ -13,5 +13,6 @@ import { H12 } from './mdc/h12.ts';
 import { H13 } from './mdc/h13.ts';
 import { H14 } from './mdc/h14.ts';
 import { H15 } from './mdc/h15.ts';
+import { H16 } from './mdc/h16.ts';
 import type { Flow } from './types.ts';
-export const FLOWS_MDC: Flow[] = [...H01, ...H02, ...H03, ...H04, ...H05, ...H06, ...H07, ...H08, ...H09, ...H10, ...H11, ...H12, ...H13, ...H14, ...H15];
+export const FLOWS_MDC: Flow[] = [...H01, ...H02, ...H03, ...H04, ...H05, ...H06, ...H07, ...H08, ...H09, ...H10, ...H11, ...H12, ...H13, ...H14, ...H15, ...H16];
