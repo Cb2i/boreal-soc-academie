@@ -187,5 +187,9 @@ export const MDC_SOURCES: SourceDef[] = [
   S('alerts-validate', 'Validate alerts', 'alert-validation', 'Alertes de test et simulations'),
   S('alerts-reference', 'Security alerts reference guide', 'alerts-reference', 'Référence des alertes par plan', 'reference', 'La liste des alertes évolue : la page officielle fait foi.'),
   S('xdr-correlation', 'Alert correlation and incident merging in the Defender portal', 'https://learn.microsoft.com/defender-xdr/alerts-incidents-correlation', 'Corrélation et fusion d’incidents', 'reference'),
+  S('sentinel-xdr-integration', 'Defender XDR integration with Microsoft Sentinel', 'https://learn.microsoft.com/azure/sentinel/microsoft-365-defender-sentinel-integration', 'Intégration Defender XDR et Sentinel', 'reference'),
+  S('sentinel-defender-portal', 'Connect Microsoft Sentinel to the Defender portal', 'https://learn.microsoft.com/azure/sentinel/microsoft-sentinel-onboard', 'Sentinel dans le portail Defender', 'reference'),
+  S('sentinel-xdr-connector', 'Stream data from Defender XDR to Sentinel in the Azure portal', 'https://learn.microsoft.com/azure/sentinel/connect-microsoft-365-defender', 'Connecteur Defender XDR et calendrier de retrait du portail Azure', 'reference', 'Date de fin de prise en charge de Sentinel dans le portail Azure annoncée au 2027-03-31; revérifier.'),
+  S('sentinel-mdc-incidents', 'Ingest Defender for Cloud incidents with Defender XDR integration', 'https://learn.microsoft.com/azure/sentinel/ingest-defender-for-cloud-incidents', 'Incidents Defender for Cloud dans Sentinel', 'reference'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
