@@ -571,3 +571,10 @@ main:focus { outline: none; }
 .pathbar { position: static !important; }
 .site-header .search-btn .search-label, .site-header .search-btn kbd { display: none; }
 .site-header .search-btn { padding: 0.3rem 0.7rem; }
+@media (max-width: 900px) {
+  .site-header .wrap { gap: 0.3rem 0.5rem; padding-block: 0.4rem 0; }
+  .site-header .sections a { padding: 0.2rem 0.65rem; }
+  .site-header .nav { padding: 0.15rem 0 0.3rem; }
+  .site-header .nav a { padding: 0.35rem 0.65rem; }
+  .site-header .search-btn, .site-header .lang-btn { min-height: 2.5rem; }
+}
