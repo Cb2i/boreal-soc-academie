@@ -27,7 +27,7 @@ function TrackCard({ id, delay }: { id: string; delay: number }) {
           <span className="kicker">{meta.kickerFr}</span>
           <h2>{tr(meta.titleFr, meta.titleEn)}</h2>
         </div>
-        <Ring pct={pct} size={56} stroke={6} color={meta.accent}><span className="ring-num">{pct}%</span></Ring>
+        <Ring pct={pct} size={44} stroke={5} color={meta.accent}><span className="ring-num">{pct}%</span></Ring>
       </div>
       <p className="muted">{tr(meta.descFr, meta.descEn)}</p>
       {st && <p className="muted small">{st.modules} {tr('modules', 'modules')} · {st.lessons} {tr('leçons', 'lessons')} · {st.exercises} {tr('exercices et questions', 'exercises and questions')} · {st.projects} {tr('projets', 'projects')} · {seen} {tr('leçons consultées', 'lessons viewed')} · {st.competencies} {tr('compétences', 'skills')}</p>}
@@ -58,7 +58,7 @@ export function LandingPage() {
               <span className="kicker">{tr('Section 1', 'Section 1')}</span>
               <h2>{tr('Azure, Sentinel et KQL', 'Azure, Sentinel and KQL')}</h2>
             </div>
-            <Ring pct={azPct} size={56} stroke={6} color="#3fd0c9"><span className="ring-num">{azPct}%</span></Ring>
+            <Ring pct={azPct} size={44} stroke={5} color="#3fd0c9"><span className="ring-num">{azPct}%</span></Ring>
           </div>
           <p className="muted">{tr('Fondations Azure, identité, observabilité, Sentinel, KQL et enquêtes SOC, avec un moteur KQL local.', 'Azure foundations, identity, observability, Sentinel, KQL and SOC investigations, with a local KQL engine.')}</p>
           <p className="muted small">{PATHS.length} {tr('parcours', 'paths')} · {ALL_LESSONS.length} {tr('cours', 'lessons')} · {ALL_EXERCISES.length} {tr('exercices', 'exercises')} · {azDone} {tr('réussis', 'completed')}</p>
