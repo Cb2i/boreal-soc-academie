@@ -1,0 +1,220 @@
+// Module 12 : Correctifs de sécurité (niveau 4).
+import type { AiCompetency, AiLesson, AiProject } from '../../agentic/types.ts';
+import { assemble } from '../assemble.ts';
+import { kit } from '../kit.ts';
+import { sref } from '../sources.ts';
+
+const md = (...lines: string[]) => lines.join('\n');
+const { a, Q, M } = kit('i12');
+const c1 = { comp: 'i12-c1', lesson: 'i12-l1', tags: ['anneaux-de-mise-a-jour', 'echeances', 'periode-de-grace'] };
+const c2 = { comp: 'i12-c2', lesson: 'i12-l2', tags: ['acceleration', 'hotpatch', 'autopatch'] };
+const c3 = { comp: 'i12-c3', lesson: 'i12-l3', tags: ['rapports', 'applications-tierces', 'limites'] };
+
+const l1: AiLesson = {
+  id: 'i12-l1', module: 'i12', title: 'Anneaux de mise à jour : report, échéance et redémarrage', minutes: 50,
+  summary: 'Concevoir des anneaux de mise à jour qui équilibrent vitesse de correction et stabilité, avec des échéances que l’on peut défendre.',
+  objectives: ['Distinguer report, échéance et période de grâce.', 'Concevoir des anneaux Test, Pilote et Large.', 'Éviter les conflits entre anneaux et politique de mises à jour de fonctionnalités.'],
+  prerequisites: ['Modules 2 et 9'],
+  body: md(
+    '## Trois leviers, trois effets',
+    'Un anneau de mise à jour (update ring) applique les réglages du client Windows Update à un groupe d’appareils. Trois leviers à ne pas confondre. Le **report** (deferral) retarde l’offre d’une mise à jour pendant un nombre de jours après sa publication : c’est le temps d’observation. L’**échéance** (deadline) fixe le nombre de jours, après l’offre, avant l’installation forcée ; le catalogue accepte de 2 à 30 jours pour les mises à jour de qualité et de fonctionnalités. La **période de grâce** fixe le minimum de jours après l’échéance avant le redémarrage automatique (0 à 7 jours). Le report décide *quand on offre*, l’échéance *quand on force*, la grâce *quand on redémarre*. Un appareil qui n’a pas redémarré n’est pas corrigé, même installé.',
+    '## Concevoir les anneaux',
+    'La démarche classique utilise des groupes **Test**, **Pilote**, **Rapide**, **Large** et **Appareils critiques**. Les premiers reçoivent la mise à jour tôt (report court, échéance courte) et servent de détecteurs ; les derniers la reçoivent après observation. Exemple de gabarit éducatif de Microsoft : report de qualité de 7 jours, échéance de qualité de 3 jours, grâce de 2 jours, redémarrage automatique avant l’échéance activé. Pour les appareils critiques, on désactive le redémarrage automatique avant l’échéance et on planifie une fenêtre. Les valeurs sont des points de départ, pas des normes : la bonne valeur dépend du risque de régression et du risque d’exposition.',
+    '## Autres réglages qui comptent',
+    'Ne bloquez pas les mises à jour des produits Microsoft (l’annulation exige des commandes PowerShell sur chaque appareil). Désactivez l’option de **suspendre** les mises à jour pour les utilisateurs, sinon l’échéance est contournée. Les notifications peuvent être réduites, mais gardez les avertissements de redémarrage. Les contrôles de redémarrage (heures actives) évitent qu’un redémarrage coupe le travail ; ils ne doivent pas reporter indéfiniment l’échéance.',
+    '## Interaction avec les mises à jour de fonctionnalités',
+    'Si un appareil est ciblé à la fois par une politique de mises à jour de fonctionnalités et par un anneau, mettez le **report des mises à jour de fonctionnalités de l’anneau à 0** et vérifiez que les mises à jour de fonctionnalités ne sont pas suspendues dans l’anneau. Sinon, le report de l’anneau retarde la version que la politique veut déployer. Les comportements côté client (heures actives, redémarrage) restent gouvernés par l’anneau.',
+    '## Prérequis souvent oubliés',
+    'Les appareils doivent être inscrits à Intune et joints à Microsoft Entra ou hybrides. Les appareils simplement enregistrés dans Entra n’ont que les politiques du client Windows Update et les anneaux, pas les politiques orchestrées par Autopatch (leçon 2). Si Windows Autopatch gère les appareils, n’attribuez pas d’anneaux personnalisés à ceux-ci : le service crée et entretient les siens.',
+  ),
+  demo: { title: 'Gabarit à cinq anneaux', body: md(
+    'Plan **fictif** :',
+    '```text',
+    'Anneau       Report  Échéance  Grâce  Redémarrage avant échéance',
+    'Test         0       0         0      Oui',
+    'Pilote       2       2         2      Oui',
+    'Large        7       3         2      Oui',
+    'Critique     7       5         2      Non (fenêtre planifiée)',
+    '```',
+    '**Lecture commentée.** Le report croît avec la prudence, l’échéance garantit la fin.',
+    '**Ce que la démo ne prouve pas.** Aucun appareil n’a reçu de mise à jour.') },
+  guided: 'i12-g1', autonomous: 'i12-a1', quiz: ['i12-q1a', 'i12-q1b', 'i12-q1c'],
+  revision: md('## Fiche : anneaux', '- Report : quand offrir. Échéance : quand forcer. Grâce : quand redémarrer.', '- Échéance de 2 à 30 jours ; grâce de 0 à 7 jours.', '- Désactiver la suspension par l’utilisateur.', '- Avec une politique de fonctionnalités : report de fonctionnalités à 0 dans l’anneau.', '- Autopatch : pas d’anneaux personnalisés sur les appareils qu’il gère.'),
+  links: [sref('intune-update-rings'), sref('intune-update-ring-settings'), sref('intune-win-updates-overview'), sref('intune-feature-updates')], teaches: ['anneaux-de-mise-a-jour', 'echeances', 'periode-de-grace'],
+};
+
+const l2: AiLesson = {
+  id: 'i12-l2', module: 'i12', title: 'Accélération, hotpatch et Autopatch : corriger vite sans improviser', minutes: 50,
+  summary: 'Accélérer une correction critique, comprendre ce que le report fait à l’accélération et situer la dépendance à Windows Autopatch.',
+  objectives: ['Utiliser une politique d’accélération pour une mise à jour critique.', 'Prévoir l’effet d’un report actif sur une accélération.', 'Énoncer les prérequis et licences des politiques orchestrées par Autopatch.'],
+  prerequisites: ['Leçon 1'],
+  body: md(
+    '## Politiques de mises à jour de qualité',
+    'Une politique de mises à jour de qualité offre une surface dédiée pour cibler des mises à jour précises avec l’orchestration infonuagique. Elle permet l’**accélération** (expedite) et le **hotpatch**. Elle n’est pas nécessaire pour continuer à recevoir les mises à jour mensuelles : sans elle, les appareils suivent le comportement normal de Windows Update avec les anneaux. On crée une politique de qualité pour l’orchestration infonuagique, les déploiements gérés par Autopatch, le hotpatch ou les rapports par politique. Pour simplement accélérer **une** mise à jour, une politique d’accélération suffit.',
+    '## Accélérer une correction',
+    'Une accélération installe une mise à jour de sécurité précise en **outrepassant les reports** de l’anneau. Cas d’école : on accélère la mise à jour de février ; en mars, une nouvelle mise à jour la remplace et un report de sept jours est actif. Un appareil éteint jusqu’au 12 mars installe février, car le report de mars est encore actif ; un appareil rallumé le 20 mars installe mars, car le report a expiré : il installe donc une version **plus récente** que celle visée. Retenez que l’accélération cible une version, mais que la supersession et les reports peuvent changer ce qui s’installe vraiment. Vérifiez par rapport, pas par hypothèse.',
+    '## Hotpatch',
+    'Pour les éditions et configurations admissibles, le hotpatch applique certaines mises à jour de sécurité sans redémarrage immédiat, ce qui rapproche plus vite le parc de la conformité. Windows Autopatch l’active par défaut pour les appareils admissibles ; on peut s’en retirer pour tout le locataire ou par groupe avec une politique de qualité. Le hotpatch réduit la dépendance au redémarrage ; il ne remplace pas la vérification de l’état réel.',
+    '## La dépendance à Autopatch',
+    'Les politiques de qualité, d’accélération, de fonctionnalités et de pilotes dépendent du service de déploiement de **Windows Autopatch**. Prérequis : appareils inscrits à Intune et joints à Entra ou hybrides (**les appareils enregistrés seulement ne sont pas pris en charge**), accès aux points de terminaison de mise à jour, **licence Windows incluant le droit Autopatch**, données de diagnostic au niveau *Requis* et service Microsoft Account Sign-In Assistant non désactivé. Les environnements GCC et GCC High ont des limites propres (l’activation d’abonnement par contrat existant ne s’y applique pas). Si vous êtes bloqué à la création d’une politique, demandez à la source de vos licences de confirmer le droit. Les appareils LTSC ne reçoivent que la charge de mises à jour de qualité.',
+    '## Mises à jour de fonctionnalités',
+    'La politique de fonctionnalités verrouille un appareil à une version (par exemple Windows 11 24H2) et l’empêche d’aller plus loin. Elle ne s’applique pas pendant l’OOBE d’Autopilot, mais au premier balayage après le provisionnement. Si l’appareil n’est plus ciblé par aucune politique de fonctionnalités, aucune mise à jour de fonctionnalités ne lui est offerte tant qu’on ne le réaffecte pas. Windows 10 a atteint la fin de support le 14 octobre 2025 : il reste un état autorisé dans Intune mais sans garantie de fonctionnalité ni correctifs de qualité.',
+  ),
+  demo: { title: 'Accélération et report', body: md(
+    'Scénario **fictif** :',
+    '```text',
+    'Fév. : accélération de la mise à jour critique',
+    'Mars : nouvelle mise à jour ; report de 7 jours actif',
+    'Appareil A rallumé le 12 mars -> installe février',
+    'Appareil B rallumé le 20 mars -> installe mars',
+    '```',
+    '**Lecture commentée.** L’accélération n’empêche pas le remplacement par une version plus récente.',
+    '**Ce que la démo ne prouve pas.** Aucun appareil n’a été mis à jour.') },
+  guided: 'i12-g2', autonomous: 'i12-a2', quiz: ['i12-q2a', 'i12-q2b', 'i12-q2c'],
+  revision: md('## Fiche : accélération et Autopatch', '- Accélérer : outrepasse les reports, mais la supersession peut changer la version installée.', '- Politique de qualité facultative pour les mises à jour mensuelles.', '- Hotpatch : sans redémarrage immédiat, appareils admissibles.', '- Autopatch : licence, jointure Entra, diagnostic Requis.', '- Windows 10 : fin de support depuis le 14 octobre 2025.'),
+  links: [sref('intune-quality-updates'), sref('intune-expedite'), sref('intune-feature-updates'), sref('intune-win-updates-overview')], teaches: ['acceleration', 'hotpatch', 'autopatch'],
+};
+
+const l3: AiLesson = {
+  id: 'i12-l3', module: 'i12', title: 'Rapports et applications tierces : ce que Windows Update ne couvre pas', minutes: 45,
+  summary: 'Mesurer l’état réel des correctifs et traiter honnêtement les applications tierces, avec leurs licences et leurs limites.',
+  objectives: ['Lire les rapports de mises à jour Windows de façon complémentaire.', 'Situer Enterprise App Management par rapport à Windows Update.', 'Énoncer les limites des mises à jour automatiques d’applications tierces.'],
+  prerequisites: ['Leçons 1 et 2'],
+  body: md(
+    '## Mesurer, ne pas supposer',
+    'Intune fournit des rapports sous Reports > Windows updates. Le rapport de **mises à jour de fonctionnalités** donne l’état agrégé ; le rapport des **échecs de mises à jour de fonctionnalités** (opérationnel) donne les causes. Pour avoir un portrait complet, il faut les deux, et il faut penser à **générer le rapport** (ou le régénérer) pour obtenir des données récentes. Un rapport indique l’état au moment de sa génération : ce n’est pas une preuve en temps réel. Pour les mises à jour de qualité, croisez avec l’inventaire de versions (module 15) : un appareil qui ne s’est pas synchronisé depuis des jours n’apparaît « à jour » que par ignorance.',
+    '## Ce que Windows Update ne couvre pas',
+    'Windows Update et les politiques de ce module concernent Windows, les mises à jour de qualité et de fonctionnalités, certains pilotes et le .NET Framework pris en charge. **Les applications tierces** (navigateurs, lecteurs PDF, clients VPN, runtimes Java) sont un angle mort fréquent d’exploitation. Microsoft propose **Enterprise App Management** : un catalogue d’applications Win32 préparées, Microsoft et non-Microsoft, hébergées par Microsoft. **Nature : fonction complémentaire sous licence supplémentaire** : il exige un abonnement en plus d’Intune Plan 1 ou 2, vendu seul ou dans la suite Intune. Windows seulement.',
+    '## Limites à connaître',
+    'Le catalogue ne vérifie pas vos licences d’applications ; vous restez responsable de l’achat et de la distribution des licences. Les mises à jour d’applications sont disponibles en général dans les 24 heures après la validation automatisée, et jusqu’à sept jours si un test manuel est requis : ce n’est pas un correctif instantané. Les applications qui se mettent à jour d’elles-mêmes sont considérées installées à partir d’une version minimale et se mettent à jour selon le fournisseur ; le réseau doit permettre les mises à jour du fournisseur. La mise à jour automatique ne s’applique qu’aux applications du catalogue avec une affectation **Requise**. Elle n’offre **ni retour arrière ni désinstallation corrective automatique**, **ni anneaux de déploiement par phases**. Si Microsoft retire une version malveillante, vous devez vous-même repérer les appareils touchés et corriger ; les données du catalogue sont mises en cache jusqu’à une heure, donc une exposition d’une heure est possible après une révocation. Si vous préférez examiner chaque mise à jour, utilisez la supersession guidée. Une application retirée du catalogue reste fonctionnelle sur les appareils où elle est déployée mais ne peut plus être déployée à neuf.',
+    '## Ce que l’on ne peut pas promettre',
+    'Aucune fonction native d’Intune ne garantit que toutes les applications tierces d’un parc sont corrigées. Pour les applications absentes du catalogue, il faut le packaging Win32 classique, un outil tiers ou le mécanisme de mise à jour du fournisseur, avec les rapports correspondants. Cette limite se consigne dans le registre des limites du projet plutôt que de se cacher dans une note de bas de page.',
+    '## Gouvernance',
+    'Définissez un niveau de service par catégorie : correctifs critiques du système (jours), navigateurs (jours), applications métier (selon l’éditeur). Mesurez le délai réel entre publication et installation, pas seulement le pourcentage « à jour ».',
+  ),
+  demo: { title: 'Trois catégories, trois délais', body: md(
+    'Niveaux de service **fictifs** :',
+    '```text',
+    'Catégorie            Délai cible  Outil',
+    'Windows (qualité)    7 jours      Anneaux + accélération',
+    'Navigateur           3 jours      Mise à jour du fournisseur',
+    'Application métier   30 jours     Packaging Win32',
+    '```',
+    '**Lecture commentée.** Chaque catégorie a son outil et son délai, aucun ne couvre tout.',
+    '**Ce que la démo ne prouve pas.** Aucune mesure réelle n’a été faite.') },
+  guided: 'i12-g3', autonomous: 'i12-a3', quiz: ['i12-q3a', 'i12-q3b', 'i12-q3c'],
+  revision: md('## Fiche : rapports et tiers', '- Générer le rapport ; il montre l’état à ce moment.', '- Enterprise App Management : licence supplémentaire, Windows.', '- Pas de retour arrière ni d’anneaux par phases en mise à jour automatique.', '- Révocation : exposition possible jusqu’à une heure.', '- Consigner les limites dans le registre.'),
+  links: [sref('intune-reports-overview'), sref('intune-eam'), sref('intune-win-updates-overview')], teaches: ['rapports', 'applications-tierces', 'limites'],
+};
+
+const exercises = [
+  a.match({ id: 'i12-g1', title: 'Levier et effet', comp: c1.comp, tags: c1.tags, role: 'guided', dim: 'comprendre', lesson: 'i12-l1',
+    st: 'Associez chaque levier à son effet.', items: [['p1', 'Report'], ['p2', 'Échéance'], ['p3', 'Période de grâce']],
+    options: [['s1', 'Quand la mise à jour est offerte'], ['s2', 'Quand l’installation est forcée'], ['s3', 'Quand le redémarrage automatique survient']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Le report retarde l’offre, l’échéance force, la grâce déclenche le redémarrage.' }),
+  a.config({ id: 'i12-a1', title: 'Anneau Large', comp: c1.comp, tags: c1.tags, role: 'autonomous', dim: 'securiser', lesson: 'i12-l1',
+    st: 'Paramétrez l’anneau Large d’un parc de bureau.',
+    fields: [
+      { id: 'pause', label: 'Permettre aux utilisateurs de suspendre les mises à jour', kind: 'toggle', accept: ['off'], why: 'Contourne l’échéance.' },
+      { id: 'dl', label: 'Échéance de qualité', kind: 'select', options: [{ id: 'd3', label: '3 jours' }, { id: 'd60', label: '60 jours' }], accept: ['d3'], why: 'Le catalogue accepte de 2 à 30 jours.' },
+      { id: 'fdef', label: 'Report des mises à jour de fonctionnalités (avec politique de fonctionnalités)', kind: 'select', options: [{ id: 'd0', label: '0 jour' }, { id: 'd30', label: '30 jours' }], accept: ['d0'], why: 'Évite de retarder la politique.' },
+    ], solution: { pause: 'off', dl: 'd3', fdef: 'd0' }, exp: 'Pas de suspension, échéance courte et report de fonctionnalités à zéro.' }),
+  Q('i12-q1a', 'quiz', 'comprendre', c1, 'Échéance', 'Quelle plage accepte l’échéance de qualité dans un anneau ?', ['De 2 à 30 jours.', 'Plage documentée.'], [['De 0 à 3 jours.', 'Faux.'], ['De 30 à 90 jours.', 'Faux.'], ['Illimitée.', 'Faux.']], 'L’échéance va de 2 à 30 jours.'),
+  Q('i12-q1b', 'quiz', 'fonctionner', c1, 'Suspension', 'Pourquoi désactiver la suspension par l’utilisateur ?', ['Elle contourne l’échéance.', 'Contrôle de l’exposition.'], [['Elle accélère Windows.', 'Faux.'], ['Elle coûte une licence.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'La suspension retarde les correctifs au-delà de l’échéance prévue.'),
+  Q('i12-q1c', 'quiz', 'maintenir', c1, 'Appareil non redémarré', 'Un correctif installé mais non redémarré protège-t-il l’appareil ?', ['Pas complètement : le redémarrage finalise l’application.', 'La grâce sert à cela.'], [['Oui, toujours.', 'Faux.'], ['Seulement sur serveur.', 'Faux.'], ['Jamais installé.', 'Faux.']], 'Sans redémarrage, la correction n’est pas finalisée.'),
+
+  a.workflow({ id: 'i12-g2', title: 'Accélérer une correction critique', comp: c2.comp, tags: c2.tags, role: 'guided', dim: 'fonctionner', lesson: 'i12-l2',
+    st: 'Ordonnez l’accélération d’une mise à jour critique.',
+    blocks: [['b1', 'Identifier la mise à jour applicable'], ['b2', 'Créer la politique d’accélération pour un groupe pilote'], ['b3', 'Vérifier l’effet des reports actifs'], ['b4', 'Contrôler l’installation par rapport'], ['b5', 'Étendre au parc'], ['b6', 'Supposer l’installation sans rapport']],
+    required: ['b1', 'b2', 'b3', 'b4', 'b5'], forbidden: ['b6'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4'], ['b4', 'b5']], notes: { b6: 'Une hypothèse n’est pas une preuve.' }, solution: ['b1', 'b2', 'b3', 'b4', 'b5'],
+    exp: 'Identification, pilote, reports, rapport puis extension.' }),
+  a.inspect({ id: 'i12-a2', title: 'Relire un plan de correctifs', comp: c2.comp, tags: c2.tags, role: 'autonomous', dim: 'securiser', lesson: 'i12-l2', language: 'text',
+    st: 'Plan fictif. Repérez les défauts.',
+    lines: [['p1', 'Les politiques d’Autopatch seront aussi attribuées aux appareils seulement enregistrés dans Entra.', { ok: 'a1', fixes: [['a1', 'Exiger la jointure Entra ou hybride'], ['a2', 'Accepter']] }], ['p2', 'L’accélération installera toujours exactement la mise à jour visée.', { ok: 'b1', fixes: [['b1', 'Vérifier par rapport : la supersession peut changer le résultat'], ['b2', 'Accepter']] }], ['p3', 'Les appareils LTSC recevront aussi les mises à jour de fonctionnalités.', { ok: 'c1', fixes: [['c1', 'Seules les mises à jour de qualité sont gérées pour LTSC'], ['c2', 'Accepter']] }]],
+    exp: 'Trois défauts : appareils enregistrés, résultat supposé et LTSC.' }),
+  Q('i12-q2a', 'quiz', 'comprendre', c2, 'Politique de qualité', 'La politique de qualité est-elle nécessaire pour recevoir les mises à jour mensuelles ?', ['Non : elle sert à l’orchestration, au hotpatch et aux rapports.', 'Facultative.'], [['Oui, toujours.', 'Faux.'], ['Seulement sur serveur.', 'Faux.'], ['Jamais utile.', 'Faux.']], 'Les appareils reçoivent les mises à jour sans elle.'),
+  Q('i12-q2b', 'quiz', 'fonctionner', c2, 'Report et accélération', 'Que fait un report actif sur la mise à jour la plus récente lors d’une accélération ?', ['Il peut bloquer la plus récente : l’appareil installe alors la version accélérée.', 'Selon la date.'], [['Rien.', 'Faux.'], ['Il annule l’accélération.', 'Faux.'], ['Il efface l’appareil.', 'Faux.']], 'Le report actif peut bloquer la version la plus récente.'),
+  Q('i12-q2c', 'quiz', 'maintenir', c2, 'Prérequis Autopatch', 'Quel appareil n’est pas pris en charge par les politiques orchestrées ?', ['Un appareil simplement enregistré dans Entra.', 'Limite documentée.'], [['Un appareil joint à Entra.', 'Pris en charge.'], ['Un appareil hybride.', 'Pris en charge.'], ['Aucun.', 'Faux.']], 'Les appareils enregistrés seulement sont exclus.'),
+
+  a.match({ id: 'i12-g3', title: 'Catégorie et outil', comp: c3.comp, tags: c3.tags, role: 'guided', dim: 'comprendre', lesson: 'i12-l3',
+    st: 'Associez chaque besoin à l’outil qui le couvre.', items: [['p1', 'Mise à jour de qualité Windows'], ['p2', 'Mise à jour d’une application du catalogue'], ['p3', 'Application absente du catalogue']],
+    options: [['s1', 'Anneaux et politiques de mises à jour'], ['s2', 'Enterprise App Management (licence supplémentaire)'], ['s3', 'Packaging Win32 ou mise à jour du fournisseur']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque catégorie de correctifs a son outil et ses limites.' }),
+  a.workflow({ id: 'i12-a3', title: 'Réagir à une révocation', comp: c3.comp, tags: c3.tags, role: 'autonomous', dim: 'maintenir', lesson: 'i12-l3',
+    st: 'Ordonnez la réaction à une version retirée du catalogue pour raison de sécurité.',
+    blocks: [['b1', 'Lire la notification du centre d’administration'], ['b2', 'Identifier les appareils avec la version touchée'], ['b3', 'Déployer une correction ou une désinstallation'], ['b4', 'Vérifier le résultat'], ['b5', 'Attendre que le catalogue se corrige seul']],
+    required: ['b1', 'b2', 'b3', 'b4'], forbidden: ['b5'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4']], notes: { b5: 'Aucun retour arrière automatique.' }, solution: ['b1', 'b2', 'b3', 'b4'],
+    exp: 'Notification, repérage, correction puis vérification.' }),
+  Q('i12-q3a', 'quiz', 'comprendre', c3, 'Nature', 'Quelle est la nature d’Enterprise App Management ?', ['Fonction complémentaire sous licence supplémentaire.', 'Windows seulement.'], [['Incluse dans toutes les licences.', 'Faux.'], ['Native et gratuite.', 'Faux.'], ['Non prise en charge.', 'Faux.']], 'C’est une fonction complémentaire sous licence.'),
+  Q('i12-q3b', 'quiz', 'fonctionner', c3, 'Limite', 'Qu’offre la mise à jour automatique d’un catalogue en cas de problème ?', ['Aucun retour arrière automatique.', 'Action manuelle requise.'], [['Un retour arrière automatique.', 'Faux.'], ['Des anneaux par phases.', 'Faux.'], ['Une garantie de licence.', 'Faux.']], 'Il n’y a pas de retour arrière automatique.'),
+  Q('i12-q3c', 'quiz', 'maintenir', c3, 'Rapport', 'Que faut-il faire pour avoir des données récentes dans un rapport de mises à jour ?', ['Générer le rapport.', 'Ou le régénérer.'], [['Rien.', 'Faux.'], ['Attendre une semaine.', 'Faux.'], ['Redémarrer le portail.', 'Faux.']], 'Le rapport doit être généré pour afficher des données actuelles.'),
+
+  Q('i12-ev1', 'eval', 'comprendre', c1, 'Report de fonctionnalités', 'Que régler dans l’anneau quand une politique de fonctionnalités s’applique aussi ?', ['Le report de fonctionnalités à 0.', 'Sinon l’anneau retarde la version.'], [['À 365 jours.', 'Faux.'], ['Le désactiver.', 'Faux.'], ['Rien.', 'Faux.']], 'Le report de l’anneau doit être à zéro.'),
+  M('i12-ev2', 'eval', 'securiser', c2, 'Prérequis Autopatch', 'Cochez les prérequis des politiques orchestrées.', [['Jointure à Entra ou hybride.', 'Prérequis.'], ['Diagnostic au niveau Requis.', 'Prérequis.']], [['Appareil seulement enregistré.', 'Exclu.'], ['Service Sign-In Assistant désactivé.', 'Bloque la réception.']], 'Jointure et diagnostic.'),
+  a.order({ id: 'i12-ev3', title: 'Cycle mensuel', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'fonctionner', lesson: 'i12-l1',
+    st: 'Ordonnez le cycle d’une mise à jour mensuelle.',
+    items: [['s1', 'Publication'], ['s2', 'Offre après le report'], ['s3', 'Installation à l’échéance'], ['s4', 'Redémarrage après la grâce'], ['s5', 'Vérification par rapport']], correct: ['s1', 's2', 's3', 's4', 's5'],
+    exp: 'Publication, offre, installation, redémarrage puis vérification.' }),
+  a.fix({ id: 'i12-ev4', title: 'Corriger l’anneau', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'securiser', lesson: 'i12-l1', language: 'json',
+    st: 'Corrigez l’anneau.',
+    starter: JSON.stringify({ suspensionAutorisee: true, echeanceQualiteJours: 45, redemarrageAutoAvantEcheance: false }, null, 2),
+    rules: [{ kind: 'equals', path: 'suspensionAutorisee', value: false, message: 'Interdire la suspension.', dim: 'securiser' }, { kind: 'range', path: 'echeanceQualiteJours', min: 2, max: 30, message: 'Échéance de 2 à 30 jours.', dim: 'fonctionner' }, { kind: 'equals', path: 'redemarrageAutoAvantEcheance', value: true, message: 'Activer le redémarrage avant l’échéance.', dim: 'securiser' }],
+    solution: JSON.stringify({ suspensionAutorisee: false, echeanceQualiteJours: 3, redemarrageAutoAvantEcheance: true }, null, 2), exp: 'Pas de suspension, échéance valide et redémarrage avant l’échéance.' }),
+  a.match({ id: 'i12-ev5', title: 'Symptôme et cause', comp: c3.comp, tags: c3.tags, role: 'eval', dim: 'maintenir', lesson: 'i12-l3',
+    st: 'Associez chaque symptôme à sa cause probable.', items: [['p1', 'Le rapport semble en retard'], ['p2', 'Aucune mise à jour de fonctionnalités n’est offerte à un appareil'], ['p3', 'Une application du catalogue reste ancienne']],
+    options: [['s1', 'Le rapport n’a pas été régénéré'], ['s2', 'L’appareil n’est plus ciblé par une politique de fonctionnalités'], ['s3', 'Affectation non Requise ou délai de validation du catalogue']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque symptôme a une cause documentée distincte.' }),
+  a.workflow({ id: 'i12-ev6', title: 'Déployer les anneaux', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'fonctionner', lesson: 'i12-l1',
+    st: 'Ordonnez le déploiement des anneaux.',
+    blocks: [['b1', 'Créer les groupes Test et Pilote'], ['b2', 'Créer les anneaux avec report croissant'], ['b3', 'Désactiver la suspension'], ['b4', 'Observer le pilote'], ['b5', 'Étendre au groupe Large'], ['b6', 'Mettre le même report à tout le parc']],
+    required: ['b1', 'b2', 'b3', 'b4', 'b5'], forbidden: ['b6'], before: [['b1', 'b2'], ['b2', 'b3'], ['b4', 'b5']], notes: { b6: 'Plus aucun détecteur précoce.' }, solution: ['b1', 'b2', 'b3', 'b4', 'b5'],
+    exp: 'Groupes, anneaux, suspension désactivée, observation puis extension.' }),
+  a.short({ id: 'i12-ev7', title: 'Fin de support', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'comprendre', lesson: 'i12-l2',
+    st: 'En quelle année Windows 10 a-t-il atteint la fin de support ? (année)', accepted: ['2025'], numeric: { value: 2025 }, ph: 'une année',
+    exp: 'Windows 10 a atteint la fin de support le 14 octobre 2025.' }),
+  a.short({ id: 'i12-ev8', title: 'Grâce maximale', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'comprendre', lesson: 'i12-l1',
+    st: 'Quel est le nombre maximal de jours de période de grâce dans un anneau ? (nombre)', accepted: ['7'], numeric: { value: 7 }, ph: 'un nombre',
+    exp: 'La période de grâce d’un anneau va de 0 à 7 jours après l’échéance.' }),
+
+  a.inspect({ id: 'i12-cs1', title: 'Cas : correctifs chez Aurore Logistique', comp: c1.comp, tags: c1.tags, role: 'case', dim: 'securiser', lesson: 'i12-l1', language: 'text',
+    st: 'Plan fictif. Repérez les défauts.',
+    lines: [['p1', 'Tout le parc reçoit les mises à jour le même jour.', { ok: 'a1', fixes: [['a1', 'Créer des anneaux Test, Pilote, Large'], ['a2', 'Accepter']] }], ['p2', 'Les utilisateurs peuvent suspendre les mises à jour 35 jours.', { ok: 'b1', fixes: [['b1', 'Interdire la suspension'], ['b2', 'Accepter']] }], ['p3', 'Le pourcentage « à jour » est la seule mesure.', { ok: 'c1', fixes: [['c1', 'Mesurer aussi le délai réel et les synchronisations manquantes'], ['c2', 'Accepter']] }]],
+    exp: 'Trois défauts : pas d’anneaux, suspension permise et mesure unique.' }),
+  a.workflow({ id: 'i12-cs2', title: 'Cas : vulnérabilité critique', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'securiser', lesson: 'i12-l2',
+    st: 'Ordonnez la réponse à une vulnérabilité activement exploitée.',
+    blocks: [['t1', 'Confirmer l’exposition avec Defender'], ['t2', 'Accélérer la mise à jour sur un pilote'], ['t3', 'Vérifier les reports actifs'], ['t4', 'Contrôler l’installation par rapport'], ['t5', 'Étendre'], ['t6', 'Attendre le prochain cycle mensuel']],
+    required: ['t1', 't2', 't3', 't4', 't5'], forbidden: ['t6'], before: [['t1', 't2'], ['t2', 't3'], ['t3', 't4'], ['t4', 't5']], notes: { t6: 'Expose le parc.' }, solution: ['t1', 't2', 't3', 't4', 't5'],
+    exp: 'Exposition, accélération, reports, rapport puis extension.' }),
+  a.match({ id: 'i12-cs3', title: 'Cas : niveaux de service', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i12-l3',
+    st: 'Associez chaque catégorie à son moyen de correction.', items: [['p1', 'Windows'], ['p2', 'Navigateur'], ['p3', 'Application métier hors catalogue']],
+    options: [['s1', 'Anneaux et accélération'], ['s2', 'Mise à jour du fournisseur ou du catalogue'], ['s3', 'Packaging Win32']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque catégorie a son moyen et sa limite.' }),
+  a.open({ id: 'i12-cs-open', title: 'Cas : stratégie de correctifs', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i12-l3',
+    st: 'Rédigez la stratégie de correctifs d’une organisation fictive.',
+    deliverable: 'Un document : anneaux, échéances, accélération, Autopatch avec prérequis, rapports, applications tierces avec licences et limites.',
+    rubric: [['r1', 'Les anneaux et échéances sont justifiés.', 'securiser'], ['r2', 'L’accélération et ses effets sont décrits.', 'fonctionner'], ['r3', 'Les prérequis Autopatch sont nommés.', 'comprendre'], ['r4', 'Les limites des applications tierces sont consignées.', 'maintenir'], ['r5', 'La mesure ne se limite pas au pourcentage.', 'maintenir']],
+    exp: 'Pas de note automatique : on juge la cohérence de la stratégie.' }),
+
+  Q('i12-rm1', 'remediation', 'comprendre', c1, 'Remédiation : leviers', 'Que décide l’échéance ?', ['Quand l’installation est forcée.', 'Après l’offre.'], [['Quand l’offre apparaît.', 'C’est le report.'], ['Quand le redémarrage survient.', 'C’est la grâce.'], ['Rien.', 'Faux.']], 'L’échéance force l’installation.'),
+  Q('i12-rm2', 'remediation', 'fonctionner', c2, 'Remédiation : accélération', 'Pourquoi vérifier par rapport après une accélération ?', ['La supersession et les reports peuvent changer la version installée.', 'Pas d’hypothèse.'], [['Pour la licence.', 'Faux.'], ['Pour le stockage.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Le résultat réel peut différer de la cible.'),
+  Q('i12-rm3', 'remediation', 'securiser', c3, 'Remédiation : tiers', 'Pourquoi consigner la limite des applications tierces ?', ['Aucune fonction native ne garantit leur correction.', 'Honnêteté du registre.'], [['Pour la licence.', 'Faux.'], ['Pour décorer.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Une limite non consignée devient une fausse promesse.'),
+];
+
+const competencies: AiCompetency[] = [
+  { id: 'i12-c1', module: 'i12', name: 'Concevoir des anneaux de mise à jour', description: 'Report, échéance, grâce, interactions.', criteria: [{ id: 'i12-c1-1', text: 'Je distingue report, échéance et grâce.' }, { id: 'i12-c1-2', text: 'Je conçois des anneaux par phases.' }, { id: 'i12-c1-3', text: 'J’évite les conflits avec la politique de fonctionnalités.' }] },
+  { id: 'i12-c2', module: 'i12', name: 'Accélérer une correction', description: 'Accélération, hotpatch, Autopatch.', criteria: [{ id: 'i12-c2-1', text: 'J’utilise une accélération avec pilote.' }, { id: 'i12-c2-2', text: 'Je prévois l’effet des reports.' }, { id: 'i12-c2-3', text: 'Je nomme les prérequis Autopatch.' }] },
+  { id: 'i12-c3', module: 'i12', name: 'Mesurer et assumer les limites', description: 'Rapports, applications tierces.', criteria: [{ id: 'i12-c3-1', text: 'Je génère et lis les rapports.' }, { id: 'i12-c3-2', text: 'Je situe Enterprise App Management.' }, { id: 'i12-c3-3', text: 'Je consigne les limites.' }] },
+];
+
+const projects: AiProject[] = [
+  { id: 'i12-p1', module: 'i12', level: 'débutant', title: 'Gabarit d’anneaux', problem: 'Concevoir un gabarit d’anneaux de mise à jour pour une organisation fictive.', architecture: 'Tableau d’une page.', tools: ['Tableur'], data: 'Groupes fictifs.', steps: ['Définir les groupes.', 'Fixer report, échéance et grâce.', 'Justifier.'], success: ['Chaque valeur est justifiée.'], risks: ['Même report partout.'], extensions: ['Ajouter les appareils critiques.'] },
+  { id: 'i12-p2', module: 'i12', level: 'intermédiaire', title: 'Procédure d’accélération', problem: 'Rédiger la procédure d’accélération d’une mise à jour critique avec vérification par rapport.', architecture: 'Procédure à étapes avec critères.', tools: ['Éditeur de texte'], data: 'Scénario fictif.', steps: ['Décrire le déclencheur.', 'Écrire les étapes.', 'Définir la vérification.', 'Prévoir l’effet des reports.'], success: ['La vérification est mesurable.'], risks: ['Supposer le résultat.'], extensions: ['Ajouter un journal de décision.'],
+    connected: { accounts: 'Un locataire de test avec Intune et un appareil Windows de test joint à Entra.', permissions: 'Policy and Profile Manager dans le locataire de test.', costs: 'Licences de test incluant le droit Autopatch.', secrets: 'Aucun secret requis.', cleanup: 'Supprimer les politiques de test.', limits: 'Facultatif : n’accélérez jamais une mise à jour sur un parc de production sans pilote.' } },
+  { id: 'i12-p3', module: 'i12', level: 'avancé', title: 'Registre des limites de correction', problem: 'Dresser le registre des limites de correction : Windows, tiers, licences et mesures.', architecture: 'Registre avec risque, mesure et responsable.', tools: ['Tableur'], data: 'Parc fictif.', steps: ['Lister les catégories.', 'Nommer les limites.', 'Associer les mesures.', 'Planifier la revue.'], success: ['Aucune limite cachée.'], risks: ['Promesse non tenable.'], extensions: ['Ajouter les délais cibles.'] },
+];
+
+export const i12 = assemble({ id: 'i12', level: 4, n: 12, title: 'Correctifs de sécurité',
+  summary: 'Anneaux de mise à jour, accélération, hotpatch, dépendance à Autopatch, rapports et limites des applications tierces.',
+  lessons: [l1, l2, l3], exercises, competencies, projects,
+  caseTitle: 'Corriger le parc chez Aurore Logistique',
+  caseScenario: 'Vous concevez les anneaux, l’accélération et la mesure des correctifs. Actions simulées.', caseMinutes: 45 });
