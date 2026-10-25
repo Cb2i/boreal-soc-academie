@@ -14,5 +14,13 @@
     "projects": 54,
     "competencies": 48,
     "resources": 0
+  },
+  "intune": {
+    "modules": 1,
+    "lessons": 3,
+    "exercises": 30,
+    "projects": 3,
+    "competencies": 3,
+    "resources": 0
   }
 }

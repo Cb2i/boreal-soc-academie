@@ -4,4 +4,5 @@ import type { TrackContent } from '../agentic/content/build.ts';
 export const CONTENT_LOADERS: Record<string, () => Promise<TrackContent>> = {
   ia: () => import('../agentic/content/index.ts').then((m) => m.CONTENT),
   xdr: () => import('../msec/xdr/index.ts').then((m) => m.CONTENT),
+  intune: () => import('../msec/intune/index.ts').then((m) => m.CONTENT),
 };

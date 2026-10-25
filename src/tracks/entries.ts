@@ -6,4 +6,5 @@ import type { Route } from '../router.ts';
 export const TRACK_ENTRIES: Record<string, LazyExoticComponent<ComponentType<{ route: Route }>>> = {
   ia: lazy(() => import('./ia.tsx')),
   xdr: lazy(() => import('./xdr.tsx')),
+  intune: lazy(() => import('./intune.tsx')),
 };

@@ -12,8 +12,10 @@ const STATUS: Record<string, string> = {
 
 /** Registre des sources : chaque fait Microsoft du parcours renvoie à une entrée datée. */
 export function SourcesPage() {
-  const { meta, to } = useTrack();
-  const rows = SOURCES.filter((s) => meta.id === 'scenarios' || s.id.startsWith(meta.id === 'xdr' ? 'xdr-' : 'intune-') || s.id.startsWith('sentinel-'));
+  const { meta, to, c } = useTrack();
+  const used = new Set(c.LESSONS.flatMap((l) => l.links.map((x) => x.url)));
+  const seen = new Set<string>();
+  const rows = SOURCES.filter((s) => used.has(s.url) && !seen.has(s.url) && (seen.add(s.url), true));
   return (
     <div className="stack">
       <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={to()}>{tr(meta.navFr, meta.navEn)}</a> / <span aria-current="page">{tr('Sources', 'Sources')}</span></nav>

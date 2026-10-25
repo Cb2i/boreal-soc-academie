@@ -200,6 +200,16 @@ export const SOURCES: SourceDef[] = [
   { id: 'mde-gov', title: 'Microsoft Learn : Microsoft Defender for Endpoint for US Government customers', url: L + 'defender-endpoint/gov', product: 'Defender for Endpoint', topic: 'Gouvernement américain', status: 'ga' },
   { id: 'xdr-usgov', title: 'Microsoft Learn : Microsoft Defender for US Government', url: L + 'defender-xdr/usgov', product: 'Defender XDR', topic: 'Gouvernement américain', status: 'ga' },
   { id: 'mdi-gov', title: 'Microsoft Learn : Microsoft Defender for Identity for US Government offerings', url: L + 'defender-for-identity/us-govt-gcc-high', product: 'Defender for Identity', topic: 'Gouvernement américain', status: 'ga' },
+  { id: 'intune-enroll-guide', title: 'Microsoft Learn : Enrollment guide: Microsoft Intune enrollment', url: L + 'intune/device-enrollment/guide', product: 'Intune', topic: 'Enrôlement', status: 'ga' },
+  { id: 'intune-enroll-steps', title: 'Microsoft Learn : Step 5 - Enroll devices in Microsoft Intune', url: L + 'intune/device-enrollment/enroll-devices', product: 'Intune', topic: 'Préparation de l’enrôlement', status: 'ga' },
+  { id: 'intune-mam-unenrolled', title: 'Microsoft Learn : Deployment guide: MAM for unenrolled devices in Microsoft Intune', url: L + 'intune/device-enrollment/mam-without-enrollment', product: 'Intune', topic: 'MAM sans enrôlement', status: 'ga' },
+  { id: 'intune-rbac', title: 'Microsoft Learn : Role-based access control (RBAC) with Microsoft Intune', url: L + 'intune/fundamentals/role-based-access-control/overview', product: 'Intune', topic: 'RBAC', status: 'ga' },
+  { id: 'intune-assign-role', title: 'Microsoft Learn : Assign Microsoft Intune roles for role-based access control', url: L + 'intune/fundamentals/role-based-access-control/assign-role', product: 'Intune', topic: 'Affectation de rôles', status: 'ga' },
+  { id: 'intune-scope-tags', title: 'Microsoft Learn : Use RBAC and scope tags for distributed IT', url: L + 'intune/fundamentals/role-based-access-control/scope-tags', product: 'Intune', topic: 'Étiquettes d’étendue', status: 'ga' },
+  { id: 'intune-builtin-roles', title: 'Microsoft Learn : Built-in role permissions for Microsoft Intune', url: L + 'intune/fundamentals/role-based-access-control/ref-built-in-roles', product: 'Intune', topic: 'Rôles intégrés', status: 'ga' },
+  { id: 'intune-licensing', title: 'Microsoft Learn : Microsoft Intune licensing', url: L + 'intune/fundamentals/licensing', product: 'Intune', topic: 'Licences', status: 'ga' },
+  { id: 'intune-addons', title: 'Microsoft Learn : Use Microsoft Intune Suite add-on capabilities', url: L + 'intune/fundamentals/add-ons', product: 'Intune', topic: 'Modules complémentaires', status: 'ga' },
+  { id: 'intune-planning', title: 'Microsoft Learn : Microsoft Intune planning guide', url: L + 'intune/fundamentals/planning-guide', product: 'Intune', topic: 'Planification', status: 'ga' },
 ];
 
 export const SOURCE_BY_ID: Record<string, SourceDef> = Object.fromEntries(SOURCES.map((s) => [s.id, s]));
