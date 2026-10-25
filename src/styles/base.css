@@ -654,3 +654,6 @@ main:focus { outline: none; }
 /* Le schéma ne doit jamais coller au bloc qui le précède (.flow remet margin à 0 plus haut) */
 .stack > .flow { margin-top: 1.25rem; margin-bottom: 0.25rem; }
 .stack > .flow + * { margin-top: 1.25rem; }
+
+/* Ancres internes : ne pas cacher la section sous l'en-tête fixe */
+.lesson section[id], article section[id] { scroll-margin-top: 6rem; }
