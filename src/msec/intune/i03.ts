@@ -1,0 +1,221 @@
+// Module 3 : Defender Antivirus (niveau 2).
+import type { AiCompetency, AiLesson, AiProject } from '../../agentic/types.ts';
+import { assemble } from '../assemble.ts';
+import { kit } from '../kit.ts';
+import { sref } from '../sources.ts';
+
+const md = (...lines: string[]) => lines.join('\n');
+const { a, Q, M } = kit('i03');
+const c1 = { comp: 'i03-c1', lesson: 'i03-l1', tags: ['politique-antivirus', 'protection-infonuagique', 'non-configure'] };
+const c2 = { comp: 'i03-c2', lesson: 'i03-l2', tags: ['pua', 'exclusions', 'fusion'] };
+const c3 = { comp: 'i03-c3', lesson: 'i03-l3', tags: ['tamper-protection', 'verification-locale', 'gpo'] };
+
+const l1: AiLesson = {
+  id: 'i03-l1', module: 'i03', title: 'La politique antivirus : protection infonuagique, temps réel et valeurs « Non configuré »', minutes: 45,
+  summary: 'Construire une politique Defender Antivirus lisible, comprendre ce que « Non configuré » veut vraiment dire et vérifier qu’elle est opérationnelle.',
+  objectives: ['Situer la politique Antivirus dans Endpoint security et ses profils.', 'Interpréter « Non configuré » sans le confondre avec « désactivé ».', 'Distinguer politique reçue, réglage appliqué et protection opérationnelle.'],
+  prerequisites: ['Modules 1 et 2'],
+  body: md(
+    '## Où se configure l’antivirus',
+    'Dans le centre d’administration Intune, **Endpoint security > Antivirus** regroupe les politiques de Microsoft Defender Antivirus. On y crée une politique pour la plateforme **Windows** avec un profil : **Microsoft Defender Antivirus** (les réglages de protection), **exclusions Microsoft Defender Antivirus** (un profil dédié aux exclusions), **Windows Security Experience** (l’interface de l’application Sécurité Windows et la protection contre la falsification) ou **Security Center**. La même plateforme Windows sert les appareils qui communiquent avec Intune par la gestion des appareils mobiles ou par la gestion des paramètres de sécurité de Defender for Endpoint, ce qui étend la portée aux serveurs que l’enrôlement Intune natif ne couvre pas. Pour la formation, retenez que le **profil choisi détermine quels réglages vous voyez** et qu’une politique Antivirus ne fait rien tant qu’elle n’est pas **affectée**.',
+    '## Les réglages de base à connaître',
+    'La documentation de référence liste chaque réglage avec son fournisseur de services de configuration (CSP). Quelques-uns reviennent dans presque toutes les conceptions. **Protection infonuagique** (AllowCloudProtection, adhésion au service MAPS) : à garder activée, car certaines fonctions de Defender for Endpoint ne fonctionnent que si elle l’est. **Surveillance du comportement** (AllowBehaviorMonitoring) : recommandée à « Autorisé ». **Analyse des archives** (AllowArchiveScanning) : recommandée à « Autorisé ». **Direction de l’analyse en temps réel** (RealTimeScanDirection) : surtout utile sur des serveurs à très fort volume de fichiers, et valable seulement sur les volumes NTFS. Les **actions sur les menaces détectées** se règlent par niveau de gravité (faible, modéré, élevé, grave) et, laissées à « Non configuré », suivent les définitions de renseignements de sécurité.',
+    '## « Non configuré » n’est pas « désactivé »',
+    'Pour la plupart des réglages, **Non configuré** signifie que la politique **ne pose aucune valeur** : c’est le produit, sa version, la licence et l’intégration à Defender for Endpoint qui décident. Exemple concret : pour la protection contre les applications potentiellement indésirables, la valeur par défaut dépend de la version de Windows, de la version des renseignements de sécurité, de la disponibilité de Smart App Control et de l’intégration à Defender for Endpoint. Conséquence de conception : **ne comptez jamais sur un défaut** pour un réglage dont dépend votre posture. Posez la valeur explicitement, ou documentez que vous acceptez le défaut et sa source. Et rappelez-vous le piège du retour arrière vu au module 2 : repasser un réglage à « Non configuré » ne rétablit pas toujours l’état initial.',
+    '## Quatre états à ne pas confondre',
+    'Une politique **créée** n’existe que dans le portail. **Affectée**, elle cible des groupes. **Reçue**, elle a atteint l’appareil (statut de réussite dans les rapports). **Opérationnelle**, la protection fait réellement son travail (par exemple la protection en temps réel est active, vérifiable avec `Get-MpComputerStatus`). Un rapport vert prouve la réception du réglage, pas l’efficacité de la protection. C’est le fil conducteur de la fiche de configuration de la formation.',
+    '## Cohabiter avec un autre antivirus',
+    'Quand un produit antivirus tiers est actif, Defender Antivirus peut passer en mode passif ou désactivé selon l’intégration à Defender for Endpoint. Ce n’est pas une panne : vérifiez le mode actif avant de conclure à un échec de politique. La page de compatibilité décrit les cas.',
+  ),
+  demo: { title: 'Lire un rapport sans se tromper', body: md(
+    'Extrait **fictif** d’un rapport de politique :',
+    '```text',
+    'Politique        : AV-Socle-Postes   Affectée : Oui',
+    'Appareils        : 120 réussis, 4 conflits, 6 en attente',
+    'Protection infonuagique : Activée (posée)',
+    'PUA              : Non configuré',
+    '```',
+    '**Lecture commentée.** 120 réussites prouvent la réception. Les 4 conflits exigent une analyse par réglage. Le PUA « Non configuré » n’est ni bloqué ni audité de façon garantie : le défaut dépend du contexte.',
+    '**Ce que la démo ne prouve pas.** Aucun appareil réel n’a été interrogé et aucune protection n’a été testée.') },
+  guided: 'i03-g1', autonomous: 'i03-a1', quiz: ['i03-q1a', 'i03-q1b', 'i03-q1c'],
+  revision: md('## Fiche : politique antivirus', '- Endpoint security > Antivirus, plateforme Windows, profils distincts.', '- « Non configuré » = aucune valeur posée, pas « désactivé ».', '- Protection infonuagique à garder active.', '- Créée, affectée, reçue, opérationnelle : quatre états différents.', '- Vérifier le mode actif si un antivirus tiers est présent.'),
+  links: [sref('intune-av-policy'), sref('intune-av-settings-win'), sref('mde-av-intune-config'), sref('mde-cloud-protection')], teaches: ['politique-antivirus', 'protection-infonuagique', 'non-configure'],
+};
+
+const l2: AiLesson = {
+  id: 'i03-l2', module: 'i03', title: 'Applications indésirables et exclusions : réduire le risque sans créer d’angle mort', minutes: 45,
+  summary: 'Déployer la protection PUA en audit puis en blocage, et gouverner les exclusions comme une dette de sécurité.',
+  objectives: ['Déployer la protection PUA en mode audit avant le blocage.', 'Expliquer comment les exclusions de plusieurs politiques fusionnent.', 'Concevoir une exclusion avec motif, portée minimale, propriétaire et revue.'],
+  prerequisites: ['Leçon 1'],
+  body: md(
+    '## Applications potentiellement indésirables',
+    'Les applications potentiellement indésirables (PUA) ne sont pas toutes des logiciels malveillants : adware, groupeurs, outils de minage ou logiciels qui ralentissent le poste. La protection les **détecte et les bloque** au téléchargement ou à l’installation. Dans Intune, le réglage « Action à entreprendre sur les applications potentiellement indésirables » propose **Non configuré**, **Désactivé**, **Blocage** (recommandé) et **Mode audit**. En audit, rien n’est bloqué, mais les événements qui auraient mené à un blocage sont consignés dans le journal d’événements Windows, ce qui permet de mesurer l’impact avant d’appliquer la règle. Microsoft conseille d’essayer d’abord l’audit, surtout si l’entreprise fait une vérification interne de conformité logicielle et veut éviter les faux positifs.',
+    '## Les défauts dépendent du contexte',
+    'Sans intégration à Defender for Endpoint, la valeur par défaut est **désactivée** pour des renseignements de sécurité plus anciens que la version 1.329.495.0 et **audit** pour des versions plus récentes. Avec Defender for Endpoint Plan 1, Plan 2 ou Defender for Business, le défaut peut être l’audit ou le blocage selon la version de Windows, des renseignements de sécurité et la disponibilité de Smart App Control. Retenez la méthode, pas les chiffres : **posez le mode voulu explicitement** et relisez la page à chaque révision, car ces défauts ont déjà changé. La page de référence précise aussi que les événements PUA bloqués se voient dans l’observateur d’événements Windows, et non dans Configuration Manager.',
+    '## Les exclusions sont une dette',
+    'Une exclusion dit à l’antivirus de ne pas analyser un fichier, un dossier, une extension ou un processus. Elle **réduit la protection** et c’est exactement ce que cherchent les attaquants qui modifient les listes d’exclusions pour se cacher. Règles de conception : une exclusion répond à un **problème mesuré** (conflit de performance, faux positif confirmé) ; sa portée est la plus petite possible (chemin précis plutôt que dossier racine, processus plutôt que lecteur) ; elle n’est affectée qu’aux **groupes qui en ont besoin** ; elle a un propriétaire et une date de revue.',
+    '## Où et comment les poser',
+    'On peut mettre les exclusions dans un profil **Microsoft Defender Antivirus** ou dans un profil dédié **exclusions Microsoft Defender Antivirus**. Les réglages sont identiques. Le point crucial : **Intune fusionne les exclusions de toutes les politiques affectées en un surensemble sur chaque appareil**. Une exclusion ajoutée « pour un seul groupe » s’additionne à celles des autres politiques de l’appareil, d’où l’intérêt d’un profil dédié, plus facile à auditer et à cibler. Les exclusions se modifient dans la politique (bouton Modifier) et s’exportent en CSV pour la revue. Le même type de profil existe aussi dans le portail Microsoft Defender quand la gestion des politiques de sécurité y est activée, avec des limites d’affectation propres aux appareils gérés par les paramètres de sécurité.',
+    '## Fusion locale',
+    'Un administrateur local peut aussi définir des exclusions sur le poste. Le réglage `DisableLocalAdminMerge` empêche la fusion des listes locales avec celles de la politique de l’organisation, et `HideExclusionsFromLocalAdmin` masque les exclusions aux administrateurs locaux (il ne les supprime pas). Le premier est aussi une condition pour que la protection contre la falsification couvre les exclusions, vue à la leçon suivante.',
+  ),
+  demo: { title: 'Une exclusion bien formée', body: md(
+    'Fiche **fictive** :',
+    '```text',
+    'Exclusion    : processus C:\\Outils\\sauvegarde.exe',
+    'Motif        : conflit de performance mesuré, ticket T-4521',
+    'Groupe       : serveurs-sauvegarde seulement',
+    'Propriétaire : équipe infrastructure',
+    'Revue        : dans 6 mois',
+    '```',
+    '**Lecture commentée.** Un processus précis, un motif mesuré, un groupe limité et une date de revue.',
+    '**Ce que la démo ne prouve pas.** Aucune exclusion n’a été déployée ni testée.') },
+  guided: 'i03-g2', autonomous: 'i03-a2', quiz: ['i03-q2a', 'i03-q2b', 'i03-q2c'],
+  revision: md('## Fiche : PUA et exclusions', '- PUA : audit d’abord, puis blocage (recommandé).', '- Poser le mode explicitement, les défauts dépendent du contexte.', '- Exclusions : motif mesuré, portée minimale, groupe limité, propriétaire, revue.', '- Les exclusions de toutes les politiques fusionnent en surensemble.', '- DisableLocalAdminMerge et HideExclusionsFromLocalAdmin sont deux choses différentes.'),
+  links: [sref('mde-pua'), sref('mde-av-exclusions'), sref('mde-av-intune-config'), sref('mde-tamper-exclusions'), sref('intune-av-policy')], teaches: ['pua', 'exclusions', 'fusion'],
+};
+
+const l3: AiLesson = {
+  id: 'i03-l3', module: 'i03', title: 'Protection contre la falsification : déployer, tolérer les changements, vérifier sur le poste', minutes: 50,
+  summary: 'Activer la protection contre la falsification par Intune, savoir ce qu’elle bloque et vérifier son état réel.',
+  objectives: ['Activer la protection contre la falsification avec le bon profil.', 'Expliquer pourquoi une GPO « réussit » sans effet sous protection.', 'Vérifier l’état réel avec PowerShell et les clés de registre documentées.'],
+  prerequisites: ['Leçons 1 et 2'],
+  body: md(
+    '## Ce que fait la protection',
+    'Pendant une attaque, les adversaires essaient de **désactiver les défenses**. La protection contre la falsification (tamper protection) empêche la modification des réglages de sécurité essentiels de Defender Antivirus, de ses fichiers et de ses processus, y compris par un administrateur local ou un script. Prérequis techniques documentés : plateforme Defender Antivirus **4.18.2010.7** ou plus récente, moteur **1.1.17600.5** ou plus récent, et protection infonuagique **activée** (depuis la plateforme 4.18.2111.5, activer la protection contre la falsification active automatiquement la protection infonuagique si elle ne l’est pas).',
+    '## Où la configurer',
+    'Dans Intune : **Endpoint security > Antivirus > Créer une politique**, plateforme **Windows**, profil **Windows Security Experience**, réglage **Tamper protection (device)** à **On** dans la section Defender. On l’affecte à tout le locataire ou à des groupes, avec exclusions de groupes possibles. Les appareils doivent être intégrés à Defender for Endpoint (P1 ou P2) ; sur un appareil jamais intégré, l’activation peut attendre le premier enregistrement après l’intégration. Une **politique qui gère la protection l’emporte sur le réglage global du portail Defender**. Pour Configuration Manager, il n’y a pas de réglage direct : on passe par le rattachement au locataire (tenant attach).',
+    '## Effets sur l’exploitation',
+    'Sous protection, les modifications locales (GPO, PowerShell, registre, interface) des réglages protégés sont bloquées. Une GPO peut **sembler réussir** alors que la protection bloque le changement. Pour un changement temporaire sur un poste, on utilise le **mode de dépannage** de Defender for Endpoint, pas un contournement. Pour un changement durable, on modifie la politique ou on exclut le groupe concerné de la politique de protection. L’identifiant d’événement **5013** signale un changement bloqué, et la page de dépannage de Defender Antivirus décrit la suite.',
+    '## Protéger aussi les exclusions',
+    'La protection peut couvrir les exclusions gérées par l’organisation si : la plateforme est **4.18.2211.5** ou plus récente ; `DisableLocalAdminMerge` est activé ; l’appareil est géré **uniquement par Intune** ou **uniquement par Configuration Manager**, avec le capteur Defender for Endpoint (Sense) actif ; les exclusions sont gérées dans Intune ou Configuration Manager. Un appareil en **cogestion** n’est pas pris en charge pour ce volet.',
+    '## Vérifier sur le poste',
+    'Sans modifier quoi que ce soit : `Get-MpComputerStatus | Select-Object IsTamperProtected, RealTimeProtectionEnabled` (True signifie activé). Pour les exclusions, dans le registre (lecture seule) : `ManagedDefenderProductType` sous `HKLM\\SOFTWARE\\Microsoft\\Windows Defender` (6 = géré uniquement par Intune ; 7 avec `EnrollmentStatus` 4 = Configuration Manager ; 7 avec 3 = cogestion non prise en charge) puis `TPExclusions` sous `...\\Windows Defender\\Features` (1 = exclusions protégées, 0 = non protégées).',
+    '## Configuration contrôlée',
+    'Microsoft documente une fonction plus récente, la **configuration contrôlée**, qui s’appuie sur la protection contre la falsification (le réglage existant y est renommé, sans activer automatiquement les nouvelles protections). Elle exige une version de plateforme précise et un retour arrière documenté. Traitez-la comme une **fonction à valider** : lisez la page avant de la déployer et testez sur un pilote.',
+  ),
+  demo: { title: 'Lire l’état réel', body: md(
+    'Sortie **fictive** d’un poste :',
+    '```text',
+    'IsTamperProtected         : True',
+    'RealTimeProtectionEnabled : True',
+    'ManagedDefenderProductType: 6',
+    'TPExclusions              : 1',
+    '```',
+    '**Lecture commentée.** Falsification active, temps réel actif, appareil géré uniquement par Intune et exclusions protégées.',
+    '**Ce que la démo ne prouve pas.** Aucune commande n’a été exécutée sur un vrai appareil.') },
+  guided: 'i03-g3', autonomous: 'i03-a3', quiz: ['i03-q3a', 'i03-q3b', 'i03-q3c'],
+  revision: md('## Fiche : protection contre la falsification', '- Windows Security Experience > Tamper protection (device) = On.', '- Politique Intune prioritaire sur le réglage global du portail.', '- GPO apparemment réussie mais bloquée ; mode de dépannage pour le temporaire.', '- Exclusions protégées : 4.18.2211.5, DisableLocalAdminMerge, Intune seul ou Configuration Manager seul, Sense.', '- Vérifier : IsTamperProtected, ManagedDefenderProductType, TPExclusions.'),
+  links: [sref('mde-tamper'), sref('mde-tamper-windows'), sref('mde-tamper-exclusions'), sref('mde-tamper-faq'), sref('mde-controlled-config'), sref('intune-av-policy')], teaches: ['tamper-protection', 'verification-locale', 'gpo'],
+};
+
+const exercises = [
+  a.match({ id: 'i03-g1', title: 'Quatre états', comp: c1.comp, tags: c1.tags, role: 'guided', dim: 'comprendre', lesson: 'i03-l1',
+    st: 'Associez chaque preuve à l’état atteint.', items: [['p1', 'Politique visible dans le portail, sans affectation'], ['p2', 'Rapport de réussite sur l’appareil'], ['p3', 'Get-MpComputerStatus indique la protection en temps réel active']],
+    options: [['s1', 'Créée'], ['s2', 'Reçue'], ['s3', 'Opérationnelle']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Créée dans le portail, reçue selon le rapport, opérationnelle selon la vérification locale.' }),
+  a.config({ id: 'i03-a1', title: 'Politique antivirus socle', comp: c1.comp, tags: c1.tags, role: 'autonomous', dim: 'securiser', lesson: 'i03-l1',
+    st: 'Paramétrez le socle antivirus.',
+    fields: [
+      { id: 'cloud', label: 'Protection infonuagique', kind: 'select', options: [{ id: 'on', label: 'Activée' }, { id: 'off', label: 'Désactivée' }, { id: 'nc', label: 'Non configurée' }], accept: ['on'], why: 'Certaines fonctions en dépendent.' },
+      { id: 'beh', label: 'Surveillance du comportement', kind: 'select', options: [{ id: 'on', label: 'Autorisée' }, { id: 'off', label: 'Non autorisée' }], accept: ['on'], why: 'Recommandé.' },
+      { id: 'def', label: 'Compter sur les défauts pour la posture', kind: 'toggle', accept: ['off'], why: 'Poser explicitement les valeurs.' },
+    ], solution: { cloud: 'on', beh: 'on', def: 'off' }, exp: 'Valeurs posées explicitement, sans compter sur les défauts.' }),
+  Q('i03-q1a', 'quiz', 'comprendre', c1, 'Non configuré', 'Que signifie « Non configuré » pour la plupart des réglages ?', ['La politique ne pose aucune valeur.', 'Le défaut du produit s’applique.'], [['Le réglage est désactivé.', 'Faux.'], ['Le réglage est verrouillé.', 'Faux.'], ['Le réglage est supprimé du produit.', 'Faux.']], 'Non configuré laisse la décision au produit.'),
+  Q('i03-q1b', 'quiz', 'fonctionner', c1, 'Rapport vert', 'Que prouve un statut de réussite ?', ['Que le réglage a été reçu par l’appareil.', 'Pas l’efficacité.'], [['Que la protection est testée.', 'Faux.'], ['Que l’appareil est sans menace.', 'Faux.'], ['Que les exclusions sont sûres.', 'Faux.']], 'La réussite prouve la réception.'),
+  Q('i03-q1c', 'quiz', 'maintenir', c1, 'Antivirus tiers', 'Defender Antivirus est en mode passif. Première action ?', ['Vérifier la présence d’un autre antivirus et le mode actif avant de conclure à un échec.', 'Cas décrit par la compatibilité.'], [['Réinstaller Windows.', 'Non.'], ['Supprimer la politique.', 'Non.'], ['Ignorer.', 'Non.']], 'Le mode passif peut être normal.'),
+
+  a.order({ id: 'i03-g2', title: 'Déployer le PUA', comp: c2.comp, tags: c2.tags, role: 'guided', dim: 'comprendre', lesson: 'i03-l2',
+    st: 'Ordonnez le déploiement de la protection PUA.',
+    items: [['s1', 'Activer le mode audit sur un pilote'], ['s2', 'Lire les événements dans le journal Windows'], ['s3', 'Traiter les faux positifs'], ['s4', 'Passer au blocage par vagues'], ['s5', 'Revoir périodiquement']], correct: ['s1', 's2', 's3', 's4', 's5'],
+    exp: 'Audit, lecture, traitement, blocage progressif puis revue.' }),
+  a.inspect({ id: 'i03-a2', title: 'Relire des exclusions', comp: c2.comp, tags: c2.tags, role: 'autonomous', dim: 'securiser', lesson: 'i03-l2', language: 'text',
+    st: 'Liste fictive. Repérez les défauts.',
+    lines: [['p1', 'Exclure tout le lecteur D: pour accélérer les analyses.', { ok: 'a1', fixes: [['a1', 'Exclure un processus ou un chemin précis après mesure'], ['a2', 'Accepter']] }], ['p2', 'Exclusions affectées à tous les appareils pour un seul serveur.', { ok: 'b1', fixes: [['b1', 'Affecter à un groupe limité avec un profil dédié'], ['b2', 'Accepter']] }], ['p3', 'Aucun propriétaire ni date de revue.', { ok: 'c1', fixes: [['c1', 'Ajouter propriétaire, motif et revue'], ['c2', 'Accepter']] }]],
+    exp: 'Portée trop large, affectation trop large et absence de gouvernance sont trois défauts.' }),
+  Q('i03-q2a', 'quiz', 'comprendre', c2, 'Mode audit', 'Que fait la protection PUA en mode audit ?', ['Elle ne bloque pas et consigne dans le journal les événements qu’elle aurait bloqués.', 'Mesure l’impact.'], [['Elle bloque en silence.', 'Faux.'], ['Elle désinstalle.', 'Faux.'], ['Elle est désactivée.', 'Faux.']], 'L’audit consigne sans bloquer.'),
+  Q('i03-q2b', 'quiz', 'fonctionner', c2, 'Fusion', 'Que devient l’ensemble des exclusions de plusieurs politiques affectées ?', ['Elles sont fusionnées en un surensemble sur l’appareil.', 'D’où le profil dédié.'], [['La dernière remplace les autres.', 'Faux.'], ['Seule la plus restrictive reste.', 'Faux.'], ['Elles s’annulent.', 'Faux.']], 'Les exclusions s’additionnent.'),
+  Q('i03-q2c', 'quiz', 'maintenir', c2, 'HideExclusions', 'Que fait HideExclusionsFromLocalAdmin ?', ['Il masque les exclusions aux administrateurs locaux sans les supprimer.', 'Distinct de DisableLocalAdminMerge.'], [['Il supprime les exclusions.', 'Faux.'], ['Il chiffre les exclusions.', 'Faux.'], ['Il les applique aux serveurs.', 'Faux.']], 'Il masque, il ne supprime pas.'),
+
+  a.match({ id: 'i03-g3', title: 'Valeur et sens', comp: c3.comp, tags: c3.tags, role: 'guided', dim: 'comprendre', lesson: 'i03-l3',
+    st: 'Associez chaque valeur de registre à son sens.', items: [['p1', 'ManagedDefenderProductType = 6'], ['p2', 'TPExclusions = 1'], ['p3', 'ManagedDefenderProductType = 7 et EnrollmentStatus = 3']],
+    options: [['s1', 'Géré uniquement par Intune'], ['s2', 'Exclusions protégées'], ['s3', 'Cogestion, non prise en charge pour les exclusions protégées']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: '6 signifie Intune seul, TPExclusions 1 signifie protégées, 7 avec 3 signifie cogestion.' }),
+  a.workflow({ id: 'i03-a3', title: 'Changer un réglage protégé', comp: c3.comp, tags: c3.tags, role: 'autonomous', dim: 'securiser', lesson: 'i03-l3',
+    st: 'Ordonnez le traitement d’un changement durable bloqué par la protection.',
+    blocks: [['b1', 'Constater le blocage (événement 5013)'], ['b2', 'Identifier le réglage et la source de gestion'], ['b3', 'Modifier la politique Intune ou exclure le groupe'], ['b4', 'Synchroniser et vérifier avec Get-MpComputerStatus'], ['b5', 'Désactiver la protection partout'], ['b6', 'Contourner par le registre']],
+    required: ['b1', 'b2', 'b3', 'b4'], forbidden: ['b5', 'b6'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4']], notes: { b5: 'Perd la protection pour tout le parc.', b6: 'Contourner affaiblit la défense.' }, solution: ['b1', 'b2', 'b3', 'b4'],
+    exp: 'Un changement durable passe par la politique, jamais par un contournement.' }),
+  Q('i03-q3a', 'quiz', 'comprendre', c3, 'Priorité', 'Un réglage Intune et le portail Defender diffèrent. Lequel l’emporte ?', ['La politique qui gère la protection l’emporte sur le réglage global.', 'Selon la FAQ.'], [['Le portail toujours.', 'Faux.'], ['Le plus récent.', 'Faux.'], ['Aucun.', 'Faux.']], 'La politique de gestion prime sur le réglage global.'),
+  Q('i03-q3b', 'quiz', 'fonctionner', c3, 'GPO bloquée', 'Pourquoi une GPO peut-elle sembler réussir sans effet ?', ['La protection bloque le changement des réglages protégés.', 'Événement 5013.'], [['La GPO est corrompue.', 'Faux.'], ['Le domaine est hors ligne.', 'Faux.'], ['Windows ignore les GPO.', 'Faux.']], 'La protection bloque les changements locaux.'),
+  Q('i03-q3c', 'quiz', 'maintenir', c3, 'Dépannage', 'Comment faire un changement temporaire sur un poste ?', ['Utiliser le mode de dépannage de Defender for Endpoint.', 'Contrôlé et limité.'], [['Désactiver pour tout le monde.', 'Non.'], ['Éditer le registre.', 'Bloqué.'], ['Débrancher le réseau.', 'Non.']], 'Le mode de dépannage est la voie prévue.'),
+
+  Q('i03-ev1', 'eval', 'comprendre', c1, 'Profil', 'Quel profil porte la protection contre la falsification ?', ['Windows Security Experience.', 'Dans la politique Antivirus.'], [['Exclusions Microsoft Defender Antivirus.', 'Non.'], ['Base de référence Edge.', 'Non.'], ['Pare-feu.', 'Non.']], 'Le profil Windows Security Experience porte le réglage.'),
+  M('i03-ev2', 'eval', 'securiser', c2, 'Bonnes exclusions', 'Cochez les bonnes pratiques d’exclusion.', [['Motif mesuré et propriétaire.', 'Gouvernance.'], ['Portée minimale et groupe limité.', 'Réduit le risque.']], [['Exclure le lecteur entier.', 'Trop large.'], ['Ne jamais revoir.', 'Dette.']], 'Motif, propriétaire, portée minimale.'),
+  a.order({ id: 'i03-ev3', title: 'Activer la protection', comp: c3.comp, tags: c3.tags, role: 'eval', dim: 'fonctionner', lesson: 'i03-l3',
+    st: 'Ordonnez l’activation de la protection contre la falsification.',
+    items: [['s1', 'Vérifier plateforme et protection infonuagique'], ['s2', 'Créer la politique Windows Security Experience'], ['s3', 'Affecter à un pilote'], ['s4', 'Vérifier IsTamperProtected'], ['s5', 'Étendre au parc']], correct: ['s1', 's2', 's3', 's4', 's5'],
+    exp: 'Prérequis, politique, pilote, vérification puis extension.' }),
+  a.fix({ id: 'i03-ev4', title: 'Corriger une politique antivirus', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'securiser', lesson: 'i03-l1', language: 'json',
+    st: 'Corrigez : protection infonuagique active, comportement actif, PUA explicite.',
+    starter: JSON.stringify({ protectionInfonuagique: 'desactivee', surveillanceComportement: 'non-autorisee', pua: 'non-configure' }, null, 2),
+    rules: [{ kind: 'equals', path: 'protectionInfonuagique', value: 'activee', message: 'Activer la protection infonuagique.', dim: 'securiser' }, { kind: 'equals', path: 'surveillanceComportement', value: 'autorisee', message: 'Autoriser la surveillance.', dim: 'securiser' }, { kind: 'oneOf', path: 'pua', values: ['audit', 'blocage'], message: 'Poser le mode PUA explicitement.', dim: 'maintenir' }],
+    solution: JSON.stringify({ protectionInfonuagique: 'activee', surveillanceComportement: 'autorisee', pua: 'audit' }, null, 2), exp: 'Réglages posés explicitement, PUA en audit pour commencer.' }),
+  a.match({ id: 'i03-ev5', title: 'Symptôme et cause', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'maintenir', lesson: 'i03-l2',
+    st: 'Associez chaque symptôme à sa cause probable.', items: [['p1', 'Une exclusion apparaît sur un groupe non prévu'], ['p2', 'Une application est signalée sans être bloquée'], ['p3', 'Un administrateur local ajoute des exclusions']],
+    options: [['s1', 'Fusion des exclusions de plusieurs politiques'], ['s2', 'PUA en mode audit'], ['s3', 'Fusion locale non désactivée']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Fusion de politiques, audit et fusion locale expliquent ces symptômes.' }),
+  a.workflow({ id: 'i03-ev6', title: 'Vérifier la protection des exclusions', comp: c3.comp, tags: c3.tags, role: 'eval', dim: 'securiser', lesson: 'i03-l3',
+    st: 'Ordonnez la vérification locale en lecture seule.',
+    blocks: [['b1', 'Lire ManagedDefenderProductType'], ['b2', 'Lire EnrollmentStatus si la valeur est 7'], ['b3', 'Lire TPExclusions'], ['b4', 'Conclure sans modifier le registre'], ['b5', 'Modifier TPExclusions à 1']],
+    required: ['b1', 'b2', 'b3', 'b4'], forbidden: ['b5'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4']], notes: { b5: 'Ne jamais modifier ces valeurs.' }, solution: ['b1', 'b2', 'b3', 'b4'],
+    exp: 'On lit les trois valeurs en lecture seule, sans jamais modifier le registre.' }),
+  a.short({ id: 'i03-ev7', title: 'Mode de gestion', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'comprendre', lesson: 'i03-l3',
+    st: 'Quelle valeur de TPExclusions indique que les exclusions sont protégées ? (nombre)', accepted: ['1'], numeric: { value: 1 }, ph: 'un nombre',
+    exp: 'TPExclusions à 1 signifie que les exclusions sont protégées.' }),
+  a.short({ id: 'i03-ev8', title: 'Intune seul', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'comprendre', lesson: 'i03-l3',
+    st: 'Quelle valeur de ManagedDefenderProductType indique une gestion uniquement par Intune ? (nombre)', accepted: ['6'], numeric: { value: 6 }, ph: 'un nombre',
+    exp: 'La valeur 6 indique une gestion uniquement par Intune.' }),
+
+  a.inspect({ id: 'i03-cs1', title: 'Cas : antivirus chez Aurore Logistique', comp: c1.comp, tags: c1.tags, role: 'case', dim: 'securiser', lesson: 'i03-l1', language: 'text',
+    st: 'Plan fictif. Repérez les défauts.',
+    lines: [['p1', 'Nous comptons sur les valeurs par défaut pour le PUA.', { ok: 'a1', fixes: [['a1', 'Poser explicitement audit puis blocage'], ['a2', 'Accepter']] }], ['p2', 'Un rapport de réussite prouve que le poste est protégé.', { ok: 'b1', fixes: [['b1', 'Vérifier l’état opérationnel sur un échantillon'], ['b2', 'Accepter']] }], ['p3', 'La protection infonuagique est désactivée pour économiser la bande passante.', { ok: 'c1', fixes: [['c1', 'La réactiver car des fonctions en dépendent'], ['c2', 'Accepter']] }]],
+    exp: 'Défauts supposés, réception confondue avec efficacité et nuage désactivé sont trois défauts.' }),
+  a.workflow({ id: 'i03-cs2', title: 'Cas : exclusion pour un serveur', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'securiser', lesson: 'i03-l2',
+    st: 'Ordonnez le traitement d’une demande d’exclusion.',
+    blocks: [['t1', 'Mesurer le problème de performance'], ['t2', 'Définir la portée minimale'], ['t3', 'Créer un profil dédié affecté à un groupe limité'], ['t4', 'Consigner motif, propriétaire et revue'], ['t5', 'Vérifier l’effet après synchronisation'], ['t6', 'Exclure le lecteur entier pour tout le parc']],
+    required: ['t1', 't2', 't3', 't4', 't5'], forbidden: ['t6'], before: [['t1', 't2'], ['t2', 't3'], ['t3', 't4'], ['t4', 't5']], notes: { t6: 'Portée excessive.' }, solution: ['t1', 't2', 't3', 't4', 't5'],
+    exp: 'On mesure, on limite, on documente puis on vérifie.' }),
+  a.match({ id: 'i03-cs3', title: 'Cas : lecture de l’état', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i03-l3',
+    st: 'Associez chaque observation à la conclusion.', items: [['p1', 'IsTamperProtected = False après politique reçue'], ['p2', 'GPO réussie mais valeur inchangée'], ['p3', 'Appareil cogéré, TPExclusions = 0']],
+    options: [['s1', 'Rechercher une source de gestion concurrente ou un prérequis manquant'], ['s2', 'La protection a bloqué le changement'], ['s3', 'Cogestion non prise en charge pour ce volet']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque observation oriente le diagnostic vers une cause distincte.' }),
+  a.open({ id: 'i03-cs-open', title: 'Cas : socle antivirus', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i03-l3',
+    st: 'Rédigez le socle antivirus d’une organisation fictive.',
+    deliverable: 'Un document : réglages posés, PUA par étapes, gouvernance des exclusions, protection contre la falsification et vérification.',
+    rubric: [['r1', 'Les valeurs critiques sont posées explicitement.', 'securiser'], ['r2', 'Le PUA passe par l’audit.', 'fonctionner'], ['r3', 'Les exclusions ont motif, portée, propriétaire et revue.', 'maintenir'], ['r4', 'La falsification est vérifiée localement.', 'securiser'], ['r5', 'Réception et efficacité sont distinguées.', 'comprendre']],
+    exp: 'Pas de note automatique : on juge la cohérence du socle.' }),
+
+  Q('i03-rm1', 'remediation', 'comprendre', c1, 'Remédiation : défaut', 'Pourquoi ne pas compter sur un défaut ?', ['Il dépend de la version, de la licence et de l’intégration.', 'Poser la valeur.'], [['Il est toujours désactivé.', 'Faux.'], ['Il est toujours sûr.', 'Faux.'], ['Aucune raison.', 'Non.']], 'Les défauts varient selon le contexte.'),
+  Q('i03-rm2', 'remediation', 'fonctionner', c2, 'Remédiation : audit', 'Pourquoi commencer le PUA par l’audit ?', ['Pour mesurer l’impact et éviter les faux positifs avant de bloquer.', 'Pilote.'], [['Pour désactiver la protection.', 'Non.'], ['Pour accélérer.', 'Non.'], ['Aucune raison.', 'Non.']], 'L’audit mesure avant de bloquer.'),
+  Q('i03-rm3', 'remediation', 'securiser', c3, 'Remédiation : falsification', 'Pourquoi la protection contre la falsification importe-t-elle ?', ['Les attaquants cherchent à désactiver les défenses.', 'Elle bloque les changements non autorisés.'], [['Elle remplace l’antivirus.', 'Faux.'], ['Elle chiffre les disques.', 'Faux.'], ['Aucune raison.', 'Non.']], 'Elle empêche la désactivation des défenses.'),
+];
+
+const competencies: AiCompetency[] = [
+  { id: 'i03-c1', module: 'i03', name: 'Construire la politique antivirus', description: 'Profils, valeurs explicites, états.', criteria: [{ id: 'i03-c1-1', text: 'Je pose les valeurs critiques explicitement.' }, { id: 'i03-c1-2', text: 'Je distingue créée, reçue et opérationnelle.' }, { id: 'i03-c1-3', text: 'Je gère la cohabitation avec un autre antivirus.' }] },
+  { id: 'i03-c2', module: 'i03', name: 'Gouverner PUA et exclusions', description: 'Audit, blocage, fusion, revue.', criteria: [{ id: 'i03-c2-1', text: 'Je déploie le PUA par étapes.' }, { id: 'i03-c2-2', text: 'Je conçois des exclusions minimales et documentées.' }, { id: 'i03-c2-3', text: 'Je comprends la fusion des exclusions.' }] },
+  { id: 'i03-c3', module: 'i03', name: 'Déployer et vérifier la falsification', description: 'Politique, effets, vérification locale.', criteria: [{ id: 'i03-c3-1', text: 'J’active la protection avec le bon profil.' }, { id: 'i03-c3-2', text: 'Je gère les changements bloqués sans contournement.' }, { id: 'i03-c3-3', text: 'Je vérifie l’état réel en lecture seule.' }] },
+];
+
+const projects: AiProject[] = [
+  { id: 'i03-p1', module: 'i03', level: 'débutant', title: 'Fiche du socle antivirus', problem: 'Documenter les réglages antivirus critiques et leur valeur posée.', architecture: 'Tableau d’une page.', tools: ['Tableur'], data: 'Réglages fictifs.', steps: ['Lister les réglages.', 'Poser la valeur.', 'Indiquer la source.'], success: ['Aucune valeur laissée au défaut sans justification.'], risks: ['Défaut supposé.'], extensions: ['Ajouter la date de revue.'] },
+  { id: 'i03-p2', module: 'i03', level: 'intermédiaire', title: 'Plan PUA et exclusions', problem: 'Concevoir le passage du PUA de l’audit au blocage et la gouvernance des exclusions.', architecture: 'Plan avec pilote, critères, registre d’exclusions et revue.', tools: ['Tableur'], data: 'Parc fictif.', steps: ['Définir le pilote.', 'Lire les événements d’audit.', 'Écrire le registre d’exclusions.', 'Planifier le blocage.'], success: ['Chaque exclusion a motif et propriétaire.'], risks: ['Exclusions trop larges.'], extensions: ['Ajouter un indicateur de dette.'],
+    connected: { accounts: 'Un locataire de test avec Intune et un appareil Windows de test intégré à Defender for Endpoint.', permissions: 'Endpoint Security Manager dans le locataire de test.', costs: 'Licences de test.', secrets: 'Aucun secret.', cleanup: 'Retirer les politiques de test et les exclusions de test.', limits: 'Facultatif : ne testez pas de fichier réellement malveillant ; utilisez les démonstrations fournies par Microsoft.' } },
+  { id: 'i03-p3', module: 'i03', level: 'avancé', title: 'Preuve de protection contre la falsification', problem: 'Concevoir un plan de vérification de la falsification et des exclusions protégées sur un parc mixte.', architecture: 'Matrice appareil par mode de gestion avec vérification et exceptions.', tools: ['Tableur'], data: 'Parc fictif.', steps: ['Classer les modes de gestion.', 'Définir les vérifications locales.', 'Traiter la cogestion.', 'Planifier le retour arrière.'], success: ['Chaque mode a une vérification.'], risks: ['Confondre réception et efficacité.'], extensions: ['Ajouter un rapport automatisé.'] },
+];
+
+export const i03 = assemble({ id: 'i03', level: 2, n: 3, title: 'Defender Antivirus',
+  summary: 'Politique antivirus, valeurs « Non configuré », PUA par étapes, gouvernance des exclusions, protection contre la falsification et vérification locale.',
+  lessons: [l1, l2, l3], exercises, competencies, projects,
+  caseTitle: 'Bâtir le socle antivirus chez Aurore Logistique',
+  caseScenario: 'Vous posez les réglages antivirus, planifiez le PUA, gouvernez des exclusions et vérifiez la protection contre la falsification. Actions simulées.', caseMinutes: 45 });
