@@ -180,6 +180,15 @@ export const SOURCES: SourceDef[] = [
   { id: 'sc-defender', title: 'Microsoft Learn : Microsoft Security Copilot and Chat in Microsoft Defender', url: L + 'defender-xdr/security-copilot-in-microsoft-365-defender', product: 'Security Copilot', topic: 'Security Copilot dans Defender', status: 'ga', uncertainty: 'Fonctions en évolution rapide et licence séparée : revérifier.' },
   { id: 'sc-logicapps', title: 'Microsoft Learn : Microsoft Security Copilot Logic Apps Connector', url: L + 'copilot/security/connector-logicapp', product: 'Security Copilot', topic: 'Connecteur Logic Apps', status: 'ga' },
   { id: 'sentinel-playbook-gen', title: 'Microsoft Learn : Generate playbooks using AI in Microsoft Sentinel', url: L + 'azure/sentinel/automation/generate-playbook', product: 'Microsoft Sentinel', topic: 'Générateur de playbooks par IA', status: 'ga', uncertainty: 'Fonction récente : revérifier.' },
+  { id: 'xdr-urbac-activate', title: 'Microsoft Learn : Activate Microsoft Defender unified role-based access control (URBAC)', url: L + 'defender-xdr/activate-defender-rbac', product: 'Defender XDR', topic: 'Activation du RBAC unifié', status: 'ga' },
+  { id: 'xdr-urbac-create', title: 'Microsoft Learn : Create custom roles with Microsoft Defender unified RBAC', url: L + 'defender-xdr/create-custom-rbac-roles', product: 'Defender XDR', topic: 'Rôles personnalisés', status: 'ga' },
+  { id: 'xdr-urbac-import', title: 'Microsoft Learn : Import roles to Microsoft Defender unified RBAC', url: L + 'defender-xdr/import-rbac-roles', product: 'Defender XDR', topic: 'Import de rôles', status: 'ga' },
+  { id: 'xdr-mto-urbac', title: 'Microsoft Learn : Manage unified role-based access control in multitenant management', url: L + 'defender-xdr/mto-urbac', product: 'Defender XDR', topic: 'RBAC multilocataire', status: 'ga' },
+  { id: 'xdr-notif-incidents', title: 'Microsoft Learn : Get incident notifications by email in Microsoft Defender XDR', url: L + 'defender-xdr/m365d-notifications-incidents', product: 'Defender XDR', topic: 'Notifications d’incident', status: 'ga' },
+  { id: 'xdr-notif-actions', title: 'Microsoft Learn : Get email notifications for response actions in Microsoft Defender XDR', url: L + 'defender-xdr/m365d-response-actions-notifications', product: 'Defender XDR', topic: 'Notifications d’actions', status: 'ga' },
+  { id: 'xdr-audit', title: 'Microsoft Learn : Search the audit log for events in Microsoft Defender XDR', url: L + 'defender-xdr/microsoft-xdr-auditing', product: 'Defender XDR', topic: 'Journal d’audit', status: 'ga' },
+  { id: 'xdr-portal-overview', title: 'Microsoft Learn : Microsoft Defender XDR in the Microsoft Defender portal', url: L + 'defender-xdr/microsoft-365-defender-portal', product: 'Defender XDR', topic: 'Portail et paramètres', status: 'ga' },
+  { id: 'xdr-enable-faq', title: 'Microsoft Learn : Microsoft Defender XDR frequently asked questions', url: L + 'defender-xdr/m365d-enable-faq', product: 'Defender XDR', topic: 'Accès, fuseau horaire', status: 'ga' },
 ];
 
 export const SOURCE_BY_ID: Record<string, SourceDef> = Object.fromEntries(SOURCES.map((s) => [s.id, s]));
