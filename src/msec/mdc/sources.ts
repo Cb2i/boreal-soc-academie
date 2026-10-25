@@ -115,5 +115,10 @@ export const MDC_SOURCES: SourceDef[] = [
   S('secrets-vm', 'Remediate machine secrets', 'remediate-server-secrets', 'Secrets en clair sur les machines'),
   S('compliance-assign', 'Assign regulatory compliance standards', 'assign-regulatory-compliance-standards', 'Affectation des standards réglementaires'),
   S('compliance-manager', 'Configure cloud settings for Compliance Manager', 'https://learn.microsoft.com/purview/compliance-manager-cloud-settings', 'Purview Compliance Manager et Defender for Cloud', 'reference'),
+  S('recos-remediate', 'Remediate recommendations in Defender for Cloud', 'implement-security-recommendations', 'Remédiation : Fix, scripts automatisés'),
+  S('recos-copilot', 'Remediate recommendations with Security Copilot', 'remediate-with-copilot', 'Remédiation assistée par Copilot', 'ga', 'Exige Security Copilot et des unités de calcul de sécurité.'),
+  S('exempt-resource', 'Exempt resources from recommendations', 'exempt-resource', 'Exemptions : mitigated et waiver'),
+  S('exempt-scale', 'Exempt resources at scale', 'exempt-resources-at-scale', 'Exemptions à grande échelle'),
+  S('policy-exemption', 'Azure Policy exemption structure', 'https://learn.microsoft.com/azure/governance/policy/concepts/exemption-structure', 'Structure d’une exemption Azure Policy', 'reference'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
