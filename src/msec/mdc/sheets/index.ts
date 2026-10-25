@@ -18,5 +18,6 @@ import { SHEETS_D17 } from './d17.ts';
 import { SHEETS_D18 } from './d18.ts';
 import { SHEETS_D19 } from './d19.ts';
 import { SHEETS_D20 } from './d20.ts';
+import { SHEETS_D21 } from './d21.ts';
 
-export const SHEETS: MdcSheet[] = [...SHEETS_D02, ...SHEETS_D03, ...SHEETS_D04, ...SHEETS_D05, ...SHEETS_D06, ...SHEETS_D07, ...SHEETS_D08, ...SHEETS_D09, ...SHEETS_D10, ...SHEETS_D11, ...SHEETS_D12, ...SHEETS_D13, ...SHEETS_D14, ...SHEETS_D15, ...SHEETS_D16, ...SHEETS_D17, ...SHEETS_D18, ...SHEETS_D19, ...SHEETS_D20];
+export const SHEETS: MdcSheet[] = [...SHEETS_D02, ...SHEETS_D03, ...SHEETS_D04, ...SHEETS_D05, ...SHEETS_D06, ...SHEETS_D07, ...SHEETS_D08, ...SHEETS_D09, ...SHEETS_D10, ...SHEETS_D11, ...SHEETS_D12, ...SHEETS_D13, ...SHEETS_D14, ...SHEETS_D15, ...SHEETS_D16, ...SHEETS_D17, ...SHEETS_D18, ...SHEETS_D19, ...SHEETS_D20, ...SHEETS_D21];

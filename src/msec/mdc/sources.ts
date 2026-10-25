@@ -182,5 +182,10 @@ export const MDC_SOURCES: SourceDef[] = [
   S('devops-pr-review', 'Review pull request annotations', 'review-pull-request-annotations', 'Traitement des annotations'),
   S('devops-image-mapping', 'Map container images from code to runtime', 'container-image-mapping', 'Cartographie code vers exécution'),
   S('devops-cli-auth', 'Defender for Cloud CLI authentication', 'defender-cli-authentication', 'Authentification de la CLI', 'preview', 'Ingestion DevOps présentée en préversion dans la documentation consultée.'),
+  S('alerts-manage', 'Manage and respond to security alerts', 'manage-respond-alerts', 'Investigation et réponse aux alertes'),
+  S('alerts-suppress', 'Suppress alerts', 'alerts-suppression-rules', 'Règles de suppression d’alertes'),
+  S('alerts-validate', 'Validate alerts', 'alert-validation', 'Alertes de test et simulations'),
+  S('alerts-reference', 'Security alerts reference guide', 'alerts-reference', 'Référence des alertes par plan', 'reference', 'La liste des alertes évolue : la page officielle fait foi.'),
+  S('xdr-correlation', 'Alert correlation and incident merging in the Defender portal', 'https://learn.microsoft.com/defender-xdr/alerts-incidents-correlation', 'Corrélation et fusion d’incidents', 'reference'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
