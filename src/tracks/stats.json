@@ -16,11 +16,11 @@
     "resources": 0
   },
   "intune": {
-    "modules": 10,
-    "lessons": 30,
-    "exercises": 300,
-    "projects": 30,
-    "competencies": 30,
+    "modules": 11,
+    "lessons": 33,
+    "exercises": 330,
+    "projects": 33,
+    "competencies": 33,
     "resources": 0
   }
 }
