@@ -137,5 +137,9 @@ export const MDC_SOURCES: SourceDef[] = [
   S('fim', 'File integrity monitoring', 'file-integrity-monitoring-overview', 'Surveillance de l’intégrité des fichiers'),
   S('fim-enable', 'Enable file integrity monitoring (Defender for Endpoint)', 'file-integrity-monitoring-enable-defender-endpoint', 'Activation de la surveillance de l’intégrité'),
   S('fim-migrate', 'Migrate file integrity monitoring from MMA or AMA', 'migrate-file-integrity-monitoring', 'Migration depuis les anciens agents', 'reference', 'Support de MMA terminé en novembre 2024.'),
+  S('containers-deploy-cli', 'Deploy Defender sensor and Azure Policy using Azure CLI', 'defender-for-containers-deploy-azure-cli', 'Déploiement du capteur et d’Azure Policy par CLI'),
+  S('containers-gated', 'Configure gated deployment rules', 'enablement-guide-runtime-gated', 'Déploiement contrôlé par contrôleur d’admission'),
+  S('containers-gated-trouble', 'Troubleshoot gated deployment', 'troubleshooting-runtime-gated', 'Dépannage du déploiement contrôlé'),
+  S('k8s-workload', 'Kubernetes workload protection', 'kubernetes-workload-protections', 'Protection des charges Kubernetes et Azure Policy'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];

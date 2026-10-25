@@ -8,5 +8,6 @@ import { H07 } from './mdc/h07.ts';
 import { H08 } from './mdc/h08.ts';
 import { H09 } from './mdc/h09.ts';
 import { H10 } from './mdc/h10.ts';
+import { H11 } from './mdc/h11.ts';
 import type { Flow } from './types.ts';
-export const FLOWS_MDC: Flow[] = [...H01, ...H02, ...H03, ...H04, ...H05, ...H06, ...H07, ...H08, ...H09, ...H10];
+export const FLOWS_MDC: Flow[] = [...H01, ...H02, ...H03, ...H04, ...H05, ...H06, ...H07, ...H08, ...H09, ...H10, ...H11];
