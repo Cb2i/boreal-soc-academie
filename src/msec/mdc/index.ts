@@ -15,8 +15,9 @@ import { d11 } from './d11.ts';
 import { d12 } from './d12.ts';
 import { d13 } from './d13.ts';
 import { d14 } from './d14.ts';
+import { d15 } from './d15.ts';
 
-export const MDC_MODULES: ModuleContent[] = [d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d11, d12, d13, d14];
+export const MDC_MODULES: ModuleContent[] = [d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d11, d12, d13, d14, d15];
 const finalProjects: AiProject[] = [];
 const resources: ResourceDef[] = [];
 export const CONTENT = buildContent(MDC_LEVELS, MDC_MODULES, finalProjects, resources);

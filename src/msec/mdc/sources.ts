@@ -158,5 +158,9 @@ export const MDC_SOURCES: SourceDef[] = [
   S('keyvault', 'Defender for Key Vault', 'defender-for-key-vault-introduction', 'Key Vault : plan déprécié', 'retrait-annonce', 'Plan déprécié pour de nouveaux enrôlements par API depuis 2026-07-05; vérifier la page avant de recommander.'),
   S('arm', 'Defender for Resource Manager', 'defender-for-resource-manager-introduction', 'Resource Manager : plan déprécié', 'retrait-annonce', 'Plan déprécié pour de nouveaux enrôlements par API depuis 2026-07-05; vérifier la page avant de recommander.'),
   S('dns', 'Defender for DNS', 'defender-for-dns-introduction', 'DNS : plan autonome déprécié', 'retrait-annonce', 'Pour de nouveaux abonnements, les alertes DNS sont incluses dans Defender for Servers P2.'),
+  S('ai-alerts', 'Alerts for AI services', 'alerts-ai-workloads', 'Alertes des services d’IA'),
+  S('prompt-shields', 'Prompt Shields in Microsoft Foundry', 'https://learn.microsoft.com/azure/foundry/openai/concepts/content-filter-prompt-shields', 'Prompt Shields et filtres de contenu (mécanisme de la plateforme IA)', 'ga'),
+  S('agent365-transition', 'Transition agent security capabilities to Microsoft Agent 365', 'https://learn.microsoft.com/defender-xdr/security-for-ai/transition-agent-security-to-agent-365', 'Licence Agent 365 pour la sécurité des agents (2026-07-01)', 'ga'),
+  S('agent-detection', 'Detect and investigate threats to AI agents using Microsoft Defender', 'https://learn.microsoft.com/defender-xdr/security-for-ai/ai-agent-detection-protection', 'Détection de menaces sur agents IA', 'preview', 'Préversion : fonctions et licences susceptibles de changer.'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
