@@ -1,0 +1,72 @@
+import type { ScenarioDef } from './def.ts';
+
+export const S05: ScenarioDef = {
+  id: 's05', n: 5, level: 2, title: 'Supports amovibles',
+  summary: 'Contrôler les clés USB et autres supports : contrôle d’appareil de Defender, règles sans chevauchement et limites face à la prévention de perte de données.',
+  sheet: {
+    need: 'Contrôler l’usage des clés USB et autres supports amovibles pour limiter les fuites de données et l’introduction de maliciels.',
+    threat: 'Copie de données vers un support personnel, exécution de maliciels depuis une clé, périphérique non autorisé branché.',
+    signal: 'Événements d’accès aux supports amovibles et de contrôle d’appareil, alertes de maliciel sur support.',
+    deciding: 'Defender for Endpoint (contrôle d’appareil, règles d’accès) déployé par Intune, avec la prévention de perte de données de Purview comme produit distinct pour le contenu.',
+    portal: 'Centre d’administration Intune (sécurité des points de terminaison) et portail Microsoft Purview pour la prévention de perte de données.',
+    enforcing: 'Contrôle d’appareil de Defender sur le poste (règles d’autorisation et de refus).',
+    evidence: 'Événements de contrôle d’appareil dans la chasse avancée, rapports Intune de déploiement, journaux de Purview le cas échéant.',
+    dependencies: 'Defender Antivirus actif, appareils intégrés, groupes d’appareils et de supports, licence de prévention de perte de données pour le contenu.',
+    delays: 'Les règles se propagent avec la synchronisation de l’appareil, et Intune ne conserve pas l’ordre des règles : elles ne doivent pas se chevaucher.',
+    failures: 'Règles qui se chevauchent, application par défaut mal choisie, support autorisé par erreur, confusion entre contrôle d’appareil et prévention de perte de données.',
+    verification: 'Brancher un support de test autorisé puis un support refusé sur un poste pilote, constater les deux comportements et retrouver les événements.',
+    rollback: 'Retirer la règle de refus fautive, revenir à l’application par défaut précédente et documenter l’exception.',
+    limits: 'Le contrôle d’appareil ne lit pas le contenu des fichiers; Purview est un produit séparé avec sa propre licence.',
+    nature: 'integration',
+    sources: ['mde-device-control-overview', 'mde-device-control-policies', 'mde-device-control-configure', 'purview-endpoint-dlp'],
+  },
+  extras: [
+    [
+      '## Deux problèmes, deux produits',
+      'Un support amovible pose deux problèmes différents. Le premier est l’**accès** : qui peut brancher quoi, en lecture ou en écriture. C’est le domaine du contrôle d’appareil de Defender. Le second est le **contenu** : quelles données ont été copiées, et sont-elles sensibles. C’est le domaine de la prévention de perte de données de Purview, un produit séparé avec sa propre licence.',
+      'Confondre les deux mène à des promesses fausses. Le contrôle d’appareil peut empêcher l’écriture sur toute clé non approuvée, mais il ne dit pas si un fichier autorisé contenait des numéros de cartes. Inversement, la prévention de perte de données examine le contenu, mais ne remplace pas la décision de principe sur les supports permis.',
+    ],
+    [
+      '## Écrire des règles qui ne se chevauchent pas',
+      'Le contrôle d’appareil s’exprime en groupes (de supports, d’utilisateurs) et en règles de politique avec des entrées d’autorisation ou de refus. Une règle de politique de supports amovibles peut autoriser la lecture et refuser l’écriture, par exemple, ou n’autoriser que des clés d’un fabricant et d’un modèle approuvés.',
+      'Deux pièges ressortent des guides de Microsoft. D’abord, Intune ne conserve pas l’ordre des règles : si deux règles peuvent s’appliquer au même support, le résultat n’est pas prévisible, donc écrivez des règles qui ne se chevauchent pas. Ensuite, l’application par défaut (autoriser ou refuser ce qu’aucune règle ne couvre) est un choix de fond : un refus par défaut est plus sûr mais exige une liste d’exceptions bien tenue.',
+    ],
+    [
+      '## Exceptions et preuves',
+      'Les besoins légitimes ne manquent pas : un technicien qui met à jour un équipement, un partenaire qui apporte des plans. Ils se traitent par des groupes d’exception nommés, limités dans le temps, avec propriétaire et revue, jamais par un assouplissement général.',
+      'La preuve vient des événements de contrôle d’appareil dans la chasse avancée et du rapport de déploiement d’Intune. Testez chaque règle avec un support autorisé et un support refusé sur un poste pilote, et consignez le résultat avec la date. Une règle jamais testée n’est qu’une intention.',
+    ],
+  ],
+  pairs: [
+    ['Empêcher l’écriture sur une clé non approuvée', 'Contrôle d’appareil de Defender'],
+    ['Examiner si un fichier copié contient des données sensibles', 'Prévention de perte de données de Purview'],
+    ['Autoriser temporairement un technicien à utiliser une clé', 'Groupe d’exception limité dans le temps'],
+  ],
+  defects: [
+    ['Deux règles visent le même support sans ordre garanti.', 'Réécrire des règles qui ne se chevauchent pas', 'Accepter'],
+    ['On croit que le contrôle d’appareil examine le contenu des fichiers.', 'Distinguer l’accès (Defender) et le contenu (Purview)', 'Accepter'],
+    ['Les exceptions sont accordées sans durée ni propriétaire.', 'Limiter dans le temps avec propriétaire et revue', 'Accepter'],
+  ],
+  steps: {
+    ok: ['Décider de l’application par défaut (autoriser ou refuser)', 'Écrire des règles sans chevauchement', 'Déployer sur un poste pilote', 'Tester un support autorisé puis un support refusé', 'Consigner les événements observés et les exceptions'],
+    forbidden: 'Déployer à tout le parc sans test de support refusé',
+  },
+  quiz: [
+    { t: 'Deux problèmes', q: 'Quels sont les deux problèmes posés par les supports amovibles ?', r: 'L’accès aux supports et le contenu copié.', w: ['Le prix et la couleur.', 'La taille et le poids.', 'La marque et la garantie.'], e: 'Deux problèmes, deux produits.' },
+    { t: 'Menace', q: 'Quelle menace vise-t-on notamment ?', r: 'La copie de données vers un support personnel.', w: ['Un écran fissuré.', 'Un clavier sale.', 'Un câble trop court.'], e: 'La fuite de données est la menace principale.' },
+    { t: 'Besoin', q: 'Comment formuler le besoin ?', r: 'Contrôler l’usage des supports pour limiter fuites et maliciels.', w: ['Acheter des clés.', 'Bloquer les ports physiques.', 'Installer Purview.'], e: 'Le besoin ne nomme pas le produit.' },
+    { t: 'Produit', q: 'Quel produit contrôle l’accès aux supports ?', r: 'Le contrôle d’appareil de Defender.', w: ['Safe Links.', 'LAPS.', 'Windows Update.'], e: 'Il décide qui accède à quel support.' },
+    { t: 'Ordre des règles', q: 'Que fait Intune de l’ordre des règles ?', r: 'Il ne le conserve pas : il ne faut pas de chevauchement.', w: ['Il le conserve toujours.', 'Il le trie par couleur.', 'Il l’ignore et bloque tout.'], e: 'Des règles qui se chevauchent donnent un résultat imprévisible.' },
+    { t: 'Application par défaut', q: 'Que détermine l’application par défaut ?', r: 'Ce qui arrive aux supports qu’aucune règle ne couvre.', w: ['La couleur du support.', 'La vitesse de copie.', 'Le prix.'], e: 'Un refus par défaut est plus sûr mais demande une liste d’exceptions.' },
+    { t: 'Licence', q: 'Pourquoi Purview est-il distinct ?', r: 'C’est un produit séparé avec sa propre licence.', w: ['Il fait partie de Windows.', 'Il est gratuit.', 'Il remplace Defender.'], e: 'Ne promettez pas l’analyse de contenu avec le seul contrôle d’appareil.' },
+    { t: 'Échec', q: 'Quel échec est typique ?', r: 'Des règles qui se chevauchent.', w: ['Un fond d’écran.', 'Un son.', 'Une langue.'], e: 'Le résultat devient imprévisible.' },
+    { t: 'Retour arrière', q: 'Quel premier retour pour une règle de refus trop large ?', r: 'La retirer ou l’affiner et documenter l’exception.', w: ['Désinstaller Windows.', 'Débrancher le réseau.', 'Ignorer.'], e: 'Le retour est ciblé.' },
+    { t: 'Évaluation : limites', q: 'Que ne fait pas le contrôle d’appareil ?', r: 'Lire le contenu des fichiers.', w: ['Refuser un support.', 'Autoriser la lecture.', 'Journaliser.'], e: 'Le contenu relève de la prévention de perte de données.' },
+    { t: 'Évaluation : test', q: 'Comment tester une règle ?', r: 'Avec un support autorisé et un support refusé sur un poste pilote.', w: ['Avec le seul support autorisé.', 'Sans test.', 'Sur tous les postes.'], e: 'Les deux cas révèlent le comportement.' },
+    { t: 'Évaluation : exception', q: 'Comment traiter une exception légitime ?', r: 'Groupe nommé, limité dans le temps, avec propriétaire.', w: ['Assouplissement général.', 'Sans suivi.', 'Permanent.'], e: 'Les exceptions sont de la dette de sécurité.' },
+  ],
+  short: { title: 'Problèmes', q: 'Combien de problèmes distincts posent les supports amovibles dans la leçon 1 ? (nombre)', value: 2, exp: 'Deux problèmes : l’accès aux supports et le contenu copié.' },
+  components: [['Contrôle d’appareil de Defender', 'native'], ['Prévention de perte de données de Purview', 'licence-supplementaire'], ['Intégration du poste à Defender for Endpoint', 'dependance']],
+  tags: [['supports-amovibles', 'acces', 'contenu'], ['controle-appareil', 'regles', 'defaut'], ['exceptions', 'tests', 'preuves']],
+  links: [['mde-device-control-overview', 'purview-endpoint-dlp'], ['mde-device-control-policies', 'mde-device-control-configure'], ['mde-device-control-walkthrough', 'purview-endpoint-dlp-start']],
+};

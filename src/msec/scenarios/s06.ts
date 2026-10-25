@@ -1,0 +1,72 @@
+import type { ScenarioDef } from './def.ts';
+
+export const S06: ScenarioDef = {
+  id: 's06', n: 6, level: 3, title: 'Risque appareil et accès conditionnel',
+  summary: 'Relier le risque d’appareil de Defender à la conformité Intune et à l’accès conditionnel, sans verrouiller tout le monde.',
+  sheet: {
+    need: 'Refuser l’accès aux ressources de l’entreprise aux appareils à risque, sans verrouiller tout le monde.',
+    threat: 'Appareil compromis qui accède aux courriels et aux fichiers avec des identifiants valides.',
+    signal: 'Niveau de risque de l’appareil évalué par Defender for Endpoint et état de conformité Intune.',
+    deciding: 'Accès conditionnel de Microsoft Entra (exiger un appareil conforme), fondé sur la conformité Intune qui lit le risque de Defender.',
+    portal: 'Centre d’administration Microsoft Entra (accès conditionnel), Intune (conformité) et portail Defender (connecteur).',
+    enforcing: 'Microsoft Entra ID au moment de l’émission du jeton d’accès.',
+    evidence: 'Journaux de connexion Entra (résultat de l’accès conditionnel), rapport de conformité Intune, alertes Defender.',
+    dependencies: 'Connecteur Intune et Defender for Endpoint activé, politique de conformité avec niveau de risque maximal, licence Entra ID P1, appareils intégrés et inscrits.',
+    delays: 'Le niveau de risque, la conformité et l’évaluation d’accès ne se rafraîchissent pas au même rythme : un appareil peut rester utilisable un moment après le changement de risque.',
+    failures: 'Verrouillage massif, compte d’urgence non exclu, appareils sans signal de risque, période de grâce trop longue, politique ciblant tous les utilisateurs sans mode rapport seulement.',
+    verification: 'Activer le mode rapport seulement, lire les journaux de connexion, simuler un risque sur un appareil pilote et constater le résultat prévu.',
+    rollback: 'Passer la politique en mode rapport seulement ou la désactiver avec le compte d’urgence, puis corriger la chaîne.',
+    limits: 'Les délais de propagation et les licences exactes sont à revérifier; ne jamais tester sur tous les utilisateurs.',
+    nature: 'integration',
+    sources: ['mde-conditional-access', 'mde-ca-overview', 'intune-compliance-overview', 'entra-ca-emergency', 'entra-ca-plan', 'entra-ca-grant'],
+  },
+  extras: [
+    [
+      '## Un signal de risque devient une décision d’accès',
+      'Defender for Endpoint évalue un niveau de risque pour chaque appareil à partir de ses alertes actives. Ce niveau est un signal. Pour qu’il compte, il faut le transformer en état de conformité dans Intune, puis demander à l’accès conditionnel de Microsoft Entra de n’accorder l’accès qu’aux appareils conformes. La chaîne compte donc au moins quatre maillons : détection, connecteur, conformité, accès.',
+      'Le besoin d’affaires est de protéger les données sans paralyser l’entreprise. Une chaîne qui fonctionne trop bien (aucun filtre sur les faux positifs, aucune période de grâce) peut bloquer des centaines de personnes à cause d’une alerte mal calibrée.',
+    ],
+    [
+      '## Quatre produits, quatre rôles',
+      'Defender for Endpoint détecte et évalue le risque. Intune porte la politique de conformité qui définit le niveau de risque toléré et les actions en cas de non-conformité (notification, délai de grâce, blocage). Microsoft Entra applique la décision au moment de l’émission du jeton. Les journaux de connexion et le rapport de conformité servent de preuve.',
+      'Le connecteur entre Intune et Defender est un prérequis : sans lui, le risque n’arrive jamais à la conformité et la politique d’accès conditionnel exige un appareil « conforme » dont la conformité ne tient pas compte du risque. C’est l’un des échecs silencieux les plus coûteux : tout paraît configuré.',
+    ],
+    [
+      '## Ne jamais se verrouiller soi-même',
+      'Avant de cibler qui que ce soit, prévoyez un ou plusieurs comptes d’accès d’urgence exclus de la politique et surveillés par une alerte à chaque utilisation. Déployez en mode rapport seulement, lisez les journaux de connexion, puis passez à l’application sur un petit groupe avant de grossir.',
+      'Les périodes de grâce de la conformité donnent à l’utilisateur le temps de corriger avant le blocage, mais une grâce trop longue vide la politique de son sens. Fixez-la selon le risque et la capacité de soutien. Le retour arrière le plus rapide est de repasser la politique en rapport seulement, une action prévue et testée d’avance.',
+    ],
+  ],
+  pairs: [
+    ['Convertir le risque d’appareil en état de conformité', 'Connecteur Intune et Defender plus politique de conformité'],
+    ['Éviter de se verrouiller soi-même', 'Compte d’urgence exclu et surveillé'],
+    ['Observer l’effet d’une politique sans l’appliquer', 'Mode rapport seulement'],
+  ],
+  defects: [
+    ['La politique d’accès conditionnel cible tous les utilisateurs dès le premier jour.', 'Commencer en rapport seulement, puis par un petit groupe', 'Accepter'],
+    ['Aucun compte d’urgence n’est prévu.', 'Prévoir des comptes d’urgence exclus et surveillés', 'Accepter'],
+    ['On suppose que le connecteur est actif parce que la politique existe.', 'Vérifier le connecteur et le flux du risque', 'Accepter'],
+  ],
+  steps: {
+    ok: ['Vérifier le connecteur entre Intune et Defender', 'Créer la politique de conformité avec le niveau de risque toléré', 'Créer la politique d’accès conditionnel en rapport seulement', 'Lire les journaux de connexion et simuler un risque sur un pilote', 'Consigner résultats, délais observés et plan de retour'],
+    forbidden: 'Activer l’application pour tous sans compte d’urgence',
+  },
+  quiz: [
+    { t: 'Chaîne', q: 'Combien de maillons au minimum compte la chaîne risque, conformité, accès ?', r: 'Quatre : détection, connecteur, conformité, accès.', w: ['Un.', 'Deux.', 'Aucun.'], e: 'Si un maillon manque, l’accès n’est pas bloqué.' },
+    { t: 'Menace', q: 'Quelle menace traite-t-on ?', r: 'Un appareil compromis qui accède aux ressources avec des identifiants valides.', w: ['Un écran fissuré.', 'Un mot de passe oublié.', 'Une panne réseau.'], e: 'Le risque est l’accès depuis un appareil compromis.' },
+    { t: 'Signal', q: 'D’où vient le niveau de risque ?', r: 'De Defender for Endpoint.', w: ['Du calendrier.', 'De Safe Links.', 'De LAPS.'], e: 'Defender évalue le risque d’après les alertes actives.' },
+    { t: 'Rôles', q: 'Qui applique la décision d’accès ?', r: 'Microsoft Entra ID.', w: ['Le portail Defender.', 'Exchange.', 'Le poste.'], e: 'Entra applique au moment du jeton.' },
+    { t: 'Connecteur', q: 'Pourquoi le connecteur est-il un prérequis ?', r: 'Sans lui, le risque n’atteint pas la conformité.', w: ['Pour le chiffrement.', 'Pour le style.', 'Il n’est pas nécessaire.'], e: 'Échec silencieux : tout paraît configuré.' },
+    { t: 'Licence', q: 'Que faut-il pour l’accès conditionnel ?', r: 'Microsoft Entra ID P1 au minimum.', w: ['Aucune licence.', 'Seulement Exchange.', 'Seulement Windows.'], e: 'La licence fait partie des dépendances.' },
+    { t: 'Délais', q: 'Pourquoi un appareil reste-t-il utilisable après un risque ?', r: 'Les rafraîchissements ne se font pas au même rythme.', w: ['Par magie.', 'Par erreur d’affichage.', 'Parce qu’il est éteint.'], e: 'Risque, conformité et accès ont des cycles différents.' },
+    { t: 'Verrouillage', q: 'Quel échec est le plus coûteux ?', r: 'Le verrouillage massif sans compte d’urgence.', w: ['Un fond d’écran.', 'Un son.', 'Une couleur.'], e: 'Une alerte mal calibrée peut bloquer des centaines de personnes.' },
+    { t: 'Retour arrière', q: 'Quel est le retour le plus rapide ?', r: 'Repasser la politique en rapport seulement.', w: ['Réinstaller Windows.', 'Supprimer les comptes.', 'Rien.'], e: 'Prévu et testé d’avance.' },
+    { t: 'Évaluation : rapport', q: 'À quoi sert le mode rapport seulement ?', r: 'À voir l’effet sans appliquer.', w: ['À chiffrer.', 'À bloquer tout.', 'À licencier.'], e: 'Il montre ce qui aurait été bloqué.' },
+    { t: 'Évaluation : grâce', q: 'Pourquoi une grâce trop longue pose-t-elle problème ?', r: 'Elle vide la politique de son effet.', w: ['Elle coûte plus.', 'Elle ralentit.', 'Aucun problème.'], e: 'La grâce se règle selon le risque et le soutien.' },
+    { t: 'Évaluation : preuve', q: 'Où voit-on le résultat de l’accès conditionnel ?', r: 'Dans les journaux de connexion Entra.', w: ['Dans le calendrier.', 'Dans les photos.', 'Nulle part.'], e: 'Le produit de preuve est distinct de la politique.' },
+  ],
+  short: { title: 'Maillons', q: 'Combien de maillons compte la chaîne décrite dans la leçon 1 ? (nombre)', value: 4, exp: 'Quatre maillons : détection, connecteur, conformité et accès.' },
+  components: [['Accès conditionnel de Microsoft Entra', 'integration'], ['Connecteur Intune et Defender for Endpoint', 'dependance'], ['Licence Microsoft Entra ID P1', 'licence-supplementaire']],
+  tags: [['risque-appareil', 'acces-conditionnel', 'chaine'], ['conformite', 'connecteur', 'entra'], ['compte-urgence', 'rapport-seulement', 'grace']],
+  links: [['mde-conditional-access', 'mde-ca-overview'], ['intune-compliance-overview', 'intune-noncompliance-actions', 'entra-ca-grant'], ['entra-ca-emergency', 'entra-ca-plan', 'intune-compliance-monitor']],
+};

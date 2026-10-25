@@ -1,0 +1,72 @@
+import type { ScenarioDef } from './def.ts';
+
+export const S04: ScenarioDef = {
+  id: 's04', n: 4, level: 2, title: 'Règles ASR par vagues',
+  summary: 'Déployer la réduction de la surface d’attaque sans interrompre le travail : audit, mesure, exclusions, blocage et retour arrière.',
+  sheet: {
+    need: 'Réduire la surface d’attaque des postes sans interrompre le travail, en déployant les règles ASR par étapes mesurées.',
+    threat: 'Techniques d’exécution courantes : processus enfants d’Office, scripts obfusqués, vol d’identifiants du processus LSASS, contenu exécutable venant du courriel.',
+    signal: 'Événements d’audit des règles ASR, rapports de détection et plaintes des utilisateurs pendant le pilote.',
+    deciding: 'Intune (politique de réduction de la surface d’attaque) avec les exclusions décidées par l’équipe de sécurité.',
+    portal: 'Centre d’administration Intune (sécurité des points de terminaison) et portail Defender (rapports ASR).',
+    enforcing: 'Microsoft Defender Antivirus sur le poste, en mode audit, avertissement ou blocage.',
+    evidence: 'Rapport ASR du portail Defender, journal des événements Windows liés à l’ASR, requêtes de chasse avancée.',
+    dependencies: 'Defender Antivirus actif avec protection en temps réel, protection fournie par le nuage pour certaines règles, appareils intégrés pour les rapports.',
+    delays: 'Le mode audit doit durer assez longtemps pour couvrir un cycle d’affaires avant tout blocage.',
+    failures: 'Passage en blocage sans mesure, exclusions trop larges, règle en conflit avec une autre politique, rapports non consultés pendant le pilote.',
+    verification: 'Comparer les événements d’audit par règle, vérifier chaque exclusion, passer un groupe pilote en blocage et mesurer les incidents de soutien.',
+    rollback: 'Repasser la règle en audit pour le groupe concerné, ajouter une exclusion étroite et documentée, relancer la mesure.',
+    limits: 'Le comportement et les prérequis de chaque règle varient : relire la référence des règles à chaque révision.',
+    nature: 'native',
+    sources: ['mde-asr-overview', 'mde-asr-implement', 'mde-asr-test', 'mde-asr-events', 'intune-asr-policy', 'mde-asr-report'],
+  },
+  extras: [
+    [
+      '## Pourquoi par vagues',
+      'Les règles ASR bloquent des comportements que des logiciels légitimes adoptent parfois : un outil de gestion qui lance des scripts, une macro d’entreprise, un installateur qui crée des processus enfants. Les activer toutes en blocage d’un coup garantit des interruptions et, très vite, des exclusions larges posées à la hâte. Le déploiement par vagues remplace cette urgence par de la mesure.',
+      'Les modes disponibles suivent l’escalade : audit (consigner), avertissement (avertir l’utilisateur, qui peut passer outre) et blocage. Une vague est un groupe d’appareils, un mode et une durée. Le passage d’une vague à l’autre se fait sur critère mesuré, pas sur date seulement.',
+    ],
+    [
+      '## Qui décide quoi',
+      'L’équipe de sécurité choisit les règles, leur mode et les exclusions. L’équipe des postes les déploie par la politique Intune. Defender Antivirus les applique. Les rapports du portail Defender et les événements Windows servent de preuve. Cette séparation permet de répondre à « la règle a-t-elle bloqué ? » sans demander à celui qui l’a déployée.',
+      'Les exclusions sont la partie sensible. Une exclusion de chemin large annule la règle pour tout ce qui s’y trouve. Elles doivent être étroites, justifiées par un événement observé, attribuées à un propriétaire et revues. Une règle ASR trop exclue donne un rapport vert et une protection vide.',
+    ],
+    [
+      '## Mesurer avant de bloquer',
+      'En audit, comptez les événements par règle et par application, repérez les applications légitimes qui déclenchent, et classez les événements en vrais positifs, faux positifs à exclure et faux positifs à corriger à la source. Un cycle d’affaires complet (fin de mois, outils saisonniers) doit être observé avant de bloquer.',
+      'Au passage en blocage, gardez un canal de soutien clair et un retour arrière prêt : repasser la règle en audit pour le groupe concerné prend une modification de politique. Annoncez les changements aux utilisateurs concernés avant la vague, pas après.',
+    ],
+  ],
+  pairs: [
+    ['Mesurer ce qu’une règle bloquerait sans rien bloquer', 'Mode audit'],
+    ['Éviter qu’un outil légitime soit bloqué en permanence', 'Exclusion étroite, documentée et revue'],
+    ['Décider du passage d’une vague à l’autre', 'Critère mesuré, pas seulement une date'],
+  ],
+  defects: [
+    ['Toutes les règles passent en blocage le même jour.', 'Déployer par vagues avec audit puis mesure', 'Accepter'],
+    ['On exclut tout le dossier de l’application pour régler la plainte.', 'Poser une exclusion étroite fondée sur l’événement', 'Accepter'],
+    ['Personne ne consulte les rapports pendant le pilote.', 'Désigner un propriétaire des rapports et un rythme de revue', 'Accepter'],
+  ],
+  steps: {
+    ok: ['Classer les règles par risque d’impact', 'Déployer le mode audit sur un groupe pilote', 'Mesurer les événements sur un cycle d’affaires complet', 'Passer le groupe pilote en blocage avec les exclusions justifiées', 'Consigner mesures, exclusions et décision de la vague suivante'],
+    forbidden: 'Passer toute l’organisation en blocage pour gagner du temps',
+  },
+  quiz: [
+    { t: 'Pourquoi des vagues', q: 'Pourquoi déployer les règles ASR par vagues ?', r: 'Pour mesurer l’impact avant de bloquer.', w: ['Pour réduire la licence.', 'Pour ralentir Defender.', 'Par tradition.'], e: 'Les vagues remplacent l’urgence par de la mesure.' },
+    { t: 'Menace', q: 'Quelle technique l’ASR vise-t-il notamment ?', r: 'Les processus enfants d’Office et les scripts obfusqués.', w: ['Les écrans verrouillés.', 'Les mots de passe longs.', 'Les imprimantes.'], e: 'L’ASR vise des comportements d’exécution courants.' },
+    { t: 'Signal', q: 'Quel signal nourrit la décision de passer au blocage ?', r: 'Les événements d’audit mesurés.', w: ['Le fond d’écran.', 'Le calendrier.', 'Une impression.'], e: 'La décision repose sur la mesure.' },
+    { t: 'Modes', q: 'Quels modes une règle ASR peut-elle avoir ?', r: 'Audit, avertissement et blocage.', w: ['Rouge, vert, bleu.', 'Haut et bas.', 'Un seul.'], e: 'L’escalade permet de mesurer avant de bloquer.' },
+    { t: 'Qui décide', q: 'Qui applique la règle sur le poste ?', r: 'Defender Antivirus.', w: ['Le portail.', 'Exchange.', 'Le réseau.'], e: 'Intune décide, Defender Antivirus applique.' },
+    { t: 'Exclusions', q: 'À quoi ressemble une bonne exclusion ?', r: 'Étroite, justifiée, attribuée et revue.', w: ['Un dossier entier.', 'Sans propriétaire.', 'Permanente.'], e: 'Une exclusion large annule la règle.' },
+    { t: 'Cycle d’affaires', q: 'Combien de temps faut-il laisser l’audit ?', r: 'Assez pour couvrir un cycle d’affaires complet.', w: ['Une minute.', 'Jamais.', 'Une heure.'], e: 'Les outils saisonniers ne se révèlent pas en un jour.' },
+    { t: 'Échec silencieux', q: 'Quel échec produit un rapport vert sans protection ?', r: 'Des exclusions trop larges.', w: ['Un écran propre.', 'Un mot de passe.', 'Une imprimante.'], e: 'La règle existe, mais elle ne s’applique plus à rien.' },
+    { t: 'Retour arrière', q: 'Quel retour arrière pour une règle qui bloque un outil légitime ?', r: 'La repasser en audit pour le groupe concerné.', w: ['Supprimer Defender.', 'Réinstaller Windows.', 'Rien.'], e: 'Une modification de politique suffit.' },
+    { t: 'Évaluation : mesure', q: 'Que mesure-t-on en audit ?', r: 'Les événements par règle et par application.', w: ['La température.', 'Le nombre de fenêtres.', 'La couleur.'], e: 'On classe en vrais et faux positifs.' },
+    { t: 'Évaluation : propriétaire', q: 'Pourquoi un propriétaire des rapports ?', r: 'Sans lecture régulière, la mesure ne sert à rien.', w: ['Pour la facture.', 'Par style.', 'Aucune raison.'], e: 'La mesure exige quelqu’un qui la lit.' },
+    { t: 'Évaluation : annonce', q: 'Quand annoncer une vague aux utilisateurs ?', r: 'Avant la vague.', w: ['Après.', 'Jamais.', 'Seulement en cas de plainte.'], e: 'Une annonce tardive multiplie les billets de soutien.' },
+  ],
+  short: { title: 'Modes', q: 'Combien de modes (audit, avertissement, blocage) une règle ASR peut-elle avoir dans cette leçon ? (nombre)', value: 3, exp: 'Trois modes forment l’escalade : audit, avertissement et blocage.' },
+  components: [['Règles ASR de Defender Antivirus', 'native'], ['Rapports ASR du portail Defender', 'integration'], ['Defender Antivirus actif avec protection en temps réel', 'dependance']],
+  tags: [['asr', 'vagues', 'surface-attaque'], ['intune', 'exclusions', 'rapports'], ['mesure', 'blocage', 'retour-arriere']],
+  links: [['mde-asr-overview', 'mde-asr-implement'], ['intune-asr-policy', 'mde-asr-configure', 'mde-asr-report'], ['mde-asr-test', 'mde-asr-events', 'mde-false-positives']],
+};

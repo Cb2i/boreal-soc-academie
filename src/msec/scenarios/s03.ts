@@ -1,0 +1,72 @@
+import type { ScenarioDef } from './def.ts';
+
+export const S03: ScenarioDef = {
+  id: 's03', n: 3, level: 2, title: 'WSL chez les développeurs',
+  summary: 'Gouverner WSL 2 avec Intune et Defender : réglages, plugiciel, conformité et risque résiduel.',
+  sheet: {
+    need: 'Permettre à des développeurs d’utiliser WSL 2 sans perdre la visibilité de sécurité sur leurs postes.',
+    threat: 'Distributions Linux ou noyaux personnalisés qui échappent aux contrôles pensés pour Windows, et outils lancés dans WSL sans visibilité.',
+    signal: 'Inventaire des distributions, événements du plugiciel Defender for Endpoint pour WSL 2 et état de conformité de l’hôte.',
+    deciding: 'Intune (paramètres de WSL, conformité) et Defender for Endpoint (plugiciel).',
+    portal: 'Centre d’administration Intune (catalogue de paramètres, conformité) et portail Defender (téléchargement du plugiciel).',
+    enforcing: 'Composant WSL de Windows (WSL1 désactivé, noyau bloqué) et plugiciel Defender dans la distribution.',
+    evidence: 'Appareils WSL 2 visibles dans le portail Defender, rapport de conformité Intune, événements du plugiciel.',
+    dependencies: 'Windows 11 22H2 ou plus (ou Windows 10 22H2), WSL 2.0.9 ou plus, appareil intégré à Defender, plugiciel Intune pour WSL pour la conformité.',
+    delays: 'Le plugiciel prend quelques minutes à s’instancier et jusqu’à 30 minutes pour qu’une instance WSL 2 s’intègre; les instances très courtes peuvent ne jamais apparaître.',
+    failures: 'Noyau personnalisé non bloqué, ARM64 ou Windows multisession (non pris en charge), instance éphémère invisible, ancienne politique de conformité personnalisée en conflit.',
+    verification: 'Lancer une distribution sur un poste pilote, attendre l’intégration, retrouver l’appareil WSL dans le portail Defender et lire l’état de conformité.',
+    rollback: 'Retirer le blocage du noyau pour un groupe d’exception documenté, ou désinstaller le plugiciel de test, et revenir au profil précédent.',
+    limits: 'Le plugiciel n’offre que de la visibilité : ni antimalware, ni gestion des vulnérabilités, ni commandes de réponse sur l’appareil logique WSL.',
+    nature: 'dependance',
+    sources: ['wsl-enterprise', 'wsl-intune', 'mde-wsl-plugin', 'intune-wsl-compliance'],
+  },
+  extras: [
+    [
+      '## Un outil de travail, pas un intrus',
+      'WSL fait tourner des distributions Linux sur un poste Windows. Pour un développeur, c’est un outil de travail quotidien ; pour la sécurité, c’est un environnement où une partie des contrôles Windows ne voit pas ce qui se passe. Le besoin d’affaires est double : garder la productivité des développeurs et garder la visibilité. Une interdiction générale satisfait le second au prix du premier et pousse les gens vers des contournements, ce qui est pire.',
+      'Le module 13 d’Intune traite WSL comme un cas parmi d’autres de composant à gouverner. Ce scénario le reprend sous l’angle Defender + Intune : qui décide, qui applique, qui prouve.',
+    ],
+    [
+      '## Trois leviers, trois rôles',
+      'Les **paramètres de WSL dans Intune** restreignent le composant : WSL1 désactivé, noyau personnalisé bloqué. Le **plugiciel Defender for Endpoint** apporte la visibilité sur les événements des distributions WSL 2. La **conformité WSL** vérifie les distributions et versions autorisées et remonte le résultat à la conformité de l’hôte. Chaque levier a un propriétaire différent : l’équipe des postes, l’équipe de sécurité des points de terminaison, l’équipe de conformité.',
+      'Le plugiciel se déploie comme une application métier depuis un MSI téléchargé dans le portail Defender. La conformité WSL exige en plus le plugiciel Intune pour WSL, qui est un composant distinct. Ne les confondez pas : l’un nourrit Defender, l’autre nourrit Intune.',
+    ],
+    [
+      '## Écrire le risque résiduel',
+      'Même bien gouverné, WSL laisse des angles morts documentés : pas d’antimalware dans le plugiciel, pas de gestion des vulnérabilités, pas de commandes de réponse sur l’appareil logique WSL, et des instances très courtes qui peuvent ne jamais apparaître. Un noyau personnalisé n’est pas pris en charge par le plugiciel, d’où le blocage côté Intune.',
+      'La fiche doit nommer ces limites comme un **risque résiduel accepté** avec un propriétaire et une date de revue. Cacher l’écart donnerait aux gestionnaires l’impression que WSL est « sous contrôle » alors que seule la visibilité l’est.',
+    ],
+  ],
+  pairs: [
+    ['Empêcher l’usage de WSL1 et d’un noyau personnalisé', 'Paramètres Intune de WSL'],
+    ['Voir les événements d’une distribution WSL 2', 'Plugiciel Defender for Endpoint'],
+    ['Limiter les distributions autorisées à une liste', 'Conformité WSL d’Intune'],
+  ],
+  defects: [
+    ['WSL est interdit à tous, développeurs compris.', 'Autoriser WSL 2 cadré pour un groupe défini', 'Accepter'],
+    ['On compte sur le plugiciel pour l’antimalware dans WSL.', 'Nommer ce que le plugiciel ne couvre pas', 'Accepter'],
+    ['Le noyau personnalisé reste autorisé pour ne pas déranger.', 'Bloquer le noyau personnalisé par Intune', 'Accepter'],
+  ],
+  steps: {
+    ok: ['Vérifier les versions minimales de Windows et de WSL', 'Déployer le plugiciel sur le poste pilote', 'Appliquer les paramètres Intune de WSL', 'Lancer une distribution et attendre l’intégration', 'Consigner la visibilité obtenue et le risque résiduel'],
+    forbidden: 'Déclarer WSL sous contrôle sans voir l’appareil dans le portail',
+  },
+  quiz: [
+    { t: 'Besoin', q: 'Quel est le besoin d’affaires du scénario ?', r: 'Garder la productivité des développeurs et la visibilité de sécurité.', w: ['Interdire WSL partout.', 'Installer Linux sur tous les postes.', 'Désactiver Defender.'], e: 'Le besoin est double : productivité et visibilité.' },
+    { t: 'Menace', q: 'Quelle menace WSL pose-t-il à la visibilité ?', r: 'Des activités dans une distribution que les contrôles Windows ne voient pas.', w: ['Un écran trop lumineux.', 'Des mots de passe trop longs.', 'Aucune.'], e: 'La menace est l’angle mort, pas l’outil lui-même.' },
+    { t: 'Signal', q: 'Quel est le signal de visibilité sur WSL 2 ?', r: 'Les événements du plugiciel Defender.', w: ['Le calendrier.', 'Le fond d’écran.', 'Le courriel.'], e: 'Le plugiciel remonte les événements des distributions.' },
+    { t: 'Trois leviers', q: 'Combien de leviers gouvernent WSL dans ce scénario ?', r: 'Trois : paramètres, plugiciel, conformité.', w: ['Un seul.', 'Deux.', 'Aucun.'], e: 'Chacun a un rôle et un propriétaire distincts.' },
+    { t: 'Deux plugiciels', q: 'Que nourrit le plugiciel Intune pour WSL ?', r: 'La conformité Intune.', w: ['L’antimalware.', 'Le courriel.', 'Le chiffrement.'], e: 'Il ne faut pas le confondre avec le plugiciel Defender.' },
+    { t: 'Déploiement', q: 'Comment déploie-t-on le plugiciel Defender ?', r: 'Comme une application métier à partir d’un MSI du portail Defender.', w: ['Par courriel.', 'Par clé USB manuelle.', 'Il est préinstallé.'], e: 'Le MSI se télécharge dans le portail et se distribue par Intune.' },
+    { t: 'Délai', q: 'Combien de temps peut prendre l’intégration d’une instance WSL 2 ?', r: 'Jusqu’à 30 minutes.', w: ['Moins d’une seconde.', 'Un an.', 'Jamais.'], e: 'Limite documentée du plugiciel.' },
+    { t: 'Plateformes', q: 'Sur quelles configurations le plugiciel n’est-il pas pris en charge ?', r: 'ARM64 et Windows multisession.', w: ['Windows 11 x64.', 'Windows 10 22H2.', 'Aucune.'], e: 'Limites documentées.' },
+    { t: 'Retour arrière', q: 'Quel retour arrière pour un groupe qui a besoin d’un noyau personnalisé ?', r: 'Un groupe d’exception documenté avec revue.', w: ['Désactiver Defender.', 'Supprimer la politique pour tous.', 'Ignorer la demande.'], e: 'L’exception est ciblée, documentée et revue.' },
+    { t: 'Évaluation : limites', q: 'Que ne couvre pas le plugiciel Defender pour WSL ?', r: 'L’antimalware, la gestion des vulnérabilités et les commandes de réponse.', w: ['La visibilité des événements.', 'Les distributions WSL 2.', 'L’intégration au portail.'], e: 'Il fournit de la visibilité seulement.' },
+    { t: 'Évaluation : noyau', q: 'Pourquoi bloquer le noyau personnalisé ?', r: 'La visibilité du plugiciel n’y est pas garantie.', w: ['Pour économiser du disque.', 'Pour la licence.', 'Aucune raison.'], e: 'Limite documentée du plugiciel.' },
+    { t: 'Évaluation : risque', q: 'Comment traiter les angles morts restants ?', r: 'Les nommer comme risque résiduel avec propriétaire et revue.', w: ['Les cacher.', 'Les ignorer.', 'Interdire WSL.'], e: 'La fiche reste honnête sur ce qui n’est pas couvert.' },
+  ],
+  short: { title: 'Leviers', q: 'Combien de leviers (paramètres, plugiciel, conformité) gouvernent WSL ici ? (nombre)', value: 3, exp: 'Trois leviers : les paramètres Intune, le plugiciel Defender et la conformité WSL.' },
+  components: [['Paramètres Intune de WSL', 'native'], ['Plugiciel Defender for Endpoint pour WSL 2', 'integration'], ['Plugiciel Intune pour WSL (conformité)', 'dependance']],
+  tags: [['wsl', 'developpeurs', 'visibilite'], ['plugiciel-defender', 'parametres-intune', 'conformite-wsl'], ['risque-residuel', 'limites', 'noyau-personnalise']],
+  links: [['wsl-enterprise', 'wsl-intune'], ['mde-wsl-plugin', 'intune-wsl-compliance', 'wsl-intune'], ['mde-wsl-plugin', 'wsl-enterprise', 'intune-wsl-compliance']],
+};

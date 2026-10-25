@@ -1,0 +1,72 @@
+import type { ScenarioDef } from './def.ts';
+
+export const S08: ScenarioDef = {
+  id: 's08', n: 8, level: 3, title: 'Confinement et restauration',
+  summary: 'Confiner un appareil compromis, enquêter, puis le remettre en service de façon sûre et vérifiée.',
+  sheet: {
+    need: 'Confiner rapidement un appareil compromis puis le remettre en service de façon sûre.',
+    threat: 'Poste compromis qui propage l’attaque ou exfiltre des données pendant que l’enquête se poursuit.',
+    signal: 'Incident ou alerte de gravité élevée dans le portail Defender, enquête et remédiation automatisée.',
+    deciding: 'Équipe de sécurité (selon les rôles et les niveaux d’approbation) dans Defender for Endpoint, avec Intune pour la remise en conformité.',
+    portal: 'Portail Defender (actions de réponse, centre d’actions) et centre d’administration Intune (synchronisation, actions d’appareil).',
+    enforcing: 'Isolement de l’appareil par Defender for Endpoint, puis actions de remédiation.',
+    evidence: 'Historique du centre d’actions, chronologie de l’appareil, rapport de conformité Intune après la remise en service.',
+    dependencies: 'Appareil intégré et en ligne, rôles de réponse, groupes d’appareils à valeur élevée, niveaux d’approbation de la remédiation automatisée.',
+    delays: 'L’action d’isolement s’applique quand l’appareil la reçoit : un appareil hors ligne la reçoit plus tard.',
+    failures: 'Isolement d’un appareil critique sans plan, remise en service sans vérification, accès conditionnel qui bloque l’appareil après restauration, droits de réponse trop larges.',
+    verification: 'Constater l’état d’isolement, vérifier l’absence de nouvelle activité, puis après libération confirmer la conformité et l’absence d’alerte.',
+    rollback: 'Libérer l’appareil de l’isolement dans le portail Defender, synchroniser dans Intune et vérifier l’état.',
+    limits: 'Certaines actions sont limitées sur les appareils à valeur élevée selon la configuration : relire la documentation des actions de réponse à chaque révision.',
+    nature: 'native',
+    sources: ['mde-respond', 'mde-high-value', 'xdr-action-center', 'mde-live-response', 'intune-sync-action'],
+  },
+  extras: [
+    [
+      '## Confiner, c’est aussi décider d’arrêter quelque chose',
+      'Isoler un poste coupe sa communication réseau, sauf vers le service de Defender. C’est une action forte : elle arrête la propagation, mais elle interrompt aussi le travail de la personne et peut couper un serveur dont d’autres dépendent. La décision n’est pas technique seulement ; elle suppose de connaître la valeur de l’appareil et le coût de l’interruption.',
+      'Le besoin d’affaires s’écrit donc ainsi : limiter les dégâts le plus vite possible sans causer un incident plus grand que celui qu’on traite. D’où l’importance des niveaux d’approbation et des groupes d’appareils à valeur élevée.',
+    ],
+    [
+      '## Qui a le droit de faire quoi',
+      'Les actions de réponse (isoler, collecter un paquet d’investigation, lancer une analyse antivirus, restreindre l’exécution d’applications) sont accordées par des rôles. Le principe du moindre privilège s’applique : tous les analystes n’ont pas besoin de toutes les actions. Les appareils à valeur élevée peuvent voir certaines actions restreintes, selon la configuration.',
+      'Le centre d’actions garde l’historique : qui a lancé quoi, quand, avec quel résultat. C’est le produit de preuve de la réponse. Intune joue un rôle de remise en service : synchronisation, vérification de conformité, retrait des restrictions temporaires.',
+    ],
+    [
+      '## Restaurer, c’est prouver que c’est fini',
+      'Libérer un appareil de l’isolement ne suffit pas. Avant de le remettre à l’utilisateur, vérifiez qu’il n’y a plus d’activité suspecte, que les remédiations sont terminées, que l’appareil est conforme et que l’accès conditionnel ne le bloque pas pour une raison résiduelle. Pour une compromission grave, la restauration passe par une réinstallation, pas par une libération simple.',
+      'Consignez la chronologie complète : détection, décision, isolement, enquête, libération, vérification. Cette chronologie est la preuve de la réponse et la source du retour d’expérience. Chaque étape a son horodatage, son auteur et son résultat.',
+    ],
+  ],
+  pairs: [
+    ['Couper la communication d’un poste compromis', 'Isolement de l’appareil'],
+    ['Savoir qui a lancé une action de réponse et quand', 'Historique du centre d’actions'],
+    ['Remettre un poste en service après l’enquête', 'Libération, synchronisation et vérification de conformité'],
+  ],
+  defects: [
+    ['Tous les analystes peuvent isoler tous les appareils sans approbation.', 'Appliquer le moindre privilège et des niveaux d’approbation', 'Accepter'],
+    ['L’appareil est libéré dès la fin de l’enquête, sans vérification.', 'Vérifier activité, conformité et accès avant la remise', 'Accepter'],
+    ['On isole un serveur critique sans plan de continuité.', 'Prévoir un plan et une approbation pour les appareils critiques', 'Accepter'],
+  ],
+  steps: {
+    ok: ['Confirmer l’alerte et la valeur de l’appareil', 'Obtenir l’approbation prévue et isoler l’appareil', 'Enquêter et remédier', 'Libérer l’appareil et synchroniser dans Intune', 'Vérifier conformité et absence d’alerte, puis consigner la chronologie'],
+    forbidden: 'Libérer l’appareil sans vérifier la fin de la remédiation',
+  },
+  quiz: [
+    { t: 'Confinement', q: 'Que fait l’isolement d’un appareil ?', r: 'Il coupe sa communication réseau, sauf vers le service de Defender.', w: ['Il le supprime.', 'Il le chiffre.', 'Il l’éteint.'], e: 'L’isolement limite la propagation.' },
+    { t: 'Menace', q: 'Quelle menace le confinement vise-t-il ?', r: 'La propagation et l’exfiltration pendant l’enquête.', w: ['Un écran sale.', 'Un son fort.', 'Rien.'], e: 'On limite les dégâts pendant l’enquête.' },
+    { t: 'Coût', q: 'Quel est le coût du confinement ?', r: 'L’interruption du travail ou de services qui dépendent de l’appareil.', w: ['Aucun.', 'Une licence.', 'Un clavier.'], e: 'La décision pèse la valeur de l’appareil.' },
+    { t: 'Rôles', q: 'Pourquoi des niveaux d’approbation ?', r: 'Pour éviter qu’une action forte soit prise à la légère.', w: ['Pour ralentir.', 'Pour le style.', 'Aucune raison.'], e: 'Moindre privilège et approbation.' },
+    { t: 'Preuve', q: 'Où trouve-t-on l’historique des actions de réponse ?', r: 'Dans le centre d’actions.', w: ['Dans le calendrier.', 'Dans les photos.', 'Nulle part.'], e: 'Qui, quand, avec quel résultat.' },
+    { t: 'Appareils critiques', q: 'Que peut changer un groupe d’appareils à valeur élevée ?', r: 'Certaines actions de réponse peuvent y être restreintes.', w: ['Rien.', 'La couleur.', 'Le nom.'], e: 'Selon la configuration documentée.' },
+    { t: 'Délais', q: 'Que se passe-t-il si l’appareil est hors ligne ?', r: 'Il reçoit l’action plus tard.', w: ['Il est isolé tout de suite.', 'L’action est annulée.', 'Il est supprimé.'], e: 'Le confinement dépend de la réception.' },
+    { t: 'Échec', q: 'Quel échec est typique à la restauration ?', r: 'L’accès conditionnel bloque l’appareil pour une raison résiduelle.', w: ['Un fond d’écran.', 'Un son.', 'Une langue.'], e: 'Il faut vérifier la conformité avant la remise.' },
+    { t: 'Retour arrière', q: 'Quel est le retour arrière du confinement ?', r: 'Libérer l’appareil, synchroniser dans Intune et vérifier.', w: ['Réinstaller Windows toujours.', 'Rien.', 'Supprimer l’appareil.'], e: 'La libération est une action prévue.' },
+    { t: 'Évaluation : restauration', q: 'Quand une réinstallation est-elle préférable à une libération ?', r: 'Après une compromission grave.', w: ['Jamais.', 'Toujours.', 'Le lundi.'], e: 'La confiance dans l’appareil dicte le choix.' },
+    { t: 'Évaluation : chronologie', q: 'Pourquoi consigner la chronologie ?', r: 'C’est la preuve de la réponse et la source du retour d’expérience.', w: ['Pour la forme.', 'Pour la licence.', 'Aucune raison.'], e: 'Chaque étape a un horodatage et un auteur.' },
+    { t: 'Évaluation : privilège', q: 'Qui doit pouvoir isoler un appareil ?', r: 'Les rôles qui en ont besoin, pas tous les analystes.', w: ['Tout le monde.', 'Personne.', 'L’utilisateur seulement.'], e: 'Le moindre privilège s’applique.' },
+  ],
+  short: { title: 'Étapes', q: 'Combien d’étapes ordonnées compte la vérification de ce scénario dans la fiche ? (nombre)', value: 5, exp: 'La vérification compte cinq étapes ordonnées, de la confirmation à la consignation.' },
+  components: [['Isolement de l’appareil par Defender for Endpoint', 'native'], ['Synchronisation et conformité Intune', 'integration'], ['Rôles et niveaux d’approbation de la réponse', 'dependance']],
+  tags: [['confinement', 'isolement', 'valeur-appareil'], ['roles', 'centre-actions', 'moindre-privilege'], ['restauration', 'verification', 'chronologie']],
+  links: [['mde-respond', 'xdr-action-center'], ['mde-high-value', 'mde-live-response', 'xdr-action-center'], ['intune-sync-action', 'mde-respond', 'mde-conditional-access']],
+};

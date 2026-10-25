@@ -7,4 +7,5 @@ export const TRACK_ENTRIES: Record<string, LazyExoticComponent<ComponentType<{ r
   ia: lazy(() => import('./ia.tsx')),
   xdr: lazy(() => import('./xdr.tsx')),
   intune: lazy(() => import('./intune.tsx')),
+  scenarios: lazy(() => import('./scenarios.tsx')),
 };

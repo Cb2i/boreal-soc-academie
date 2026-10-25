@@ -1,0 +1,72 @@
+import type { ScenarioDef } from './def.ts';
+
+export const S07: ScenarioDef = {
+  id: 's07', n: 7, level: 3, title: 'Perte de télémétrie',
+  summary: 'Repérer qu’un appareil a cessé de signaler avant qu’un angle mort ne cache une compromission, et rétablir la visibilité.',
+  sheet: {
+    need: 'Détecter rapidement qu’un appareil a cessé de signaler, avant qu’un angle mort ne cache une compromission.',
+    threat: 'Capteur arrêté ou altéré, appareil jamais intégré ou connexion bloquée vers le service, l’angle mort masquant une activité malveillante.',
+    signal: 'État de communication du capteur dans l’inventaire des appareils, absence d’événements récents et écart entre les inventaires Intune et Defender.',
+    deciding: 'Defender for Endpoint (inventaire et état du capteur) et Intune (politique d’intégration EDR).',
+    portal: 'Portail Defender (inventaire des appareils) et centre d’administration Intune (EDR).',
+    enforcing: 'Service de capteur de Defender for Endpoint sur l’appareil, avec la protection contre la falsification.',
+    evidence: 'États de l’inventaire des appareils, requête sur les derniers événements par appareil, rapport de conformité Intune.',
+    dependencies: 'Politique EDR Intune, connectivité aux points de terminaison du service, protection contre la falsification, intégration fonctionnelle.',
+    delays: 'Un appareil éteint ou hors ligne est normal pendant un temps : il faut un seuil d’inactivité avant d’alerter.',
+    failures: 'Appareil jamais intégré, capteur arrêté, proxy qui bloque, mauvais groupe de ciblage, seuil d’alerte mal réglé, confusion entre appareil hors ligne et appareil à risque.',
+    verification: 'Comparer les inventaires Intune et Defender, repérer les appareils sans événement récent et vérifier l’intégration sur un échantillon.',
+    rollback: 'Réappliquer la politique EDR, rejouer l’intégration par la méthode d’origine et documenter la cause.',
+    limits: 'Les libellés d’état et les seuils changent : revérifier l’inventaire des appareils et le dépannage d’intégration à chaque révision.',
+    nature: 'dependance',
+    sources: ['mde-troubleshoot-onboarding', 'mde-onboard-intune', 'intune-edr-deploy', 'mde-devices-overview', 'mde-tamper'],
+  },
+  extras: [
+    [
+      '## Le silence n’est pas la sécurité',
+      'Un tableau de bord sans alerte peut vouloir dire que tout va bien, ou que plus rien ne remonte. La différence est l’un des angles morts les plus dangereux d’un SOC : un attaquant qui arrête ou contourne le capteur obtient précisément le silence qu’il cherche. Le besoin d’affaires est donc de mesurer la **couverture**, pas seulement les détections.',
+      'Trois populations se ressemblent à tort : les appareils jamais intégrés, ceux dont le capteur s’est arrêté et ceux qui sont simplement hors ligne. Les deux premières sont des problèmes de couverture ; la troisième est normale pendant un temps.',
+    ],
+    [
+      '## Deux inventaires à comparer',
+      'Intune connaît les appareils inscrits. Defender connaît ceux qui signalent. L’écart entre les deux est l’indicateur le plus simple de perte de télémétrie : un appareil géré par Intune qui n’apparaît pas dans Defender, ou qui n’a pas d’événement récent, mérite une enquête. L’inventaire des appareils de Defender affiche un état de communication du capteur, dont les libellés sont à relire dans la documentation à chaque révision.',
+      'La politique EDR d’Intune apporte l’intégration, mais elle ne garantit rien seule : le capteur doit tourner, le réseau doit laisser passer les connexions vers le service et la protection contre la falsification doit empêcher un arrêt non autorisé. Le produit de preuve (l’inventaire de Defender) est volontairement distinct de ce qui déploie (Intune).',
+    ],
+    [
+      '## Seuils, alertes et réparations',
+      'Un seuil d’inactivité trop court inonde l’équipe d’alertes sur des ordinateurs portables fermés pour la fin de semaine ; trop long, il laisse un angle mort durer des jours. Choisissez un seuil par type d’appareil (serveur toujours allumé, portable) et revoyez-le avec les données.',
+      'La réparation suit la couche : politique EDR mal ciblée, intégration à rejouer, proxy à corriger, capteur à relancer. Notez la cause dans la fiche. Une même cause qui revient (par exemple un proxy) justifie une correction à la source plutôt qu’une réparation appareil par appareil.',
+    ],
+  ],
+  pairs: [
+    ['Un appareil géré par Intune n’apparaît pas dans Defender', 'Intégration manquante ou capteur arrêté'],
+    ['Un portable est éteint depuis deux jours de fin de semaine', 'Hors ligne normal, sous le seuil d’alerte'],
+    ['Un serveur toujours allumé n’a plus d’événement depuis une semaine', 'Alerte de couverture à enquêter'],
+  ],
+  defects: [
+    ['Aucune alerte n’est donc tout va bien.', 'Mesurer la couverture, pas seulement les détections', 'Accepter'],
+    ['Le même seuil d’inactivité sert pour les serveurs et les portables.', 'Choisir un seuil par type d’appareil', 'Accepter'],
+    ['On répare chaque appareil sans chercher la cause commune.', 'Corriger la cause commune, par exemple le proxy', 'Accepter'],
+  ],
+  steps: {
+    ok: ['Exporter l’inventaire des appareils d’Intune', 'Exporter l’inventaire des appareils de Defender', 'Repérer les écarts et les appareils sans événement récent', 'Vérifier l’intégration sur un échantillon', 'Consigner la cause et la correction dans la fiche'],
+    forbidden: 'Supposer que les appareils muets sont simplement éteints',
+  },
+  quiz: [
+    { t: 'Silence', q: 'Que peut signifier l’absence d’alerte ?', r: 'Que tout va bien, ou que plus rien ne remonte.', w: ['Que tout va toujours bien.', 'Que le réseau est rapide.', 'Rien.'], e: 'Il faut mesurer la couverture.' },
+    { t: 'Menace', q: 'Pourquoi un attaquant arrête-t-il le capteur ?', r: 'Pour obtenir le silence qui masque son activité.', w: ['Pour économiser l’énergie.', 'Par ennui.', 'Aucune raison.'], e: 'L’angle mort est l’objectif.' },
+    { t: 'Trois populations', q: 'Quelles populations ressemblent à des appareils muets ?', r: 'Jamais intégrés, capteur arrêté, hors ligne.', w: ['Neufs, anciens, rouges.', 'Gros, petits, moyens.', 'Aucune.'], e: 'Deux sont des problèmes de couverture, une est normale.' },
+    { t: 'Inventaires', q: 'Quel écart signale une perte de télémétrie ?', r: 'Un appareil connu d’Intune mais absent ou muet dans Defender.', w: ['Un écran propre.', 'Un fond d’écran.', 'Une langue.'], e: 'La comparaison des inventaires est l’indicateur le plus simple.' },
+    { t: 'Rôles', q: 'Qui déploie l’intégration ?', r: 'La politique EDR d’Intune.', w: ['Le calendrier.', 'Exchange.', 'Le pare-feu.'], e: 'La preuve vient de Defender, pas de ce qui déploie.' },
+    { t: 'Protection', q: 'À quoi sert la protection contre la falsification ici ?', r: 'À empêcher l’arrêt non autorisé du capteur.', w: ['À chiffrer le disque.', 'À filtrer le courriel.', 'À rien.'], e: 'Elle protège le capteur lui-même.' },
+    { t: 'Délais', q: 'Pourquoi un seuil d’inactivité ?', r: 'Un appareil éteint est normal pendant un temps.', w: ['Pour la facture.', 'Pour le style.', 'Il n’en faut pas.'], e: 'Sans seuil, les alertes inondent l’équipe.' },
+    { t: 'Échecs', q: 'Quelle cause réseau est fréquente ?', r: 'Un proxy qui bloque les connexions vers le service.', w: ['Une imprimante.', 'Un clavier.', 'Un son.'], e: 'La connectivité est une dépendance.' },
+    { t: 'Retour arrière', q: 'Que faire après une réparation ?', r: 'Réappliquer la politique ou rejouer l’intégration et vérifier.', w: ['Rien.', 'Réinstaller Windows.', 'Débrancher.'], e: 'Et documenter la cause.' },
+    { t: 'Évaluation : couverture', q: 'Que mesure-t-on pour la couverture ?', r: 'La part des appareils gérés qui signalent réellement.', w: ['Le nombre de fenêtres.', 'La couleur.', 'Le bruit.'], e: 'La couverture complète les détections.' },
+    { t: 'Évaluation : seuil', q: 'Comment choisir le seuil ?', r: 'Par type d’appareil, ajusté avec les données.', w: ['Un seuil unique pour tous.', 'Au hasard.', 'Jamais.'], e: 'Serveur et portable n’ont pas les mêmes habitudes.' },
+    { t: 'Évaluation : cause', q: 'Que faire quand la même cause revient ?', r: 'La corriger à la source.', w: ['Réparer chaque appareil.', 'L’ignorer.', 'Désinstaller.'], e: 'La correction à la source évite la répétition.' },
+  ],
+  short: { title: 'Populations', q: 'Combien de populations d’appareils muets la leçon 1 distingue-t-elle ? (nombre)', value: 3, exp: 'Trois populations : jamais intégrés, capteur arrêté et hors ligne.' },
+  components: [['Capteur de Defender for Endpoint', 'native'], ['Politique EDR d’Intune', 'integration'], ['Connectivité aux points de terminaison du service', 'dependance']],
+  tags: [['telemetrie', 'couverture', 'angle-mort'], ['inventaires', 'edr', 'capteur'], ['seuils', 'reparation', 'cause-commune']],
+  links: [['mde-devices-overview', 'mde-troubleshoot-onboarding'], ['intune-edr-deploy', 'mde-onboard-intune', 'mde-devices-overview'], ['mde-tamper', 'mde-troubleshoot-onboarding', 'intune-mde-configure']],
+};

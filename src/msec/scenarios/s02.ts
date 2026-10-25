@@ -1,0 +1,72 @@
+import type { ScenarioDef } from './def.ts';
+
+export const S02: ScenarioDef = {
+  id: 's02', n: 2, level: 1, title: 'Protection web et réseau',
+  summary: 'Empêcher les connexions vers des destinations malveillantes ou interdites : protection réseau, indicateurs et filtrage de contenu web.',
+  sheet: {
+    need: 'Empêcher les postes de se connecter à des destinations malveillantes ou de catégories interdites, quel que soit le navigateur.',
+    threat: 'Sites d’hameçonnage, de distribution de maliciels et de commande et contrôle atteints par un clic, un script ou un logiciel installé.',
+    signal: 'Réputation des destinations, indicateurs personnalisés, catégories de filtrage de contenu web et alertes de connexion réseau.',
+    deciding: 'Defender for Endpoint (indicateurs, filtrage de contenu web) et Intune (mode de la protection réseau sur le poste).',
+    portal: 'Portail Microsoft Defender (paramètres des points de terminaison) et centre d’administration Intune (politique d’antivirus ou de réduction de la surface d’attaque).',
+    enforcing: 'Protection réseau de Defender Antivirus sur le poste, et Microsoft Edge pour son filtrage natif.',
+    evidence: 'Alertes et rapport de filtrage de contenu web dans le portail Defender, événements réseau dans la chasse avancée.',
+    dependencies: 'Defender Antivirus actif avec protection en temps réel et protection fournie par le nuage, appareils intégrés à Defender for Endpoint, indicateurs réseau activés dans les fonctions avancées.',
+    delays: 'Un indicateur ou une catégorie met un certain temps à se propager aux appareils, et la protection réseau en audit n’empêche rien.',
+    failures: 'Mode audit laissé en place, antivirus en mode passif, navigateur sans protection réseau active, catégorie trop large qui bloque un service légitime, appareil hors ligne.',
+    verification: 'Visiter une destination de test prévue par la documentation depuis un poste pilote, constater le blocage, puis retrouver l’événement dans la chasse avancée.',
+    rollback: 'Repasser la protection réseau en audit, retirer l’indicateur ou la catégorie fautive, documenter l’exception et sa date de revue.',
+    limits: 'Les prérequis de plateforme et de navigateur changent : revérifier la documentation de la protection réseau et du filtrage de contenu web à chaque révision.',
+    nature: 'native',
+    sources: ['mde-network-protection', 'mde-network-protection-config', 'mde-web-protection', 'mde-wcf', 'mde-indicator-ip', 'mde-advanced-features'],
+  },
+  extras: [
+    [
+      '## Trois mécanismes qui se ressemblent',
+      'La protection contre les menaces web, la protection réseau et le filtrage de contenu web visent tous des destinations, mais pas pour la même raison. La protection contre les menaces web bloque des sites malveillants connus. La protection réseau étend cette logique au niveau du système d’exploitation, donc à tous les navigateurs et à toute application qui se connecte. Le filtrage de contenu web, lui, bloque des **catégories** (jeux, réseaux sociaux, contenu pour adultes) choisies par l’organisation, pas des menaces.',
+      'Le besoin d’affaires dit lequel utiliser. Si le besoin est « ne pas atteindre des sites dangereux », on parle de réputation. S’il est « respecter la politique d’usage », on parle de catégories. Les confondre mène à bloquer des catégories pour se protéger d’un maliciel, ou à croire qu’un filtre de catégories protège contre un site compromis.',
+    ],
+    [
+      '## Indicateurs personnalisés : puissants et risqués',
+      'Les indicateurs permettent d’autoriser, d’auditer, d’avertir ou de bloquer une adresse IP, une URL ou un domaine précis. Ils sont utiles pour réagir vite à un renseignement de menace. Ils dépendent de la protection réseau pour s’appliquer à d’autres navigateurs que Microsoft Edge, et exigent l’activation de la fonction d’indicateurs réseau dans les paramètres avancés du portail.',
+      'Un indicateur d’autorisation peut ouvrir un trou : traitez chaque autorisation comme une exclusion, avec propriétaire et date de revue. Les mêmes règles de dette de sécurité qu’en réduction de la surface d’attaque s’appliquent ici.',
+    ],
+    [
+      '## Du mode audit au blocage',
+      'La protection réseau se déploie en mode audit, puis en mode blocage, comme les règles ASR. Le mode audit consigne ce qui serait bloqué sans rien empêcher : un déploiement qui reste en audit donne une impression de protection sans protection. Ajoutez au plan une date de passage en blocage et un critère mesurable (nombre d’événements légitimes bloqués à zéro pendant une période donnée).',
+      'Quand un utilisateur se plaint qu’un site est bloqué, la première question n’est pas « comment l’autoriser ? » mais « quel mécanisme l’a bloqué ? ». La réponse change la correction : indicateur, catégorie, réputation ou règle de pare-feu.',
+    ],
+  ],
+  pairs: [
+    ['Bloquer les jeux en ligne pour respecter la politique d’usage', 'Filtrage de contenu web par catégorie'],
+    ['Bloquer une adresse IP désignée par un renseignement de menace', 'Indicateur personnalisé'],
+    ['Étendre la protection à tous les navigateurs du poste', 'Protection réseau de Defender Antivirus'],
+  ],
+  defects: [
+    ['La protection réseau reste en mode audit : elle protège déjà.', 'Planifier le passage en blocage avec un critère mesuré', 'Accepter'],
+    ['On autorise le domaine d’un fournisseur sans propriétaire ni revue.', 'Traiter l’autorisation comme une exclusion documentée', 'Accepter'],
+    ['On bloque des catégories pour se protéger d’un maliciel.', 'Utiliser la réputation et la protection réseau pour les menaces', 'Accepter'],
+  ],
+  steps: {
+    ok: ['Vérifier que Defender Antivirus est actif sur le poste pilote', 'Confirmer le mode de la protection réseau', 'Visiter une destination de test sur le poste pilote', 'Retrouver l’événement dans la chasse avancée', 'Consigner résultat, date et exceptions dans la fiche'],
+    forbidden: 'Désactiver la protection réseau pour faire passer le test',
+  },
+  quiz: [
+    { t: 'Menaces ou catégories', q: 'Quel mécanisme bloque des catégories de sites choisies par l’organisation ?', r: 'Le filtrage de contenu web.', w: ['La protection réseau seule.', 'Safe Attachments.', 'Le chiffrement de disque.'], e: 'Les catégories relèvent du filtrage de contenu web, pas de la réputation.' },
+    { t: 'Signal', q: 'D’où vient le signal de la protection réseau ?', r: 'De la réputation des destinations et des indicateurs.', w: ['Du calendrier.', 'Du nombre de courriels.', 'De la taille du disque.'], e: 'Le signal est la réputation ou l’indicateur, pas l’utilisateur.' },
+    { t: 'Besoin', q: 'Comment formuler le besoin ?', r: 'Empêcher les connexions vers des destinations dangereuses ou interdites.', w: ['Activer la protection réseau.', 'Acheter un pare-feu.', 'Bloquer Internet.'], e: 'Le besoin ne nomme pas le produit.' },
+    { t: 'Application', q: 'Quel composant applique la protection réseau sur le poste ?', r: 'Defender Antivirus.', w: ['Le portail Intune.', 'Exchange Online.', 'Le Centre de mise à jour.'], e: 'Intune décide, Defender Antivirus applique.' },
+    { t: 'Indicateurs', q: 'Pourquoi les indicateurs exigent-ils une activation dans le portail ?', r: 'La fonction d’indicateurs réseau doit être activée dans les paramètres avancés.', w: ['Pour la facturation.', 'Pour le chiffrement.', 'Ils n’exigent rien.'], e: 'Sans activation, l’indicateur ne s’applique pas.' },
+    { t: 'Autres navigateurs', q: 'Quelle fonction étend la protection à d’autres navigateurs qu’Edge ?', r: 'La protection réseau.', w: ['Safe Links.', 'LAPS.', 'BitLocker.'], e: 'Elle agit au niveau du système d’exploitation.' },
+    { t: 'Audit', q: 'Que fait la protection réseau en mode audit ?', r: 'Elle consigne sans bloquer.', w: ['Elle bloque tout.', 'Elle chiffre le trafic.', 'Elle désinstalle le navigateur.'], e: 'L’audit mesure, il ne protège pas.' },
+    { t: 'Échec silencieux', q: 'Quel échec laisse la politique « reçue » sans protection ?', r: 'Defender Antivirus en mode passif.', w: ['Un fond d’écran modifié.', 'Un mot de passe long.', 'Un second écran.'], e: 'Sans Defender Antivirus actif, la protection réseau n’agit pas.' },
+    { t: 'Retour arrière', q: 'Quel premier retour pour une catégorie qui bloque un service légitime ?', r: 'Retirer ou affiner la catégorie pour le groupe concerné et documenter.', w: ['Désactiver Defender.', 'Réinitialiser les postes.', 'Ignorer la plainte.'], e: 'Le retour est ciblé et documenté.' },
+    { t: 'Évaluation : mécanismes', q: 'Pourquoi distinguer réputation et catégories ?', r: 'Elles répondent à des besoins différents : menace ou politique d’usage.', w: ['Elles sont identiques.', 'Pour payer plus.', 'Aucune raison.'], e: 'Le besoin dicte le mécanisme.' },
+    { t: 'Évaluation : autorisation', q: 'Comment traiter un indicateur d’autorisation ?', r: 'Comme une exclusion : propriétaire et revue.', w: ['Comme une préférence.', 'Sans suivi.', 'Comme un retour arrière.'], e: 'Une autorisation permanente est un trou de sécurité.' },
+    { t: 'Évaluation : preuve', q: 'Où retrouve-t-on la trace d’un blocage réseau ?', r: 'Dans les alertes et la chasse avancée.', w: ['Dans le calendrier.', 'Dans les photos.', 'Nulle part.'], e: 'Le produit de preuve est distinct de la politique.' },
+  ],
+  short: { title: 'Mécanismes', q: 'Combien de mécanismes (protection contre les menaces web, protection réseau, filtrage de contenu web) la leçon 1 compare-t-elle ? (nombre)', value: 3, exp: 'La leçon compare trois mécanismes qui se ressemblent mais répondent à des besoins distincts.' },
+  components: [['Protection réseau de Defender Antivirus', 'native'], ['Filtrage de contenu web (portail Defender)', 'integration'], ['Intégration du poste à Defender for Endpoint', 'dependance']],
+  tags: [['protection-web', 'protection-reseau', 'filtrage-contenu'], ['indicateurs', 'portail-defender', 'intune'], ['mode-audit', 'exceptions', 'chasse-avancee']],
+  links: [['mde-web-protection', 'mde-network-protection', 'mde-wcf'], ['mde-indicator-ip', 'mde-advanced-features', 'mde-network-protection-config'], ['mde-network-protection', 'mde-av-compat', 'mde-passive']],
+};
