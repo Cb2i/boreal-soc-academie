@@ -72,10 +72,10 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
           return [
             { key: `${t.id}-home`, label: tr(t.titleFr, t.titleEn), kind: k, hint: t.descFr, to: href(t.route) } as Item,
             { key: `${t.id}-res`, label: `${tr('Ressources', 'Resources')} (${k})`, kind: k, hint: 'scripts modèles données fictives', to: href(t.route, 'ressources') } as Item,
-            { key: `${t.id}-proj`, label: `${tr('Projets', 'Projects')} (${k})`, kind: k, hint: 'projets de synthèse', to: href(t.route, 'projets') } as Item,
+            { key: `${t.id}-proj`, label: `${tr('Labs', 'Labs')} (${k})`, kind: k, hint: 'labs de synthèse', to: href(t.route, 'projets') } as Item,
             ...c.MODULES.map((m) => ({ key: `${t.id}-m-${m.id}`, label: `${m.n}. ${m.title}`, kind: `${k} module`, hint: m.summary, to: href(t.route, 'module', m.id) })),
             ...c.LESSONS.map((l) => ({ key: `${t.id}-l-${l.id}`, label: l.title, kind: `${k} cours`, hint: l.summary, to: href(t.route, 'cours', l.id) })),
-            ...c.PROJECTS.map((x) => ({ key: `${t.id}-p-${x.id}`, label: x.title, kind: `${k} projet`, hint: x.problem, to: href(t.route, 'projet', x.id) })),
+            ...c.PROJECTS.map((x) => ({ key: `${t.id}-p-${x.id}`, label: x.title, kind: `${k} lab`, hint: x.problem, to: href(t.route, 'projet', x.id) })),
           ];
         })
       : [];

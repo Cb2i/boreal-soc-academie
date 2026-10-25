@@ -30,7 +30,7 @@ function TrackCard({ id, delay }: { id: string; delay: number }) {
         <Ring pct={pct} size={44} stroke={5} color={meta.accent}><span className="ring-num">{pct}%</span></Ring>
       </div>
       <p className="muted">{tr(meta.descFr, meta.descEn)}</p>
-      {st && <p className="muted small">{st.modules} {tr('modules', 'modules')} · {st.lessons} {tr('leçons', 'lessons')} · {st.exercises} {tr('exercices et questions', 'exercises and questions')} · {st.projects} {tr('projets', 'projects')} · {seen} {tr('leçons consultées', 'lessons viewed')} · {st.competencies} {tr('compétences', 'skills')}</p>}
+      {st && <p className="muted small">{st.modules} {tr('modules', 'modules')} · {st.lessons} {tr('leçons', 'lessons')} · {st.exercises} {tr('exercices et questions', 'exercises and questions')} · {st.projects} {tr('labs', 'labs')} · {seen} {tr('leçons consultées', 'lessons viewed')} · {st.competencies} {tr('compétences', 'skills')}</p>}
       <span className="btn primary">{seen > 0 ? tr('Continuer', 'Continue') : tr('Commencer', 'Start')} →</span>
     </a>
   );

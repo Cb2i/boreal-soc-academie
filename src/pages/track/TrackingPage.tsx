@@ -81,7 +81,7 @@ export function TrackingPage() {
       </section>
 
       <section aria-labelledby="t-proj" className="stack">
-        <h2 id="t-proj">{tr('Projets réalisés', 'Projects completed')} ({doneProjects.length}/{PROJECTS.length})</h2>
+        <h2 id="t-proj">{tr('Labs réalisés', 'Labs completed')} ({doneProjects.length}/{PROJECTS.length})</h2>
         {doneProjects.length + inProgress.length === 0 ? <div className="state">{tr('Aucun projet démarré. Choisissez-en un dans la liste.', 'No project started.')} <a href={to('projets')}>{tr('Voir les projets', 'See projects')}</a></div> : (
           <ul>{[...doneProjects, ...inProgress].map((x) => <li key={x.id}><a href={to('projet', x.id)}>{x.title}</a> <span className={`pill${p.projects[x.id].status === 'realise' ? ' ok' : ''}`}>{p.projects[x.id].status === 'realise' ? 'Réalisé' : 'En cours'}</span></li>)}</ul>
         )}

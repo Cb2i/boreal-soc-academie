@@ -115,7 +115,7 @@ export function ModulePage({ id }: { id: string }) {
       </section>
 
       <section aria-labelledby="m-proj">
-        <h2 id="m-proj">{tr('Idées de projets', 'Project ideas')}</h2>
+        <h2 id="m-proj">{tr('Lab du module', 'Module lab')}</h2>
         <div className="grid cols-3">
           {projects.map((x) => {
             const r = p.projects[x.id];

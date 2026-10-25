@@ -422,7 +422,7 @@ const ok = (name, cond, extra = '') => {
   ok('IA : ressources listées avec leur statut', nRes >= 25 && nVerif >= 4, nRes + ' / ' + nVerif);
   await ap.goto(base + '#/ia/projets');
   await ap.waitForSelector('h1');
-  ok('IA : page des projets', /projet/i.test(await ap.textContent('h1')));
+  ok('IA : page des projets', /lab/i.test(await ap.textContent('h1')));
   await ap.goto(base + '#/ia/projet/f01');
   await ap.waitForSelector('h1');
   ok('IA : un projet de synthèse s’ouvre', /triage/i.test(await ap.textContent('h1')));

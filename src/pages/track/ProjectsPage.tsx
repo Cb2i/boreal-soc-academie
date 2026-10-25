@@ -56,14 +56,14 @@ export function ProjectPage({ id }: { id: string }) {
       <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={to()}>{tr(meta.navFr, meta.navEn)}</a> / <a href={to('projets')}>Labs</a> / <span aria-current="page">{x.title}</span></nav>
       <h1>{x.title}</h1>
       <div className="row"><span className="pill">{x.level}</span>{x.module !== 'final' && <a className="pill" href={to('module', x.module)}>{tr('Module', 'Module')} {MODULE_BY_ID[x.module]?.n}</a>}</div>
-      <div className="card stack">
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{tr('Votre suivi', 'Your tracking')}</h2>
+      <details className="card stack" open={!x.lab}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{tr('Votre suivi', 'Your tracking')} <span className="pill" style={{ marginLeft: 8 }}>{STATUS.find((s) => s.id === r.status)?.label}</span></summary>
         <div className="row" role="radiogroup" aria-label={tr('État du lab', 'Lab status')}>
           {STATUS.map((s) => <label key={s.id} className="choice" style={{ display: 'inline-flex' }}><input type="radio" name="st" checked={r.status === s.id} onChange={() => set({ status: s.id })} /> <span>{s.label}</span></label>)}
         </div>
         <label htmlFor="pn" className="muted small" style={{ display: 'block' }}>{tr('Notes personnelles (conservées sur cet appareil)', 'Personal notes (kept on this device)')}</label>
         <textarea id="pn" rows={4} style={{ display: 'block', width: '100%', boxSizing: 'border-box' }} value={r.notes} onChange={(e) => set({ notes: e.target.value })} />
-      </div>
+      </details>
       {x.lab && <LabBody x={x} r={r} set={set} sec={sec} list={list} />}
       {!x.lab && (<>
       {sec(tr('Problème à résoudre', 'Problem to solve'), <p><Inline text={x.problem} /></p>)}

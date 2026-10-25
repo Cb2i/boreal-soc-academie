@@ -27,7 +27,7 @@ export function TrackHome() {
             <span><strong>{MODULES.length}</strong> {tr('modules', 'modules')}</span>
             <span><strong>{totalLessons}</strong> {tr('leçons', 'lessons')}</span>
             <span><strong>{EXERCISES.length}</strong> {tr('exercices et questions', 'exercises and questions')}</span>
-            <span><strong>{PROJECTS.length}</strong> {tr('projets', 'projects')}</span>
+            <span><strong>{PROJECTS.length}</strong> {tr('labs', 'labs')}</span>
           </div>
           <p className="muted small">{tr('Le contenu de cette section est rédigé en français uniquement.', 'The content of this section is written in French only.')}</p>
           {(track.home?.notes ?? []).map((n, i) => <p key={i} className="muted small"><Inline text={n} /></p>)}
@@ -52,7 +52,7 @@ export function TrackHome() {
             <h2 id={`lv-${lv.n}`}><span className="lvl-n">{lv.n}</span> {lv.title}</h2>
             <p className="muted">{lv.summary}</p>
             {lv.n === 6 ? (
-              <a className="card link" href={to('projets')}><strong>{tr('Projets de synthèse', 'Capstone projects')}</strong><p className="muted small">{PROJECTS.filter((x) => x.module === 'final').length} {tr('projets complets, avec architecture, étapes, critères de réussite et garde-fous.', 'complete projects.')}</p></a>
+              <a className="card link" href={to('projets')}><strong>{tr('Labs de synthèse', 'Capstone labs')}</strong><p className="muted small">{PROJECTS.filter((x) => x.module === 'final').length} {tr('labs complets, avec contexte client, mission, données, parties guidées et corrigés.', 'complete labs.')}</p></a>
             ) : (
               <div className={`grid cols-3${mods.length === 4 ? ' n4' : ''}`}>
                 {mods.map((m) => {

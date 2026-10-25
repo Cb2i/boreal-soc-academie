@@ -20,7 +20,7 @@ export function CoveragePage() {
     <div className="stack">
       <nav className="crumbs" aria-label={tr('Fil d’Ariane', 'Breadcrumb')}><a href={to()}>{tr(meta.navFr, meta.navEn)}</a> / <span aria-current="page">{tr('Couverture', 'Coverage')}</span></nav>
       <h1>{tr('Matrice de couverture', 'Coverage matrix')}</h1>
-      <p className="muted">{tr('Pour chaque module : les compétences visées, les leçons et exercices qui les enseignent, les évaluations et cas pratiques qui les vérifient, et les projets qui les prolongent. La matrice est générée depuis le contenu : si un maillon manque, les tests échouent.', 'For each module: skills, lessons and exercises, assessments and cases, projects. Generated from the content.')}</p>
+      <p className="muted">{tr('Pour chaque module : les compétences visées, les leçons et exercices qui les enseignent, les évaluations et cas pratiques qui les vérifient, et les labs qui les prolongent. La matrice est générée depuis le contenu : si un maillon manque, les tests échouent.', 'For each module: skills, lessons and exercises, assessments and cases, labs. Generated from the content.')}</p>
       <div className="table-wrap">
         <table className="grid-table coverage">
           <thead><tr><th scope="col">{tr('Module', 'Module')}</th><th scope="col">{tr('Compétence', 'Skill')}</th><th scope="col">{tr('Leçons', 'Lessons')}</th><th scope="col">{tr('Exercices', 'Exercises')}</th><th scope="col">{tr('Évaluation', 'Assessment')}</th><th scope="col">{tr('Cas pratique', 'Case')}</th><th scope="col">{tr('Projets', 'Projects')}</th></tr></thead>

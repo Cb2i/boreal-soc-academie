@@ -122,7 +122,7 @@ export function recommend(cat: Catalog, p: AiProgress): Next {
     const caseEx = cat.exercises.filter((e) => e.module === m.id && e.role === 'case' && e.type !== 'open');
     if (caseEx.some((e) => !p.items[e.id])) return { kind: 'case', module: m.id, title: `Cas pratique du module ${m.n}`, reason: 'Mettez les notions en situation.' };
   }
-  return { kind: 'done', reason: 'Tous les modules livrés sont parcourus. Passez aux projets.' };
+  return { kind: 'done', reason: 'Tous les modules livrés sont parcourus. Passez aux labs.' };
 }
 
 /** Score moyen par dimension sur les exercices notés automatiquement et déjà tentés. */
