@@ -612,6 +612,13 @@ function buildXdr(seed: number): Record<string, Table> {
   }
   dev.push({ Timestamp: at(5, 16, 42, 0), DeviceName: `${PEOPLE.find((x) => x.sam === 'm.gagnon')!.pc}.nordlys.example`, ActionType: 'RemovableStorageAccessTriggered', FileName: 'plans-clients.xlsx', FolderPath: 'E:\\plans-clients.xlsx', InitiatingProcessFileName: 'explorer.exe', InitiatingProcessAccountName: 'm.gagnon', AdditionalFields: '{"Policy":"Refuser l’écriture","AccessMask":"write","Result":"Denied"}' });
 
+  // Un capteur inactif n’envoie plus rien : on retire les événements postérieurs à son dernier signalement.
+  const muteFrom = new Map(devices.filter((d) => d.SensorHealthState === 'Inactive').map((d) => [String(d.DeviceName), (d.Timestamp as Date).getTime()] as const));
+  const alive = (r: Partial<Record<string, Value>>) => {
+    const t = muteFrom.get(String(r.DeviceName));
+    return t === undefined || (r.Timestamp as Date).getTime() <= t;
+  };
+
   return {
     DeviceProcessEvents: table(
       [
@@ -624,7 +631,7 @@ function buildXdr(seed: number): Record<string, Table> {
         ['InitiatingProcessParentFileName', 'string'],
         ['SHA256', 'string'],
       ],
-      proc,
+      proc.filter(alive),
     ),
     DeviceNetworkEvents: table(
       [
@@ -637,7 +644,7 @@ function buildXdr(seed: number): Record<string, Table> {
         ['InitiatingProcessFileName', 'string'],
         ['InitiatingProcessAccountName', 'string'],
       ],
-      net,
+      net.filter(alive),
     ),
     DeviceLogonEvents: table(
       [
@@ -649,7 +656,7 @@ function buildXdr(seed: number): Record<string, Table> {
         ['RemoteIP', 'string'],
         ['FailureReason', 'string'],
       ],
-      logon,
+      logon.filter(alive),
     ),
     DeviceInfo: table(
       [
@@ -675,7 +682,7 @@ function buildXdr(seed: number): Record<string, Table> {
         ['InitiatingProcessAccountName', 'string'],
         ['AdditionalFields', 'string'],
       ],
-      dev,
+      dev.filter(alive),
     ),
     EmailEvents: table(
       [
