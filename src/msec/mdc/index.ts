@@ -4,8 +4,9 @@ import { MDC_LEVELS } from './levels.ts';
 import { d01 } from './d01.ts';
 import { d02 } from './d02.ts';
 import { d03 } from './d03.ts';
+import { d04 } from './d04.ts';
 
-export const MDC_MODULES: ModuleContent[] = [d01, d02, d03];
+export const MDC_MODULES: ModuleContent[] = [d01, d02, d03, d04];
 const finalProjects: AiProject[] = [];
 const resources: ResourceDef[] = [];
 export const CONTENT = buildContent(MDC_LEVELS, MDC_MODULES, finalProjects, resources);

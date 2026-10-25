@@ -100,5 +100,11 @@ export const MDC_SOURCES: SourceDef[] = [
   S('powershell-onboarding', 'Onboard Defender for Cloud using PowerShell', 'powershell-onboarding', 'Activation par PowerShell'),
   S('set-pricing', 'Set-AzSecurityPricing', 'https://learn.microsoft.com/powershell/module/az.security/set-azsecuritypricing', 'Commande PowerShell de tarification', 'reference'),
   S('storage-iac', 'Enable Defender for Storage by using infrastructure as code', 'defender-for-storage-infrastructure-as-code-enablement', 'Activation du stockage par IaC'),
+  S('onboard-mg', 'Enable Defender for Cloud on all subscriptions in a management group', 'onboard-management-group', 'Activation par groupe de gestion et Azure Policy'),
+  S('servers-scale', 'Scale a Defender for Servers deployment', 'plan-defender-for-servers-scale', 'Déploiement de Servers à l’échelle'),
+  S('monitoring-components', 'How does Defender for Cloud collect data?', 'monitoring-components', 'Composants de surveillance et extensions'),
+  S('ama', 'Azure Monitor Agent in Defender for Cloud', 'auto-deploy-azure-monitoring-agent', 'Azure Monitor Agent et Defender for Cloud'),
+  S('arc-monitor-mode', 'Extensions security for Azure Arc-enabled servers', 'https://learn.microsoft.com/azure/azure-arc/servers/security-extensions', 'Mode de surveillance de l’agent Arc', 'reference'),
+  S('cspm-components', 'Protect your resources with Defender CSPM', 'tutorial-enable-cspm-plan', 'Composants de Defender CSPM'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
