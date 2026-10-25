@@ -1,0 +1,221 @@
+// Module 13 : Restrictions et durcissement du système (niveau 4).
+import type { AiCompetency, AiLesson, AiProject } from '../../agentic/types.ts';
+import { assemble } from '../assemble.ts';
+import { kit } from '../kit.ts';
+import { sref } from '../sources.ts';
+
+const md = (...lines: string[]) => lines.join('\n');
+const { a, Q, M } = kit('i13');
+const c1 = { comp: 'i13-c1', lesson: 'i13-l1', tags: ['wsl', 'plugiciel-defender', 'conformite-wsl'] };
+const c2 = { comp: 'i13-c2', lesson: 'i13-l2', tags: ['catalogue-de-parametres', 'oma-uri', 'admx'] };
+const c3 = { comp: 'i13-c3', lesson: 'i13-l3', tags: ['parametre-non-pris-en-charge', 'alternatives', 'derive'] };
+
+const l1: AiLesson = {
+  id: 'i13-l1', module: 'i13', title: 'WSL en entreprise : un cas de composant à gouverner, pas à interdire par réflexe', minutes: 50,
+  summary: 'Gouverner WSL avec Intune, le plugiciel Defender et la conformité, en connaissant les limites de visibilité.',
+  objectives: ['Décrire les trois leviers : paramètres Intune de WSL, plugiciel Defender, conformité WSL.', 'Énoncer les limites de visibilité du plugiciel.', 'Choisir entre bloquer, autoriser et surveiller selon le risque.'],
+  prerequisites: ['Modules 4, 5 et 11'],
+  body: md(
+    '## Pourquoi WSL est un bon cas d’étude',
+    'Windows Subsystem for Linux (WSL) fait tourner des distributions Linux sur un poste Windows. Pour un développeur, c’est un outil de travail ; pour une équipe de sécurité, c’est un environnement où les processus, les fichiers et le réseau échappent à une partie des contrôles prévus pour Windows. Ce module le traite comme **un cas parmi d’autres** de durcissement : un composant légitime qu’on gouverne par des réglages, de la visibilité et de la conformité, plutôt que par une interdiction réflexe. L’approche vaut pour d’autres composants (Hyper-V, PowerShell, OpenSSH).',
+    '## Levier 1 : les paramètres Intune de WSL',
+    'WSL se gère comme un composant Windows avec des paramètres de catalogue (profil de configuration Windows 10 et plus, catalogue de paramètres, rechercher « Windows Subsystem for Linux »). Deux réglages de sécurité typiques : mettre **Allow WSL1** à *Désactivé* pour n’autoriser que WSL 2, et **bloquer le noyau personnalisé** et la ligne de commande de noyau personnalisée. Les prérequis recommandés sont Windows 10 22H2 ou plus, ou Windows 11 22H2 ou plus (les fonctions réseau avancées exigent Windows 11 22H2), et WSL 2.0.9 ou plus (`wsl --version`).',
+    '## Levier 2 : le plugiciel Defender for Endpoint',
+    'Le plugiciel permet à Defender de voir et surveiller les événements de sécurité des distributions WSL 2 en cours d’exécution, avec peu d’impact sur la performance. Il se déploie par un MSI téléchargé depuis le portail Defender (Paramètres > Points de terminaison > Intégration > Windows Subsystem for Linux 2) et se distribue par Intune comme application métier. Il s’intègre automatiquement au locataire auquel l’hôte Windows est intégré. **Limites documentées** : il faut quelques minutes pour qu’il s’instancie et **jusqu’à 30 minutes** pour qu’une instance WSL2 s’intègre ; les instances de courte durée peuvent ne jamais apparaître. Un **noyau personnalisé** n’est pas pris en charge (le plugiciel ne le bloque pas mais ne garantit pas la visibilité) : bloquez-le avec Intune. Non pris en charge sur **ARM64** ni sur les variantes **multisession** de Windows. Il offre la **visibilité** sur les événements, mais **pas** l’antimalware, la gestion des vulnérabilités ni les commandes de réponse pour l’appareil logique WSL. Le comportement de détection varie selon les distributions. Les mises à jour automatiques exigent la version 1.24.522.2 ou plus récente.',
+    '## Levier 3 : la conformité WSL',
+    'Une politique de conformité peut vérifier les distributions Linux et leurs versions (**Allowed Linux distributions and versions**) et intégrer le résultat à la conformité globale de l’hôte. Elle exige le **plugiciel Intune pour WSL** et l’extension de gestion Intune sur l’appareil. Sans distribution listée, toutes sont permises (défaut). Avec un nom seul, toutes les versions de cette distribution passent. Avec un minimum ou un maximum, on borne la version. Supprimez d’abord les anciennes politiques de conformité personnalisées pour WSL.',
+    '## Décider : bloquer, autoriser ou surveiller',
+    'Bloquer WSL1 et le noyau personnalisé a un coût faible et un gain net de visibilité. Interdire WSL pour tous retire un outil de travail et pousse les gens vers des contournements. Un compromis fréquent : WSL 2 autorisé pour un groupe de développeurs, plugiciel obligatoire, distributions d’une liste, noyau standard, conformité incluse dans l’accès conditionnel. Documentez ce que le plugiciel ne voit pas (le trafic dans une instance éphémère, un noyau personnalisé) comme risque résiduel.',
+  ),
+  demo: { title: 'Politique WSL pour développeurs', body: md(
+    'Politique **fictive** :',
+    '```text',
+    'Groupe            : Développeurs (WSL 2 autorisé)',
+    'Allow WSL1        : Désactivé',
+    'Noyau personnalisé: bloqué',
+    'Plugiciel Defender: obligatoire',
+    'Distributions     : Ubuntu 22.04 ou plus',
+    '```',
+    '**Lecture commentée.** On autorise, on cadre et on rend visible.',
+    '**Ce que la démo ne prouve pas.** Aucun poste n’a été configuré.') },
+  guided: 'i13-g1', autonomous: 'i13-a1', quiz: ['i13-q1a', 'i13-q1b', 'i13-q1c'],
+  revision: md('## Fiche : WSL', '- Trois leviers : paramètres Intune, plugiciel Defender, conformité WSL.', '- Allow WSL1 désactivé ; noyau personnalisé bloqué.', '- Plugiciel : visibilité seulement, jusqu’à 30 minutes, pas d’ARM64 ni multisession.', '- Conformité WSL : plugiciel Intune requis.', '- Risque résiduel à documenter.'),
+  links: [sref('wsl-enterprise'), sref('wsl-intune'), sref('mde-wsl-plugin'), sref('intune-wsl-compliance')], teaches: ['wsl', 'plugiciel-defender', 'conformite-wsl'],
+};
+
+const l2: AiLesson = {
+  id: 'i13-l2', module: 'i13', title: 'Catalogue de paramètres, OMA-URI et ADMX : choisir le bon mécanisme', minutes: 45,
+  summary: 'Choisir entre catalogue de paramètres, profil personnalisé et modèles d’administration, et connaître les contraintes de chacun.',
+  objectives: ['Préférer le catalogue de paramètres et expliquer pourquoi.', 'Énoncer les contraintes d’un paramètre personnalisé OMA-URI.', 'Savoir où se trouvent les modèles d’administration aujourd’hui.'],
+  prerequisites: ['Leçon 1', 'Module 2'],
+  body: md(
+    '## Ordre de préférence',
+    'Pour durcir Windows avec Intune, l’ordre de préférence est : **profil de sécurité des points de terminaison** quand il existe pour le domaine (module 3 à 8), puis **catalogue de paramètres**, qui expose les paramètres de la plupart des CSP de politique et les modèles d’administration, puis **profil personnalisé OMA-URI** pour ce qui n’est nulle part ailleurs. Intune peut prendre en charge plus de paramètres que ceux documentés, et tous ne sont pas documentés : le catalogue est la source pour savoir ce qui est configurable. Utilisez les paramètres intégrés autant que possible et les OMA-URI seulement pour les options autrement indisponibles.',
+    '## Contraintes d’un profil personnalisé',
+    'Un OMA-URI est le chemin vers un paramètre pris en charge par un CSP ; le profil personnalisé est le conteneur ; Intune livre par OMA-DM, et le CSP du client applique, généralement en modifiant le Registre. Toutes les entrées du référentiel des CSP ne sont pas prises en charge par Intune : le paramètre doit prendre en charge les opérations **Add**, **Replace** et **Get**. Si la valeur retournée par Get ne correspond pas à celle fournie par Add ou Replace, Intune signale **une erreur de conformité**. Les valeurs de type chaîne, base64 ou XML sont masquées dans l’interface, mais visibles pour les rôles qui ont les permissions de créer, lire et mettre à jour les configurations (Policy and Profile Manager) et pour l’Intune Administrator. Les paramètres ne sont pas tous compatibles avec toutes les versions de Windows : le référentiel des CSP indique les versions et éditions.',
+    '## Taille et plateforme',
+    'Une politique App Control déployée par OMA-URI est limitée à **350 000 octets** : privilégiez les règles fondées sur la signature, l’Intelligent Security Graph et l’installateur géré, et plusieurs politiques à partir de Windows 10 1903. Le type de donnée est Base64 (fichier) pour le binaire, et l’identifiant de politique s’écrit sans accolades dans l’URI.',
+    '## Modèles d’administration',
+    'Le catalogue de paramètres contient les **modèles d’administration** (équivalents des chemins de stratégie de groupe), sans téléchargement ni OMA-URI personnalisé. Depuis la version de décembre 2024, le profil de type **Templates > Administrative Templates** est **déprécié et en lecture seule**. On peut importer des fichiers ADMX et ADML personnalisés ou de fournisseurs tiers. Certains paramètres ne sont pas inclus dans toutes les éditions de Windows : la recommandation est l’édition Enterprise.',
+    '## Dépanner un paramètre qui ne s’applique pas',
+    'Deux familles de causes. La politique n’est jamais arrivée sur l’appareil : vérifiez le ciblage et le journal de diagnostic MDM. La politique est arrivée mais le comportement n’est pas observé : consultez le journal d’administration `DeviceManagement-Enterprise-Diagnostics-Provider` ; la cause fréquente est une erreur de syntaxe de l’OMA-URI. Les deux journaux doivent mentionner le paramètre. Si ce n’est pas le cas, la politique n’a probablement pas été livrée.',
+  ),
+  demo: { title: 'Choisir le mécanisme', body: md(
+    'Décision **fictive** :',
+    '```text',
+    'Chiffrement BitLocker       -> profil de sécurité (module 7)',
+    'Paramètre de stratégie      -> catalogue de paramètres',
+    'Paramètre absent du catalogue -> OMA-URI (Add, Replace, Get requis)',
+    'Politique App Control       -> OMA-URI binaire, 350 000 octets au plus',
+    '```',
+    '**Lecture commentée.** Plus on descend, plus on assume la maintenance.',
+    '**Ce que la démo ne prouve pas.** Aucun profil n’a été livré.') },
+  guided: 'i13-g2', autonomous: 'i13-a2', quiz: ['i13-q2a', 'i13-q2b', 'i13-q2c'],
+  revision: md('## Fiche : mécanismes', '- Préférer profil de sécurité, puis catalogue, puis OMA-URI.', '- OMA-URI : Add, Replace, Get ; Get différent = erreur de conformité.', '- App Control en OMA-URI : 350 000 octets.', '- Profil Administrative Templates : lecture seule depuis décembre 2024.', '- Deux journaux pour le dépannage : diagnostic MDM et DeviceManagement-Enterprise-Diagnostics-Provider.'),
+  links: [sref('intune-custom-windows'), sref('intune-oma-troubleshoot'), sref('intune-admx-settings-catalog'), sref('win-appcontrol-intune-deploy'), sref('intune-settings-catalog')], teaches: ['catalogue-de-parametres', 'oma-uri', 'admx'],
+};
+
+const l3: AiLesson = {
+  id: 'i13-l3', module: 'i13', title: 'Quand le paramètre n’existe pas : alternatives, dérive et honnêteté', minutes: 45,
+  summary: 'Traiter un paramètre non pris en charge sans faux contournement, et détecter la dérive entre la politique voulue et l’état réel.',
+  objectives: ['Reconnaître un paramètre non pris en charge et nommer l’alternative.', 'Détecter une dérive de configuration.', 'Consigner une exception de durcissement avec son risque.'],
+  prerequisites: ['Leçons 1 et 2'],
+  body: md(
+    '## Trois réponses honnêtes',
+    'Face à un durcissement demandé (par exemple par un référentiel de sécurité), il n’y a que trois réponses honnêtes. **Il existe un paramètre pris en charge** : on le déploie, on le valide. **Il n’existe pas de paramètre, mais une alternative équivalente** : on la propose en nommant ce qu’elle couvre et ce qu’elle ne couvre pas (par exemple App Control au lieu d’un blocage de fichier, Device Control au lieu d’un paramètre USB). **Ni l’un ni l’autre** : on consigne l’exigence comme **non prise en charge**, avec le risque résiduel et le propriétaire. Une quatrième réponse, « on le fait par un script maison non suivi », est une dette cachée.',
+    '## Reconnaître le non pris en charge',
+    'Signes : le paramètre n’apparaît ni dans le catalogue ni dans un profil de sécurité ; le CSP ne prend pas en charge Add, Replace et Get ; l’édition de Windows ne l’inclut pas ; la plateforme n’offre pas l’équivalent (module 14) ; la fonction exige une licence que vous n’avez pas (EPM, module 8). Dans le registre de couverture du projet, chacun de ces cas reçoit la nature « non pris en charge » ou « licence supplémentaire », jamais « natif » par optimisme.',
+    '## Dérive et conflits',
+    'Un appareil peut recevoir plusieurs sources : Intune, stratégie de groupe, scripts, produit tiers. Le résultat dépend des priorités et des conflits. Les symptômes sont une valeur effective qui diffère de la valeur voulue, un paramètre en conflit dans le rapport par paramètre, ou un état qui bascule. Le traitement : un propriétaire par domaine de paramètres, retrait des stratégies de groupe en conflit, vérification locale de la valeur effective (Registre, `Get-MpPreference`, journaux), et relecture périodique des rapports. Les politiques de sécurité des points de terminaison, le catalogue et les bases de référence peuvent toucher le même paramètre : le module 2 a traité l’ordre ; ici l’enjeu est de ne pas y revenir à chaque incident.',
+    '## Documenter une exception',
+    'Une exception de durcissement contient : l’exigence visée, la raison, le périmètre (groupe, durée), le contrôle compensatoire, le risque résiduel, le propriétaire et la date de revue. Sans date de revue, l’exception devient la règle. Gardez la liste dans le registre des limites du projet et revoyez-la après chaque mise à jour importante de Microsoft.',
+    '## Ce que la preuve doit montrer',
+    'Pour un durcissement, la preuve utile est la valeur effective sur un échantillon d’appareils, pas la page de configuration. Dans le parcours sans locataire, cette preuve est simulée par des sorties fictives qui ne comptent pas comme validation réelle.',
+  ),
+  demo: { title: 'Fiche d’exception', body: md(
+    'Exemple **fictif** :',
+    '```text',
+    'Exigence      : bloquer tous les clients SSH tiers',
+    'Statut        : non pris en charge par un paramètre natif',
+    'Compensation  : App Control (liste d’autorisation) + détection Defender',
+    'Risque résiduel: client portable non signé hors périmètre',
+    'Revue         : dans 6 mois',
+    '```',
+    '**Lecture commentée.** L’exigence n’est pas déclarée satisfaite : l’écart est nommé.',
+    '**Ce que la démo ne prouve pas.** Aucun contrôle n’a été testé.') },
+  guided: 'i13-g3', autonomous: 'i13-a3', quiz: ['i13-q3a', 'i13-q3b', 'i13-q3c'],
+  revision: md('## Fiche : non pris en charge', '- Trois réponses : paramètre, alternative nommée, non pris en charge.', '- Jamais de script maison non suivi.', '- Un propriétaire par domaine de paramètres.', '- Exception : raison, périmètre, compensation, risque, revue.', '- Preuve = valeur effective, pas la page de configuration.'),
+  links: [sref('intune-custom-windows'), sref('intune-settings-catalog'), sref('intune-baselines'), sref('win-appcontrol-overview')], teaches: ['parametre-non-pris-en-charge', 'alternatives', 'derive'],
+};
+
+const exercises = [
+  a.match({ id: 'i13-g1', title: 'Levier et rôle', comp: c1.comp, tags: c1.tags, role: 'guided', dim: 'comprendre', lesson: 'i13-l1',
+    st: 'Associez chaque levier WSL à son rôle.', items: [['p1', 'Paramètres Intune de WSL'], ['p2', 'Plugiciel Defender'], ['p3', 'Conformité WSL']],
+    options: [['s1', 'Restreindre WSL1 et le noyau personnalisé'], ['s2', 'Donner de la visibilité sur WSL 2'], ['s3', 'Borner les distributions et versions autorisées']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque levier couvre un aspect distinct : restriction, visibilité et conformité.' }),
+  a.config({ id: 'i13-a1', title: 'Politique WSL', comp: c1.comp, tags: c1.tags, role: 'autonomous', dim: 'securiser', lesson: 'i13-l1',
+    st: 'Paramétrez la politique WSL d’un groupe de développeurs.',
+    fields: [
+      { id: 'wsl1', label: 'Autoriser WSL1', kind: 'toggle', accept: ['off'], why: 'Le plugiciel couvre WSL 2.' },
+      { id: 'kernel', label: 'Noyau personnalisé', kind: 'select', options: [{ id: 'allow', label: 'Autorisé' }, { id: 'block', label: 'Bloqué' }], accept: ['block'], why: 'La visibilité n’est pas garantie.' },
+      { id: 'plugin', label: 'Plugiciel Defender obligatoire', kind: 'toggle', accept: ['on'], why: 'Visibilité sur les événements.' },
+    ], solution: { wsl1: 'off', kernel: 'block', plugin: 'on' }, exp: 'WSL1 désactivé, noyau bloqué et plugiciel obligatoire.' }),
+  Q('i13-q1a', 'quiz', 'comprendre', c1, 'Visibilité', 'Que fournit le plugiciel Defender pour WSL ?', ['De la visibilité sur les événements WSL 2.', 'Pas l’antimalware.'], [['L’antimalware pour WSL.', 'Non disponible.'], ['Les commandes de réponse.', 'Non disponible.'], ['La gestion des vulnérabilités.', 'Non disponible.']], 'Il offre la visibilité, pas l’antimalware.'),
+  Q('i13-q1b', 'quiz', 'fonctionner', c1, 'Plateformes', 'Sur quelles configurations le plugiciel n’est-il pas pris en charge ?', ['ARM64 et Windows multisession.', 'Limites documentées.'], [['Windows 11 x64.', 'Pris en charge.'], ['Windows 10 22H2.', 'Pris en charge.'], ['Aucune.', 'Faux.']], 'ARM64 et multisession sont exclus.'),
+  Q('i13-q1c', 'quiz', 'maintenir', c1, 'Instances courtes', 'Pourquoi une instance WSL2 peut-elle ne pas apparaître dans le portail ?', ['Elle est trop éphémère : jusqu’à 30 minutes pour s’intégrer.', 'Délai documenté.'], [['Elle est interdite.', 'Faux.'], ['Elle est chiffrée.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Les instances très courtes peuvent ne jamais apparaître.'),
+
+  a.match({ id: 'i13-g2', title: 'Besoin et mécanisme', comp: c2.comp, tags: c2.tags, role: 'guided', dim: 'comprendre', lesson: 'i13-l2',
+    st: 'Associez chaque besoin au mécanisme préféré.', items: [['p1', 'Chiffrement de disque'], ['p2', 'Un paramètre de stratégie courant'], ['p3', 'Un paramètre absent du catalogue']],
+    options: [['s1', 'Profil de sécurité des points de terminaison'], ['s2', 'Catalogue de paramètres'], ['s3', 'Profil personnalisé OMA-URI']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'On préfère le mécanisme le plus spécialisé disponible.' }),
+  a.inspect({ id: 'i13-a2', title: 'Relire un profil personnalisé', comp: c2.comp, tags: c2.tags, role: 'autonomous', dim: 'securiser', lesson: 'i13-l2', language: 'text',
+    st: 'Plan fictif. Repérez les défauts.',
+    lines: [['p1', 'Tout le durcissement passera par des OMA-URI.', { ok: 'a1', fixes: [['a1', 'Préférer profils de sécurité et catalogue'], ['a2', 'Accepter']] }], ['p2', 'Le paramètre choisi ne prend en charge que Get.', { ok: 'b1', fixes: [['b1', 'Choisir un paramètre avec Add, Replace et Get'], ['b2', 'Accepter']] }], ['p3', 'La politique App Control de 600 000 octets sera envoyée par OMA-URI.', { ok: 'c1', fixes: [['c1', 'Réduire sous 350 000 octets ou scinder en plusieurs politiques'], ['c2', 'Accepter']] }]],
+    exp: 'Trois défauts : mécanisme, opérations CSP et taille.' }),
+  Q('i13-q2a', 'quiz', 'comprendre', c2, 'Opérations', 'Quelles opérations un paramètre OMA-URI doit-il prendre en charge pour Intune ?', ['Add, Replace et Get.', 'Sinon erreur de conformité.'], [['Delete seulement.', 'Faux.'], ['Exec seulement.', 'Faux.'], ['Aucune.', 'Faux.']], 'Add, Replace et Get sont requis.'),
+  Q('i13-q2b', 'quiz', 'fonctionner', c2, 'Modèles d’administration', 'Où se trouvent les modèles d’administration aujourd’hui ?', ['Dans le catalogue de paramètres.', 'Le profil Templates est en lecture seule.'], [['Dans le profil Templates, modifiable.', 'Déprécié.'], ['Nulle part.', 'Faux.'], ['Dans le pare-feu.', 'Faux.']], 'Le catalogue de paramètres les contient.'),
+  Q('i13-q2c', 'quiz', 'maintenir', c2, 'Dépannage', 'Quels journaux consulter si un OMA-URI ne s’applique pas ?', ['Diagnostic MDM et DeviceManagement-Enterprise-Diagnostics-Provider.', 'Deux journaux.'], [['Journal des impressions.', 'Faux.'], ['Journal du pare-feu seulement.', 'Insuffisant.'], ['Aucun.', 'Faux.']], 'Ces deux journaux montrent la livraison et l’erreur.'),
+
+  a.workflow({ id: 'i13-g3', title: 'Traiter une exigence', comp: c3.comp, tags: c3.tags, role: 'guided', dim: 'securiser', lesson: 'i13-l3',
+    st: 'Ordonnez le traitement d’une exigence de durcissement.',
+    blocks: [['b1', 'Chercher un paramètre pris en charge'], ['b2', 'Sinon chercher une alternative et nommer sa couverture'], ['b3', 'Sinon consigner comme non pris en charge'], ['b4', 'Fixer propriétaire et date de revue'], ['b5', 'Déclarer l’exigence satisfaite sans preuve']],
+    required: ['b1', 'b2', 'b3', 'b4'], forbidden: ['b5'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4']], notes: { b5: 'Fausse conformité.' }, solution: ['b1', 'b2', 'b3', 'b4'],
+    exp: 'Paramètre, alternative, non pris en charge puis propriétaire et revue.' }),
+  a.fix({ id: 'i13-a3', title: 'Corriger une fiche d’exception', comp: c3.comp, tags: c3.tags, role: 'autonomous', dim: 'maintenir', lesson: 'i13-l3', language: 'json',
+    st: 'Corrigez la fiche d’exception.',
+    starter: JSON.stringify({ statut: 'satisfait', compensation: '', revue: '' }, null, 2),
+    rules: [{ kind: 'equals', path: 'statut', value: 'non-pris-en-charge', message: 'Nommer le statut réel.', dim: 'securiser' }, { kind: 'type', path: 'compensation', type: 'string', message: 'Décrire la compensation.', dim: 'securiser' }, { kind: 'equals', path: 'revue', value: '6-mois', message: 'Fixer une date de revue.', dim: 'maintenir' }],
+    solution: JSON.stringify({ statut: 'non-pris-en-charge', compensation: 'App Control et détection Defender', revue: '6-mois' }, null, 2), exp: 'Statut réel, compensation décrite et revue fixée.' }),
+  Q('i13-q3a', 'quiz', 'comprendre', c3, 'Réponses', 'Quelle est une réponse honnête quand aucun paramètre n’existe ?', ['Une alternative nommée ou un statut non pris en charge.', 'Avec risque résiduel.'], [['Déclarer satisfait.', 'Faux.'], ['Cacher l’écart.', 'Faux.'], ['Un script non suivi.', 'Dette cachée.']], 'On nomme l’alternative ou l’écart.'),
+  Q('i13-q3b', 'quiz', 'fonctionner', c3, 'Dérive', 'Comment détecter une dérive ?', ['Comparer la valeur effective et la valeur voulue.', 'Sur un échantillon.'], [['Lire la page de configuration seulement.', 'Insuffisant.'], ['Attendre un incident.', 'Trop tard.'], ['Redémarrer.', 'Insuffisant.']], 'La valeur effective se compare à la valeur voulue.'),
+  Q('i13-q3c', 'quiz', 'maintenir', c3, 'Exception', 'Pourquoi une date de revue ?', ['Sans revue, l’exception devient la règle.', 'Gouvernance.'], [['Pour la licence.', 'Faux.'], ['Pour la vitesse.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Sans date de revue, l’exception s’installe.'),
+
+  Q('i13-ev1', 'eval', 'comprendre', c1, 'Approche', 'Quelle approche WSL traite-t-on ici ?', ['Gouverner par réglages, visibilité et conformité.', 'Pas d’interdiction réflexe.'], [['Toujours interdire.', 'Faux.'], ['Ignorer.', 'Faux.'], ['Désinstaller Windows.', 'Faux.']], 'On gouverne plutôt que d’interdire par réflexe.'),
+  M('i13-ev2', 'eval', 'securiser', c1, 'Mesures WSL', 'Cochez les mesures cohérentes pour un groupe de développeurs.', [['Désactiver WSL1.', 'Le plugiciel couvre WSL 2.'], ['Bloquer le noyau personnalisé.', 'Visibilité garantie.']], [['Laisser le noyau personnalisé.', 'Perte de visibilité.'], ['Compter sur l’antimalware du plugiciel.', 'Inexistant.']], 'WSL1 désactivé et noyau bloqué.'),
+  a.order({ id: 'i13-ev3', title: 'Déployer WSL cadré', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'fonctionner', lesson: 'i13-l1',
+    st: 'Ordonnez le déploiement de la gouvernance WSL.',
+    items: [['s1', 'Vérifier les versions minimales'], ['s2', 'Déployer le plugiciel Defender'], ['s3', 'Appliquer les paramètres Intune de WSL'], ['s4', 'Ajouter la conformité des distributions'], ['s5', 'Valider sur un pilote']], correct: ['s1', 's2', 's3', 's4', 's5'],
+    exp: 'Versions, plugiciel, paramètres, conformité puis pilote.' }),
+  a.fix({ id: 'i13-ev4', title: 'Corriger un profil personnalisé', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'securiser', lesson: 'i13-l2', language: 'json',
+    st: 'Corrigez le profil App Control en OMA-URI.',
+    starter: JSON.stringify({ typeDonnee: 'string', guidAvecAccolades: true, tailleOctets: 600000 }, null, 2),
+    rules: [{ kind: 'equals', path: 'typeDonnee', value: 'base64-fichier', message: 'Utiliser Base64 (fichier).', dim: 'fonctionner' }, { kind: 'equals', path: 'guidAvecAccolades', value: false, message: 'GUID sans accolades.', dim: 'fonctionner' }, { kind: 'range', path: 'tailleOctets', min: 1, max: 350000, message: 'Rester sous 350 000 octets.', dim: 'securiser' }],
+    solution: JSON.stringify({ typeDonnee: 'base64-fichier', guidAvecAccolades: false, tailleOctets: 300000 }, null, 2), exp: 'Base64, GUID sans accolades et taille sous la limite.' }),
+  a.match({ id: 'i13-ev5', title: 'Symptôme et cause', comp: c3.comp, tags: c3.tags, role: 'eval', dim: 'maintenir', lesson: 'i13-l3',
+    st: 'Associez chaque symptôme à sa cause probable.', items: [['p1', 'Erreur de conformité sur un paramètre personnalisé'], ['p2', 'Valeur effective différente de la valeur voulue'], ['p3', 'Le paramètre est introuvable dans le catalogue']],
+    options: [['s1', 'La valeur retournée par Get diffère de celle envoyée'], ['s2', 'Conflit avec une autre source de configuration'], ['s3', 'Édition, version ou plateforme sans support']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque symptôme a une cause documentée distincte.' }),
+  a.workflow({ id: 'i13-ev6', title: 'Résoudre une dérive', comp: c3.comp, tags: c3.tags, role: 'eval', dim: 'maintenir', lesson: 'i13-l3',
+    st: 'Ordonnez la résolution d’une dérive de configuration.',
+    blocks: [['b1', 'Lire la valeur effective sur un échantillon'], ['b2', 'Repérer les sources concurrentes'], ['b3', 'Désigner un propriétaire'], ['b4', 'Retirer la source en conflit'], ['b5', 'Revérifier'], ['b6', 'Ajouter une troisième source']],
+    required: ['b1', 'b2', 'b3', 'b4', 'b5'], forbidden: ['b6'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4'], ['b4', 'b5']], notes: { b6: 'Aggrave la dérive.' }, solution: ['b1', 'b2', 'b3', 'b4', 'b5'],
+    exp: 'Valeur effective, sources, propriétaire, retrait puis revérification.' }),
+  a.short({ id: 'i13-ev7', title: 'Taille maximale', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'comprendre', lesson: 'i13-l2',
+    st: 'Quelle est la limite de taille, en octets, d’une politique App Control déployée par OMA-URI ? (nombre)', accepted: ['350000', '350 000'], numeric: { value: 350000 }, ph: 'un nombre',
+    exp: 'La limite est de 350 000 octets pour une politique déployée par OMA-URI.' }),
+  a.short({ id: 'i13-ev8', title: 'Version WSL', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'comprendre', lesson: 'i13-l1',
+    st: 'Quelle version majeure de WSL est visée par le plugiciel Defender ? (nombre)', accepted: ['2'], numeric: { value: 2 }, ph: 'un nombre',
+    exp: 'Le plugiciel prend en charge les distributions WSL 2, et WSL 1 est à désactiver.' }),
+
+  a.inspect({ id: 'i13-cs1', title: 'Cas : durcissement chez Aurore Logistique', comp: c1.comp, tags: c1.tags, role: 'case', dim: 'securiser', lesson: 'i13-l1', language: 'text',
+    st: 'Plan fictif. Repérez les défauts.',
+    lines: [['p1', 'WSL est interdit pour tous, y compris les développeurs.', { ok: 'a1', fixes: [['a1', 'Autoriser WSL 2 cadré pour un groupe'], ['a2', 'Accepter']] }], ['p2', 'On compte sur le plugiciel pour l’antimalware dans WSL.', { ok: 'b1', fixes: [['b1', 'Nommer ce que le plugiciel ne couvre pas'], ['b2', 'Accepter']] }], ['p3', 'Le noyau personnalisé reste autorisé.', { ok: 'c1', fixes: [['c1', 'Bloquer par Intune'], ['c2', 'Accepter']] }]],
+    exp: 'Trois défauts : interdiction réflexe, fausse couverture et noyau permis.' }),
+  a.workflow({ id: 'i13-cs2', title: 'Cas : choisir le mécanisme', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'securiser', lesson: 'i13-l2',
+    st: 'Ordonnez le choix du mécanisme pour un nouveau paramètre.',
+    blocks: [['t1', 'Chercher un profil de sécurité'], ['t2', 'Chercher dans le catalogue de paramètres'], ['t3', 'Vérifier Add, Replace, Get du CSP'], ['t4', 'Créer un OMA-URI en dernier recours'], ['t5', 'Valider la livraison dans les journaux'], ['t6', 'Commencer par un OMA-URI']],
+    required: ['t1', 't2', 't3', 't4', 't5'], forbidden: ['t6'], before: [['t1', 't2'], ['t2', 't3'], ['t3', 't4'], ['t4', 't5']], notes: { t6: 'Maintenance accrue.' }, solution: ['t1', 't2', 't3', 't4', 't5'],
+    exp: 'Profil de sécurité, catalogue, CSP, OMA-URI puis journaux.' }),
+  a.match({ id: 'i13-cs3', title: 'Cas : natures', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i13-l3',
+    st: 'Associez chaque situation à la nature à inscrire au registre.', items: [['p1', 'Paramètre natif dans le catalogue'], ['p2', 'Fonction qui exige EPM'], ['p3', 'Exigence sans paramètre ni alternative']],
+    options: [['s1', 'Natif'], ['s2', 'Licence supplémentaire'], ['s3', 'Non pris en charge']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'La nature décrit honnêtement ce que le produit couvre.' }),
+  a.open({ id: 'i13-cs-open', title: 'Cas : stratégie de durcissement', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i13-l3',
+    st: 'Rédigez la stratégie de durcissement d’une organisation fictive.',
+    deliverable: 'Un document : WSL, mécanismes, exceptions, dérive, preuves et registre des limites.',
+    rubric: [['r1', 'WSL est gouverné par trois leviers.', 'securiser'], ['r2', 'Le mécanisme est choisi par ordre de préférence.', 'fonctionner'], ['r3', 'Les exigences non prises en charge sont nommées.', 'comprendre'], ['r4', 'Les exceptions ont une revue.', 'maintenir'], ['r5', 'La preuve est la valeur effective.', 'maintenir']],
+    exp: 'Pas de note automatique : on juge la cohérence de la stratégie.' }),
+
+  Q('i13-rm1', 'remediation', 'comprendre', c1, 'Remédiation : WSL', 'Pourquoi bloquer le noyau personnalisé ?', ['La visibilité du plugiciel n’y est pas garantie.', 'Limite documentée.'], [['Pour économiser du disque.', 'Faux.'], ['Pour la licence.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Le plugiciel ne garantit pas la visibilité avec un noyau personnalisé.'),
+  Q('i13-rm2', 'remediation', 'fonctionner', c2, 'Remédiation : OMA-URI', 'Pourquoi préférer le catalogue à un OMA-URI ?', ['Moins de maintenance et moins d’erreurs de syntaxe.', 'Intégré à Intune.'], [['Il est plus lent.', 'Faux.'], ['Il coûte plus.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Le catalogue réduit la maintenance.'),
+  Q('i13-rm3', 'remediation', 'securiser', c3, 'Remédiation : statut', 'Pourquoi ne pas déclarer satisfaite une exigence sans paramètre ?', ['Ce serait une fausse conformité.', 'L’écart se nomme.'], [['Pour la vitesse.', 'Faux.'], ['Pour la licence.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Une fausse conformité cache un risque.'),
+];
+
+const competencies: AiCompetency[] = [
+  { id: 'i13-c1', module: 'i13', name: 'Gouverner un composant comme WSL', description: 'Paramètres, plugiciel, conformité.', criteria: [{ id: 'i13-c1-1', text: 'Je nomme les trois leviers.' }, { id: 'i13-c1-2', text: 'J’énonce les limites de visibilité.' }, { id: 'i13-c1-3', text: 'Je décide bloquer, autoriser ou surveiller.' }] },
+  { id: 'i13-c2', module: 'i13', name: 'Choisir le mécanisme de configuration', description: 'Profil, catalogue, OMA-URI, ADMX.', criteria: [{ id: 'i13-c2-1', text: 'Je respecte l’ordre de préférence.' }, { id: 'i13-c2-2', text: 'Je connais les contraintes OMA-URI.' }, { id: 'i13-c2-3', text: 'Je dépanne par les journaux.' }] },
+  { id: 'i13-c3', module: 'i13', name: 'Traiter honnêtement l’absence de paramètre', description: 'Alternatives, dérive, exceptions.', criteria: [{ id: 'i13-c3-1', text: 'Je nomme une alternative et sa couverture.' }, { id: 'i13-c3-2', text: 'Je détecte la dérive.' }, { id: 'i13-c3-3', text: 'Je documente une exception.' }] },
+];
+
+const projects: AiProject[] = [
+  { id: 'i13-p1', module: 'i13', level: 'débutant', title: 'Tableau de décision WSL', problem: 'Décider, pour quatre groupes fictifs, de bloquer, autoriser ou surveiller WSL.', architecture: 'Tableau d’une page.', tools: ['Tableur'], data: 'Groupes fictifs.', steps: ['Lister les groupes.', 'Évaluer le risque.', 'Choisir la décision.'], success: ['Chaque décision est justifiée.'], risks: ['Interdiction réflexe.'], extensions: ['Ajouter la conformité.'] },
+  { id: 'i13-p2', module: 'i13', level: 'intermédiaire', title: 'Plan de gouvernance WSL', problem: 'Concevoir le plan de gouvernance WSL avec paramètres, plugiciel, conformité et risque résiduel.', architecture: 'Plan documenté avec tests.', tools: ['Éditeur de texte'], data: 'Parc fictif.', steps: ['Définir les paramètres.', 'Planifier le plugiciel.', 'Écrire la conformité.', 'Nommer le risque résiduel.'], success: ['Le risque résiduel est explicite.'], risks: ['Fausse couverture.'], extensions: ['Ajouter une requête de contrôle.'],
+    connected: { accounts: 'Un locataire de test avec Intune et un poste Windows 11 de test avec WSL 2.', permissions: 'Policy and Profile Manager dans le locataire de test.', costs: 'Licences de test.', secrets: 'Aucun secret requis.', cleanup: 'Retirer les profils et désinstaller le plugiciel de test.', limits: 'Facultatif : le plugiciel exige un appareil intégré à Defender for Endpoint.' } },
+  { id: 'i13-p3', module: 'i13', level: 'avancé', title: 'Registre des exigences non prises en charge', problem: 'Dresser un registre d’exigences de durcissement avec statut, alternative, risque et revue.', architecture: 'Registre avec propriétaire et date.', tools: ['Tableur'], data: 'Exigences fictives.', steps: ['Lister les exigences.', 'Classer par nature.', 'Nommer les alternatives.', 'Planifier les revues.'], success: ['Aucune exigence sans statut.'], risks: ['Fausse conformité.'], extensions: ['Ajouter un tableau de dérive.'] },
+];
+
+export const i13 = assemble({ id: 'i13', level: 4, n: 13, title: 'Restrictions et durcissement du système',
+  summary: 'WSL comme cas de composant à gouverner, choix du mécanisme de configuration, paramètres non pris en charge, alternatives et dérive.',
+  lessons: [l1, l2, l3], exercises, competencies, projects,
+  caseTitle: 'Durcir les postes chez Aurore Logistique',
+  caseScenario: 'Vous gouvernez WSL, choisissez les mécanismes et documentez les exceptions. Actions simulées.', caseMinutes: 45 });
