@@ -23,5 +23,6 @@ import { CAPS_D21 } from './d21.ts';
 import { CAPS_D22 } from './d22.ts';
 import { CAPS_D23 } from './d23.ts';
 import { CAPS_D24 } from './d24.ts';
+import { CAPS_D25 } from './d25.ts';
 
-export const CAPABILITIES: MdcCapability[] = [...CAPS_D01, ...CAPS_D02, ...CAPS_D03, ...CAPS_D04, ...CAPS_D05, ...CAPS_D06, ...CAPS_D07, ...CAPS_D08, ...CAPS_D09, ...CAPS_D10, ...CAPS_D11, ...CAPS_D12, ...CAPS_D13, ...CAPS_D14, ...CAPS_D15, ...CAPS_D16, ...CAPS_D17, ...CAPS_D18, ...CAPS_D19, ...CAPS_D20, ...CAPS_D21, ...CAPS_D22, ...CAPS_D23, ...CAPS_D24];
+export const CAPABILITIES: MdcCapability[] = [...CAPS_D01, ...CAPS_D02, ...CAPS_D03, ...CAPS_D04, ...CAPS_D05, ...CAPS_D06, ...CAPS_D07, ...CAPS_D08, ...CAPS_D09, ...CAPS_D10, ...CAPS_D11, ...CAPS_D12, ...CAPS_D13, ...CAPS_D14, ...CAPS_D15, ...CAPS_D16, ...CAPS_D17, ...CAPS_D18, ...CAPS_D19, ...CAPS_D20, ...CAPS_D21, ...CAPS_D22, ...CAPS_D23, ...CAPS_D24, ...CAPS_D25];
