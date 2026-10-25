@@ -174,5 +174,13 @@ export const MDC_SOURCES: SourceDef[] = [
   S('arc-troubleshoot', 'Troubleshoot Azure Connected Machine agent connection problems', 'https://learn.microsoft.com/azure/azure-arc/servers/troubleshoot-agent-onboard', 'Codes AZCM et problèmes de connexion de l’agent Arc', 'reference'),
   S('arc-proxy', 'Manage Azure Connected Machine agent proxy settings', 'https://learn.microsoft.com/azure/azure-arc/servers/manage-agent-proxy-settings', 'Proxy et contournement pour points de terminaison privés', 'reference'),
   S('arc-prereq', 'Azure Arc-enabled servers prerequisites', 'https://learn.microsoft.com/azure/azure-arc/servers/prerequisites', 'Systèmes pris en charge, fournisseurs de ressources et rôles', 'reference', 'Consulté par les liens de la documentation Defender for Cloud; relire la page à la date de mise en œuvre.'),
+  S('devops-github', 'Connect your GitHub environment', 'quickstart-onboard-github', 'Connecteur GitHub'),
+  S('devops-ado', 'Connect Azure DevOps environments', 'quickstart-onboard-devops', 'Connecteur Azure DevOps'),
+  S('devops-edit', 'Edit DevOps connectors', 'edit-devops-connector', 'Modification des connecteurs DevOps'),
+  S('devops-github-action', 'Configure the Microsoft Security DevOps GitHub action', 'github-action', 'Action GitHub Microsoft Security DevOps'),
+  S('devops-pr', 'Enable pull request annotations', 'enable-pull-request-annotations', 'Annotations de demandes de tirage'),
+  S('devops-pr-review', 'Review pull request annotations', 'review-pull-request-annotations', 'Traitement des annotations'),
+  S('devops-image-mapping', 'Map container images from code to runtime', 'container-image-mapping', 'Cartographie code vers exécution'),
+  S('devops-cli-auth', 'Defender for Cloud CLI authentication', 'defender-cli-authentication', 'Authentification de la CLI', 'preview', 'Ingestion DevOps présentée en préversion dans la documentation consultée.'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];

@@ -20,8 +20,9 @@ import { d16 } from './d16.ts';
 import { d17 } from './d17.ts';
 import { d18 } from './d18.ts';
 import { d19 } from './d19.ts';
+import { d20 } from './d20.ts';
 
-export const MDC_MODULES: ModuleContent[] = [d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d11, d12, d13, d14, d15, d16, d17, d18, d19];
+export const MDC_MODULES: ModuleContent[] = [d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d11, d12, d13, d14, d15, d16, d17, d18, d19, d20];
 const finalProjects: AiProject[] = [];
 const resources: ResourceDef[] = [];
 export const CONTENT = buildContent(MDC_LEVELS, MDC_MODULES, finalProjects, resources);
