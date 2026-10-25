@@ -127,7 +127,7 @@ export function recommend(cat: Catalog, p: AiProgress): Next {
 
 /** Score moyen par dimension sur les exercices notés automatiquement et déjà tentés. */
 export function dimScores(cat: Catalog, p: AiProgress): Record<Dim, { mean: number; n: number }> {
-  const out: Record<Dim, { sum: number; n: number }> = { comprendre: { sum: 0, n: 0 }, fonctionner: { sum: 0, n: 0 }, securiser: { sum: 0, n: 0 }, maintenir: { sum: 0, n: 0 } };
+  const out: Record<Dim, { sum: number; n: number }> = { comprendre: { sum: 0, n: 0 }, fonctionner: { sum: 0, n: 0 }, securiser: { sum: 0, n: 0 }, maintenir: { sum: 0, n: 0 }, verifier: { sum: 0, n: 0 }, cout: { sum: 0, n: 0 } };
   for (const e of cat.exercises) {
     if (e.type === 'open') continue;
     const r = p.items[e.id];

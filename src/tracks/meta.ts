@@ -9,7 +9,7 @@ export interface TrackNavItem {
 }
 
 export interface TrackMeta {
-  id: 'ia' | 'xdr' | 'intune' | 'scenarios';
+  id: 'ia' | 'xdr' | 'intune' | 'scenarios' | 'mdc';
   route: string;
   /** Libellé court dans le menu des sections. */
   navFr: string;
@@ -111,6 +111,30 @@ export const TRACKS: TrackMeta[] = [
       { sub: 'suivi', fr: 'Suivi', en: 'Tracking' },
       { sub: 'projets', fr: 'Labs', en: 'Labs', also: ['projet'] },
       { sub: 'couverture', fr: 'Couverture', en: 'Coverage' },
+    ],
+  },
+  {
+    id: 'mdc',
+    route: 'defender-cloud',
+    navFr: 'Defender for Cloud',
+    navEn: 'Defender for Cloud',
+    titleFr: 'Microsoft Defender for Cloud',
+    titleEn: 'Microsoft Defender for Cloud',
+    kickerFr: 'Section 5',
+    accent: '#8bd450',
+    storageKey: 'boube.mdc.v1',
+    resourceDir: 'ressources-mdc',
+    exportFile: 'boube-defender-for-cloud-progression.json',
+    label: 'Defender for Cloud',
+    descFr: 'CNAPP de Microsoft du débutant à l’expert : architecture, plans et coûts, gouvernance, CSPM, chemins d’attaque, conformité, charges de travail, AWS, GCP, Arc, DevSecOps, alertes, intégration XDR et Sentinel, automatisation et exploitation.',
+    descEn: 'Microsoft CNAPP from beginner to expert: architecture, plans and costs, governance, CSPM, attack paths, compliance, workloads, AWS, GCP, Arc, DevSecOps, alerts, XDR and Sentinel integration, automation and operations. Written in French.',
+    nav: [
+      ...COMMON_NAV,
+      { sub: 'capacites', fr: 'Capacités', en: 'Capabilities' },
+      { sub: 'fiches', fr: 'Fiches', en: 'Sheets', also: ['fiche'] },
+      { sub: 'catalogue', fr: 'Scénarios', en: 'Scenarios' },
+      { sub: 'sources', fr: 'Sources', en: 'Sources' },
+      { sub: 'limites', fr: 'Limites', en: 'Limits' },
     ],
   },
 ];

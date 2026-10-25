@@ -13,6 +13,8 @@ export interface SourceDef {
   status: SourceStatus;
   /** Incertitude ou précaution à connaître avant de s'appuyer sur cette source. */
   uncertainty?: string;
+  /** Date de consultation propre à la source (AAAA-MM-JJ). Absente : date commune du registre. */
+  consulted?: string;
 }
 
 /** Nature de la capacité : fonction native, intégration, dépendance, licence supplémentaire ou non prise en charge. */

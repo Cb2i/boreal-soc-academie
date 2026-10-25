@@ -2,7 +2,7 @@
 import { author } from '../agentic/content/helpers.ts';
 import type { AiExercise } from '../agentic/types.ts';
 
-type Dim = 'comprendre' | 'fonctionner' | 'securiser' | 'maintenir';
+type Dim = 'comprendre' | 'fonctionner' | 'securiser' | 'maintenir' | 'verifier' | 'cout';
 type Role = 'guided' | 'autonomous' | 'quiz' | 'eval' | 'case' | 'remediation';
 export type Opt = [text: string, why: string];
 

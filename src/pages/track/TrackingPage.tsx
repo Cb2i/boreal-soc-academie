@@ -62,7 +62,7 @@ export function TrackingPage() {
           <thead><tr><th scope="col">{tr('Module', 'Module')}</th><th scope="col">{tr('Évaluation', 'Assessment')}</th><th scope="col">{tr('Meilleur', 'Best')}</th><th scope="col">{tr('Passations', 'Attempts')}</th><th scope="col">{tr('Cas pratique', 'Case')}</th></tr></thead>
           <tbody>{MODULES.map((m) => { const e = p.evals[m.id]; const st = moduleStats(m, CAT, p, []); return <tr key={m.id}><th scope="row"><a href={to('module', m.id)}>{m.n}. {m.title}</a></th><td>{e ? `${Math.round(e.score * 100)} %` : '-'}</td><td>{e ? `${Math.round(e.best * 100)} %` : '-'}</td><td>{e ? e.attempts : 0}</td><td>{st.caseScore !== null ? `${Math.round(st.caseScore * 100)} %` : '-'}</td></tr>; })}</tbody>
         </table></div>
-        <div className="row">{(Object.keys(dims) as Dim[]).map((d) => <span key={d} className="pill">{DIM_LABELS[d]} : {dims[d].n ? `${Math.round(dims[d].mean * 100)} % (${dims[d].n})` : '-'}</span>)}</div>
+        <div className="row">{(Object.keys(dims) as Dim[]).filter((d) => dims[d].n > 0 || !['verifier', 'cout'].includes(d)).map((d) => <span key={d} className="pill">{DIM_LABELS[d]} : {dims[d].n ? `${Math.round(dims[d].mean * 100)} % (${dims[d].n})` : '-'}</span>)}</div>
       </section>
 
       <section aria-labelledby="t-comp" className="stack">

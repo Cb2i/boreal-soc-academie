@@ -43,7 +43,7 @@ export function EvalPage({ moduleId }: { moduleId: string }) {
 
   if (results) {
     const score = exs.reduce((a, e) => a + results[e.id].score, 0) / exs.length;
-    const byDim: Record<Dim, number[]> = { comprendre: [], fonctionner: [], securiser: [], maintenir: [] };
+    const byDim: Record<Dim, number[]> = { comprendre: [], fonctionner: [], securiser: [], maintenir: [], verifier: [], cout: [] };
     exs.forEach((e) => byDim[e.dim].push(results[e.id].score));
     const weakTagsList = [...new Set(exs.filter((e) => results[e.id].score < 1).flatMap((e) => e.tags))];
     const rem = remediationFor(m.id, weakTagsList, CAT);

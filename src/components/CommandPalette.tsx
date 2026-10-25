@@ -63,7 +63,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       locked: !isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll, p.startLevel[e.path]),
       done: !!p.done[e.id],
     }));
-    const short: Record<string, string> = { ia: 'IA', xdr: 'XDR', intune: 'Intune', scenarios: 'Scénarios' };
+    const short: Record<string, string> = { ia: 'IA', xdr: 'XDR', intune: 'Intune', scenarios: 'Scénarios', mdc: 'Defender for Cloud' };
     const aiItems: Item[] = tracks
       ? TRACKS.flatMap((t) => {
           const c = tracks[t.id];

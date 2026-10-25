@@ -1,6 +1,7 @@
 // Registre des sources officielles consultées. Chaque lien cité dans une leçon doit figurer ici (test d'intégrité).
 // Date de consultation commune : session de recherche du 2026-10-24 (Microsoft Learn, consulté via la recherche et la lecture de pages).
 import type { SourceDef } from './types.ts';
+import { MDC_SOURCES } from './mdc/sources.ts';
 
 export const CONSULTED = '2026-10-24';
 
@@ -328,6 +329,7 @@ export const SOURCES: SourceDef[] = [
   { id: 'intune-audit-logs', title: 'Microsoft Learn : Use audit logs to track and monitor events in Microsoft Intune', url: L + 'intune/governance/monitor-audit-logs', product: 'Intune', topic: 'Journaux d audit, export et Graph, deux ans d événements', status: 'ga' },
   { id: 'intune-troubleshoot-policies', title: 'Microsoft Learn : Troubleshooting policies and profiles in Microsoft Intune', url: L + 'troubleshoot/mem/intune/device-configuration/troubleshoot-policies-in-microsoft-intune', product: 'Intune', topic: 'Volet de dépannage intégré, licence, géré, jointure Entra', status: 'ga' },
   { id: 'intune-graph-overview', title: 'Microsoft Learn : Working with Intune in Microsoft Graph', url: L + 'graph/api/resources/intune-graph-overview', product: 'Intune', topic: 'API Graph pour la gestion des appareils', status: 'ga' },
+  ...MDC_SOURCES,
   { id: 'win-mdm-collect-logs', title: 'Microsoft Learn : Collect MDM logs', url: L + 'windows/client-management/mdm-collect-logs', product: 'Windows', topic: 'Rapport de diagnostic MDM Windows', status: 'ga' },
 ];
 
@@ -337,5 +339,5 @@ export const SOURCE_BY_ID: Record<string, SourceDef> = Object.fromEntries(SOURCE
 export function sref(id: string): { title: string; url: string; verified: string } {
   const s = SOURCE_BY_ID[id];
   if (!s) throw new Error(`Source inconnue du registre : ${id}`);
-  return { title: s.title, url: s.url, verified: CONSULTED };
+  return { title: s.title, url: s.url, verified: s.consulted ?? CONSULTED };
 }

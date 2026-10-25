@@ -31,7 +31,7 @@ export function SourcesPage() {
                 <td>{s.product}</td>
                 <td>{s.topic}</td>
                 <td>{STATUS[s.status] ?? s.status}</td>
-                <td>{CONSULTED}</td>
+                <td>{s.consulted ?? CONSULTED}</td>
                 <td>{s.uncertainty ?? '-'}</td>
               </tr>
             ))}

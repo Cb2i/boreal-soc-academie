@@ -6,12 +6,14 @@ import type { Item, SourceRef } from '../content/types.ts';
 export type { Item, SourceRef };
 
 /** Dimensions évaluées séparément, pour ne pas confondre comprendre, faire fonctionner, sécuriser et maintenir. */
-export type Dim = 'comprendre' | 'fonctionner' | 'securiser' | 'maintenir';
+export type Dim = 'comprendre' | 'fonctionner' | 'securiser' | 'maintenir' | 'verifier' | 'cout';
 export const DIM_LABELS: Record<Dim, string> = {
   comprendre: 'Compréhension',
   fonctionner: 'Fonctionnement',
   securiser: 'Sécurité',
   maintenir: 'Maintenabilité',
+  verifier: 'Vérification',
+  cout: 'Coût',
 };
 
 export type Role = 'guided' | 'autonomous' | 'quiz' | 'eval' | 'case' | 'remediation';
