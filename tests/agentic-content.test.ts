@@ -23,13 +23,12 @@ describe('contenu Agentic AI : intégrité', () => {
       expect(m.lessons.length, `${m.id} leçons`).toBeGreaterThanOrEqual(1);
       expect(m.evaluation.length, `${m.id} évaluation`).toBe(8);
       expect(m.competencies.length, `${m.id} compétences`).toBeGreaterThanOrEqual(2);
-      expect(m.projects.length, `${m.id} projets`).toBe(3);
+      expect(m.projects.length, `${m.id} labs`).toBeGreaterThanOrEqual(1);
       expect(m.remediation.length, `${m.id} remédiation`).toBeGreaterThanOrEqual(3);
       expect(CASES.some((c) => c.id === m.caseStudy), `${m.id} cas`).toBe(true);
       for (const id of [...m.evaluation, ...m.remediation]) expect(EX_BY_ID[id], id).toBeDefined();
       for (const id of m.competencies) expect(COMP_BY_ID[id], id).toBeDefined();
       for (const id of m.projects) expect(PROJECTS.some((p) => p.id === id), id).toBe(true);
-      expect(m.projects.map((id) => PROJECTS.find((p) => p.id === id)!.level).sort()).toEqual(['avancé', 'débutant', 'intermédiaire']);
     }
   });
 

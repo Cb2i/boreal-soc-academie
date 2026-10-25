@@ -4,6 +4,6 @@ import type { AiProject, ModuleContent } from '../agentic/types.ts';
 export function withLabs(modules: ModuleContent[], labs: AiProject[]): ModuleContent[] {
   return modules.map((m) => {
     const own = labs.filter((l) => l.module === m.module.id);
-    return own.length > 0 ? { ...m, projects: own } : m;
+    return own.length > 0 ? { ...m, projects: own, module: { ...m.module, projects: own.map((l) => l.id) } } : m;
   });
 }

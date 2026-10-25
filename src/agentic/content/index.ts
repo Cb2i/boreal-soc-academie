@@ -1,7 +1,11 @@
 import type { ModuleContent } from '../types.ts';
 import { buildContent } from './build.ts';
 import { AI_LEVELS } from './levels.ts';
-import { FINAL_PROJECTS } from './final.ts';
+import { IA_FINAL_LABS } from './labsF.ts';
+import { IA_LABS_1 } from './labs1.ts';
+import { IA_LABS_2 } from './labs2.ts';
+import { IA_LABS_3 } from './labs3.ts';
+import { withLabs } from '../../msec/labs.ts';
 import { RESOURCES } from './resources.ts';
 import { m01 } from './m01.ts';
 import { m02 } from './m02.ts';
@@ -23,8 +27,8 @@ import { m17 } from './m17.ts';
 import { m18 } from './m18.ts';
 
 /** Tous les modules livrés, dans l'ordre pédagogique. */
-export const MODULE_CONTENT: ModuleContent[] = [m01, m02, m03, m04, m05, m06, m07, m08, m09, m10, m11, m12, m13, m14, m15, m16, m17, m18];
+export const MODULE_CONTENT: ModuleContent[] = withLabs([m01, m02, m03, m04, m05, m06, m07, m08, m09, m10, m11, m12, m13, m14, m15, m16, m17, m18], [...IA_LABS_1, ...IA_LABS_2, ...IA_LABS_3]);
 
-export const CONTENT = buildContent(AI_LEVELS, MODULE_CONTENT, FINAL_PROJECTS, RESOURCES);
+export const CONTENT = buildContent(AI_LEVELS, MODULE_CONTENT, IA_FINAL_LABS, RESOURCES);
 export const { LEVELS, MODULES, LESSONS, EXERCISES, COMPETENCIES, CASES, PROJECTS, MODULE_BY_ID, LESSON_BY_ID, EX_BY_ID, COMP_BY_ID, CASE_BY_MODULE, PROJECT_BY_ID } = CONTENT;
 export { RESOURCES };

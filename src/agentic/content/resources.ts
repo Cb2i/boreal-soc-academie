@@ -74,7 +74,7 @@ export const RESOURCES: ResourceDef[] = [
   {
     id: 'r-kb-script', title: 'Contrôle d’hygiène de la base de runbooks', file: 'rapports/kb-hygiene.py', kind: 'python', module: 'm15', status: 'teste',
     description: 'Vérifie propriétaire, dates de révision et statut des runbooks ; signale les revues dépassées.',
-    how: 'Exécuté avec python3 -I sur trois runbooks fictifs : trois problèmes détectés. Contrôle de forme seulement.', lessons: ['m15-l2'], projects: ['m15-p2'],
+    how: 'Exécuté avec python3 -I sur trois runbooks fictifs : trois problèmes détectés. Contrôle de forme seulement.', lessons: ['m15-l2'], projects: ['m15-p1'],
   },
   {
     id: 'r-runbook-compromis', title: 'Runbook fictif : compte compromis', file: 'rapports/runbooks/rb-compte-compromis.md', kind: 'markdown', module: 'm15', status: 'teste',
@@ -83,7 +83,7 @@ export const RESOURCES: ResourceDef[] = [
   {
     id: 'r-garde-outils', title: 'Garde-fou d’appels d’outils', file: 'securite/garde-outils.py', kind: 'python', module: 'm16', status: 'teste',
     description: 'Liste blanche, validation stricte des paramètres, niveaux d’effet, approbation et limite d’appels.',
-    how: 'Exécuté avec python3 -I sur six appels fictifs : lectures autorisées, outil inconnu et paramètre piégé refusés, isolement envoyé en approbation.', lessons: ['m16-l2'], projects: ['m16-p2'],
+    how: 'Exécuté avec python3 -I sur six appels fictifs : lectures autorisées, outil inconnu et paramètre piégé refusés, isolement envoyé en approbation.', lessons: ['m16-l2'], projects: ['m16-p1'],
   },
   {
     id: 'r-appels-fictifs', title: 'Appels d’outils fictifs', file: 'securite/appels-fictifs.json', kind: 'donnees', module: 'm16', status: 'teste',
