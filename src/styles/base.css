@@ -650,3 +650,7 @@ main:focus { outline: none; }
 .flow-panel.k-atk .flow-pdu code { border-color: var(--bad); } .flow-panel.k-ctl .flow-pdu code { border-color: var(--ok); }
 .flow-in { font-size: .92rem; }
 @media (prefers-reduced-motion: reduce) { .flow-pk-halo { animation: none; } }
+
+/* Le schéma ne doit jamais coller au bloc qui le précède (.flow remet margin à 0 plus haut) */
+.stack > .flow { margin-top: 1.25rem; margin-bottom: 0.25rem; }
+.stack > .flow + * { margin-top: 1.25rem; }
