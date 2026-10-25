@@ -26,8 +26,10 @@ import { d22 } from './d22.ts';
 import { d23 } from './d23.ts';
 import { d24 } from './d24.ts';
 import { d25 } from './d25.ts';
+import { d26 } from './d26.ts';
+import { MDC_FINAL_PROJECTS } from './finalProjects.ts';
 
-export const MDC_MODULES: ModuleContent[] = [d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25];
-const finalProjects: AiProject[] = [];
+export const MDC_MODULES: ModuleContent[] = [d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26];
+const finalProjects: AiProject[] = MDC_FINAL_PROJECTS;
 const resources: ResourceDef[] = [];
 export const CONTENT = buildContent(MDC_LEVELS, MDC_MODULES, finalProjects, resources);

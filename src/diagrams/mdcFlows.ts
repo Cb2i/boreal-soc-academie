@@ -23,5 +23,6 @@ import { H22 } from './mdc/h22.ts';
 import { H23 } from './mdc/h23.ts';
 import { H24 } from './mdc/h24.ts';
 import { H25 } from './mdc/h25.ts';
+import { H26 } from './mdc/h26.ts';
 import type { Flow } from './types.ts';
-export const FLOWS_MDC: Flow[] = [...H01, ...H02, ...H03, ...H04, ...H05, ...H06, ...H07, ...H08, ...H09, ...H10, ...H11, ...H12, ...H13, ...H14, ...H15, ...H16, ...H17, ...H18, ...H19, ...H20, ...H21, ...H22, ...H23, ...H24, ...H25];
+export const FLOWS_MDC: Flow[] = [...H01, ...H02, ...H03, ...H04, ...H05, ...H06, ...H07, ...H08, ...H09, ...H10, ...H11, ...H12, ...H13, ...H14, ...H15, ...H16, ...H17, ...H18, ...H19, ...H20, ...H21, ...H22, ...H23, ...H24, ...H25, ...H26];
