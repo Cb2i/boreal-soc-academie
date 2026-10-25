@@ -601,7 +601,7 @@ main:focus { outline: none; }
 .flow-ctl { gap: 8px; }
 .flow-list summary { cursor: pointer; font-size: .9rem; color: var(--muted); }
 @media (max-width: 640px) { .flow { padding: 10px; } }
-.flow-svg.narrow .flow-lab { font-size: 19px; } .flow-svg.narrow .flow-sub { font-size: 15px; } .flow-svg.narrow .flow-badge text { font-size: 14px; }
+.flow-svg.narrow .flow-lab { font-size: 16px; } .flow-svg.narrow .flow-sub { font-size: 13px; } .flow-svg.narrow .flow-badge text { font-size: 14px; }
 @media (prefers-reduced-motion: reduce) { .flow-node rect, .flow-edge { transition: none; } }
 
 /* Mouvement : flux continu, fluide, qui part et revient */
@@ -650,9 +650,3 @@ main:focus { outline: none; }
 .flow-panel.k-atk .flow-pdu code { border-color: var(--bad); } .flow-panel.k-ctl .flow-pdu code { border-color: var(--ok); }
 .flow-in { font-size: .92rem; }
 @media (prefers-reduced-motion: reduce) { .flow-pk-halo { animation: none; } }
-
-/* Libellés longs : deux lignes au lieu d'une coupure */
-.flow-lab.two { font-size: 13.5px; }
-.flow-sub.sm { font-size: 11.5px; }
-.flow-svg.narrow .flow-lab.two { font-size: 16px; }
-.flow-svg.narrow .flow-sub.sm { font-size: 13px; }

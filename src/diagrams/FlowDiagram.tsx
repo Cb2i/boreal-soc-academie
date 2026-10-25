@@ -21,9 +21,27 @@ const GLYPH: Record<Icon, string> = {
   chart: 'M4 20V4M4 20h16M8 16v-4M12 16V8M16 16v-7',
 };
 
+function wrap(text: string, lim: number, maxLines: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let cur = '';
+  for (const w of words) {
+    const t = cur ? `${cur} ${w}` : w;
+    if (t.length <= lim || !cur) cur = t; else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > maxLines) {
+    const keep = lines.slice(0, maxLines);
+    const rest = lines.slice(maxLines - 1).join(' ');
+    keep[maxLines - 1] = rest;
+    lines.length = 0; lines.push(...keep);
+  }
+  return lines.map((l, i) => (l.length > lim ? (i === lines.length - 1 || true ? l.slice(0, lim - 1) + '…' : l) : l));
+}
+
 function layout(n: number, narrow: boolean) {
   const W = narrow ? 520 : 920;
-  const NW = narrow ? 196 : 200;
+  const NW = narrow ? 210 : 220;
   const cols = narrow ? 2 : Math.min(3, n);
   const rows = Math.ceil(n / cols);
   const gx = (W - cols * NW) / (cols + 1);
@@ -136,27 +154,17 @@ export function FlowDiagram({ flow }: { flow: Flow }) {
                 <rect width={NW} height={NH} rx="16" />
                 <g transform="translate(14,16) scale(1.5)"><g className="flow-ico"><path d={GLYPH[n[3]]} /></g></g>
                 {(() => {
-                  const lim = narrow ? 19 : 18;
-                  const subLim = narrow ? 24 : 22;
-                  const lab = n[1];
-                  let l1 = lab, l2 = '';
-                  if (lab.length > lim) {
-                    const cut = lab.lastIndexOf(' ', lim);
-                    if (cut > 4) { l1 = lab.slice(0, cut); l2 = lab.slice(cut + 1); } else { l1 = lab.slice(0, lim - 1) + '…'; }
-                    if (l2.length > lim + 2) l2 = l2.slice(0, lim + 1) + '…';
-                  }
-                  const sub = n[2].length > subLim + 4 ? n[2].slice(0, subLim + 3) + '…' : n[2];
-                  const small = sub.length > subLim;
-                  return l2 ? (
+                  const tx = narrow ? 56 : 62;
+                  const labLim = narrow ? 16 : 18;
+                  const subLim = narrow ? 21 : 22;
+                  const ll = wrap(n[1], labLim, 2);
+                  const sl = wrap(n[2], subLim, ll.length === 1 ? 2 : 1);
+                  const ly = ll.length === 1 ? (sl.length === 1 ? [36] : [30]) : [29, 47];
+                  const sy = ll.length === 1 ? (sl.length === 1 ? [56] : [49, 64]) : [66];
+                  return (
                     <>
-                      <text x="62" y="30" className="flow-lab two">{l1}</text>
-                      <text x="62" y="46" className="flow-lab two">{l2}</text>
-                      <text x="62" y="65" className={`flow-sub${small ? ' sm' : ''}`}>{sub}</text>
-                    </>
-                  ) : (
-                    <>
-                      <text x="62" y="36" className="flow-lab">{l1}</text>
-                      <text x="62" y="56" className={`flow-sub${small ? ' sm' : ''}`}>{sub}</text>
+                      {ll.map((t, k) => <text key={`l${k}`} x={tx} y={ly[k]} className="flow-lab">{t}</text>)}
+                      {sl.map((t, k) => <text key={`s${k}`} x={tx} y={sy[k]} className="flow-sub">{t}</text>)}
                     </>
                   );
                 })()}
