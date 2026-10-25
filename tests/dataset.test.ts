@@ -66,3 +66,19 @@ describe('jeux de données fictifs', () => {
     if (r.ok) expect([r.table.rows[0].n, r.table.rows[0].bloques]).toEqual([8, 2]);
   });
 });
+
+describe('tables Defender ajoutées pour les scénarios (DeviceInfo, DeviceEvents)', () => {
+  it('DeviceInfo contient au moins deux appareils muets et un appareil non intégré', () => {
+    const r = q('DeviceInfo | where SensorHealthState == "Inactive" | project DeviceName', ctxX);
+    expect(r.ok && r.table.rows.length).toBeGreaterThanOrEqual(2);
+    const r2 = q('DeviceInfo | where OnboardingStatus != "Onboarded" | project DeviceName', ctxX);
+    expect(r2.ok && r2.table.rows.length).toBe(1);
+  });
+  it('DeviceEvents contient les événements ASR en audit du poste PC-017', () => {
+    const r = q('DeviceEvents | where ActionType == "AsrOfficeChildProcessAudited" and DeviceName startswith "PC-017" | count', ctxX);
+    expect(r.ok && r.table.rows[0].Count).toBeGreaterThanOrEqual(4);
+  });
+  it('ces tables ne sont pas visibles dans le contexte Sentinel', () => {
+    expect(q('DeviceInfo | take 1').ok).toBe(false);
+  });
+});

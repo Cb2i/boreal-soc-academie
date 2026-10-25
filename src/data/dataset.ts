@@ -4,7 +4,7 @@
 //
 // Deux familles de tables, volontairement séparées (comme dans la réalité) :
 //  - Sentinel / Log Analytics : SigninLogs, AuditLogs, AzureActivity, SecurityEvent, Syslog, Heartbeat, CommonSecurityLog
-//  - Defender XDR (Advanced Hunting) : DeviceProcessEvents, DeviceNetworkEvents, DeviceLogonEvents, EmailEvents, EmailUrlInfo
+//  - Defender XDR (Advanced Hunting) : DeviceProcessEvents, DeviceNetworkEvents, DeviceLogonEvents, DeviceInfo, DeviceEvents, EmailEvents, EmailUrlInfo
 //
 // buildDataset(seed) génère le « bruit » à partir de la graine ; les incidents plantés fixes sont
 // identiques pour toutes les graines. Certains incidents ont une variante dépendant de la graine :
@@ -18,7 +18,7 @@ export const SIM_NOW = new Date('2026-03-12T12:00:00Z');
 export type DatasetContext = 'sentinel' | 'defender-xdr';
 
 export const SENTINEL_TABLES = ['SigninLogs', 'AuditLogs', 'AzureActivity', 'SecurityEvent', 'Syslog', 'Heartbeat', 'CommonSecurityLog'] as const;
-export const XDR_TABLES = ['DeviceProcessEvents', 'DeviceNetworkEvents', 'DeviceLogonEvents', 'EmailEvents', 'EmailUrlInfo'] as const;
+export const XDR_TABLES = ['DeviceProcessEvents', 'DeviceNetworkEvents', 'DeviceLogonEvents', 'DeviceInfo', 'DeviceEvents', 'EmailEvents', 'EmailUrlInfo'] as const;
 
 export interface Dataset {
   seed: number;
@@ -578,6 +578,40 @@ function buildXdr(seed: number): Record<string, Table> {
     urls.push({ Timestamp: ts, NetworkMessageId: id, Url: 'https://invoice-nordlys.example/pay', UrlDomain: 'invoice-nordlys.example', UrlLocation: 'Body' });
   }
 
+
+  // Inventaire des appareils (DeviceInfo) : un enregistrement par appareil, Timestamp = dernier signalement du capteur.
+  // Deux appareils muets fixes et un troisième qui dépend de la graine : de quoi pratiquer la détection de perte de télémétrie.
+  const devices: Partial<Record<string, Value>>[] = [];
+  const silent = new Set([PEOPLE[3].pc, PEOPLE[9].pc, PEOPLE[12 + (seed % 5)].pc]);
+  for (const p of PEOPLE) {
+    const mute = silent.has(p.pc);
+    devices.push({ Timestamp: mute ? at(1, 9 + (p.pc.length % 3), 14, 5) : at(7, 10, int(rng, 0, 59), int(rng, 0, 59)), DeviceId: `dev-${p.pc.toLowerCase()}`, DeviceName: `${p.pc}.nordlys.example`, OSPlatform: p.os.startsWith('Win') ? p.os : 'Windows11', OnboardingStatus: 'Onboarded', SensorHealthState: mute ? 'Inactive' : 'Active', ExposureLevel: pick(rng, ['Low', 'Low', 'Medium']), MachineGroup: 'Postes' });
+  }
+  devices.push({ Timestamp: at(7, 11, 20, 0), DeviceId: 'dev-srv-file01', DeviceName: 'SRV-FILE01.nordlys.example', OSPlatform: 'WindowsServer2022', OnboardingStatus: 'Onboarded', SensorHealthState: 'Active', ExposureLevel: 'Medium', MachineGroup: 'Serveurs' });
+  devices.push({ Timestamp: at(6, 22, 40, 0), DeviceId: 'dev-srv-dc01', DeviceName: 'SRV-DC01.nordlys.example', OSPlatform: 'WindowsServer2022', OnboardingStatus: 'Onboarded', SensorHealthState: 'Impaired communications', ExposureLevel: 'High', MachineGroup: 'Serveurs' });
+  devices.push({ Timestamp: at(3, 8, 0, 0), DeviceId: 'dev-pc-091', DeviceName: 'PC-091.nordlys.example', OSPlatform: 'Windows11', OnboardingStatus: 'Can be onboarded', SensorHealthState: 'No sensor data', ExposureLevel: 'Unknown', MachineGroup: 'Postes' });
+
+  // Événements d’appareil (DeviceEvents) : règles ASR en audit ou en blocage et supports amovibles.
+  const dev: Partial<Record<string, Value>>[] = [];
+  const asrNoise: [string, string, string][] = [
+    ['AsrExecutableEmailContentAudited', 'setup-fournisseur.exe', 'OUTLOOK.EXE'],
+    ['AsrOfficeChildProcessAudited', 'cmd.exe', 'EXCEL.EXE'],
+    ['AsrScriptExecutableDownloadAudited', 'inventory.ps1', 'powershell.exe'],
+  ];
+  for (let i = 0; i < 40; i++) {
+    const p = pick(rng, PEOPLE);
+    const [act, file, init] = pick(rng, asrNoise);
+    const ts = at(int(rng, 0, 7), int(rng, 11, 20), int(rng, 0, 59), int(rng, 0, 59));
+    if (ts > SIM_NOW) continue;
+    dev.push({ Timestamp: ts, DeviceName: `${p.pc}.nordlys.example`, ActionType: act, FileName: file, FolderPath: `C:\\Users\\${p.sam}\\AppData\\Local\\Temp\\${file}`, InitiatingProcessFileName: init, InitiatingProcessAccountName: p.sam, AdditionalFields: '{"IsAudit":"true"}' });
+  }
+  for (let i = 0; i < 4; i++) dev.push({ Timestamp: at(6, 10, 5, 18 + i), DeviceName: 'PC-017.nordlys.example', ActionType: 'AsrOfficeChildProcessAudited', FileName: 'powershell.exe', FolderPath: 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe', InitiatingProcessFileName: 'WINWORD.EXE', InitiatingProcessAccountName: 'c.ouellet', AdditionalFields: '{"IsAudit":"true","RuleId":"d4f940ab-401b-4efc-aadc-ad5f3c50688a"}' });
+  for (let i = 0; i < 6; i++) {
+    const p = PEOPLE[(i * 2 + 1) % PEOPLE.length];
+    dev.push({ Timestamp: at(2 + (i % 4), 13, 10 + i, 0), DeviceName: `${p.pc}.nordlys.example`, ActionType: i % 3 === 0 ? 'UsbDriveMounted' : 'PnpDeviceConnected', FileName: '', FolderPath: i % 3 === 0 ? 'E:\\' : '', InitiatingProcessFileName: 'svchost.exe', InitiatingProcessAccountName: 'system', AdditionalFields: `{"ProductName":"USB DISK ${i}","VendorId":"0951"}` });
+  }
+  dev.push({ Timestamp: at(5, 16, 42, 0), DeviceName: `${PEOPLE.find((x) => x.sam === 'm.gagnon')!.pc}.nordlys.example`, ActionType: 'RemovableStorageAccessTriggered', FileName: 'plans-clients.xlsx', FolderPath: 'E:\\plans-clients.xlsx', InitiatingProcessFileName: 'explorer.exe', InitiatingProcessAccountName: 'm.gagnon', AdditionalFields: '{"Policy":"Refuser l’écriture","AccessMask":"write","Result":"Denied"}' });
+
   return {
     DeviceProcessEvents: table(
       [
@@ -616,6 +650,32 @@ function buildXdr(seed: number): Record<string, Table> {
         ['FailureReason', 'string'],
       ],
       logon,
+    ),
+    DeviceInfo: table(
+      [
+        ['Timestamp', 'datetime'],
+        ['DeviceId', 'string'],
+        ['DeviceName', 'string'],
+        ['OSPlatform', 'string'],
+        ['OnboardingStatus', 'string'],
+        ['SensorHealthState', 'string'],
+        ['ExposureLevel', 'string'],
+        ['MachineGroup', 'string'],
+      ],
+      devices,
+    ),
+    DeviceEvents: table(
+      [
+        ['Timestamp', 'datetime'],
+        ['DeviceName', 'string'],
+        ['ActionType', 'string'],
+        ['FileName', 'string'],
+        ['FolderPath', 'string'],
+        ['InitiatingProcessFileName', 'string'],
+        ['InitiatingProcessAccountName', 'string'],
+        ['AdditionalFields', 'string'],
+      ],
+      dev,
     ),
     EmailEvents: table(
       [
