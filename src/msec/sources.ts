@@ -189,6 +189,17 @@ export const SOURCES: SourceDef[] = [
   { id: 'xdr-audit', title: 'Microsoft Learn : Search the audit log for events in Microsoft Defender XDR', url: L + 'defender-xdr/microsoft-xdr-auditing', product: 'Defender XDR', topic: 'Journal d’audit', status: 'ga' },
   { id: 'xdr-portal-overview', title: 'Microsoft Learn : Microsoft Defender XDR in the Microsoft Defender portal', url: L + 'defender-xdr/microsoft-365-defender-portal', product: 'Defender XDR', topic: 'Portail et paramètres', status: 'ga' },
   { id: 'xdr-enable-faq', title: 'Microsoft Learn : Microsoft Defender XDR frequently asked questions', url: L + 'defender-xdr/m365d-enable-faq', product: 'Defender XDR', topic: 'Accès, fuseau horaire', status: 'ga' },
+  { id: 'mde-min-req', title: 'Microsoft Learn : Minimum requirements for Microsoft Defender for Endpoint', url: L + 'defender-endpoint/minimum-requirements', product: 'Defender for Endpoint', topic: 'Prérequis et systèmes pris en charge', status: 'ga' },
+  { id: 'mde-macos', title: 'Microsoft Learn : Microsoft Defender for Endpoint on macOS', url: L + 'defender-endpoint/microsoft-defender-endpoint-mac', product: 'Defender for Endpoint', topic: 'macOS', status: 'ga' },
+  { id: 'mde-macos-prereq', title: 'Microsoft Learn : Microsoft Defender for Endpoint on macOS prerequisites', url: L + 'defender-endpoint/microsoft-defender-endpoint-mac-prerequisites', product: 'Defender for Endpoint', topic: 'Prérequis macOS', status: 'ga' },
+  { id: 'mde-linux', title: 'Microsoft Learn : Microsoft Defender for Endpoint on Linux', url: L + 'defender-endpoint/microsoft-defender-endpoint-linux', product: 'Defender for Endpoint', topic: 'Linux', status: 'ga' },
+  { id: 'mde-mobile', title: 'Microsoft Learn : Microsoft Defender for Endpoint on other platforms', url: L + 'defender-endpoint/non-windows', product: 'Defender for Endpoint', topic: 'Android, iOS et licences', status: 'ga' },
+  { id: 'mde-vdi', title: 'Microsoft Learn : Onboard non-persistent VDI devices to Microsoft Defender for Endpoint', url: L + 'defender-endpoint/configure-endpoints-vdi', product: 'Defender for Endpoint', topic: 'VDI non persistant', status: 'ga' },
+  { id: 'mde-onboard-server', title: 'Microsoft Learn : Onboard servers to Microsoft Defender', url: L + 'defender-endpoint/onboard-server', product: 'Defender for Endpoint', topic: 'Serveurs Windows', status: 'ga' },
+  { id: 'mde-server-migration', title: 'Microsoft Learn : Server migration scenarios from the previous, MMA-based Microsoft Defender for Endpoint solution', url: L + 'defender-endpoint/server-migration', product: 'Defender for Endpoint', topic: 'Migration des serveurs', status: 'ga' },
+  { id: 'mde-gov', title: 'Microsoft Learn : Microsoft Defender for Endpoint for US Government customers', url: L + 'defender-endpoint/gov', product: 'Defender for Endpoint', topic: 'Gouvernement américain', status: 'ga' },
+  { id: 'xdr-usgov', title: 'Microsoft Learn : Microsoft Defender for US Government', url: L + 'defender-xdr/usgov', product: 'Defender XDR', topic: 'Gouvernement américain', status: 'ga' },
+  { id: 'mdi-gov', title: 'Microsoft Learn : Microsoft Defender for Identity for US Government offerings', url: L + 'defender-for-identity/us-govt-gcc-high', product: 'Defender for Identity', topic: 'Gouvernement américain', status: 'ga' },
 ];
 
 export const SOURCE_BY_ID: Record<string, SourceDef> = Object.fromEntries(SOURCES.map((s) => [s.id, s]));
