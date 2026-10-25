@@ -6,6 +6,8 @@ import { href } from '../router.ts';
 import { store } from '../state/progress.ts';
 import { useProgress } from '../state/useProgress.ts';
 import { tr } from '../i18n/lang.ts';
+import { FlowDiagram } from '../diagrams/FlowDiagram.tsx';
+import { FLOW_BY_LESSON } from '../diagrams/index.ts';
 
 export function LessonPage({ id }: { id: string }) {
   const p = useProgress();
@@ -21,6 +23,7 @@ export function LessonPage({ id }: { id: string }) {
       <h1>{l.title}</h1>
       <div className="row"><span className="pill">{l.minutes} min</span><span className="pill">{tr('Niveau', 'Level')} {l.level}</span>{l.preview && <span className="pill warn">{tr('Fonctionnalité en préversion', 'Preview feature')}</span>}</div>
       {l.preview && <p className="callout preview">{tr('Ce cours touche une fonctionnalité en préversion : le comportement et la disponibilité peuvent changer. Revalidez dans la documentation officielle.', 'This lesson covers a preview feature: behavior and availability may change. Re-check the official documentation.')}</p>}
+      {FLOW_BY_LESSON[l.id] && <FlowDiagram flow={FLOW_BY_LESSON[l.id]} />}
       <Markdown source={l.body} context={l.context} />
       <section className="card stack" aria-labelledby="ex-h">
         <h2 id="ex-h" style={{ fontSize: '1.15rem' }}>{tr('Exercices associés', 'Related exercises')}</h2>

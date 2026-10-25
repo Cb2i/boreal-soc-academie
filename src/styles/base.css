@@ -603,3 +603,25 @@ main:focus { outline: none; }
 @media (max-width: 640px) { .flow { padding: 10px; } }
 .flow-svg.narrow .flow-lab { font-size: 19px; } .flow-svg.narrow .flow-sub { font-size: 15px; } .flow-svg.narrow .flow-badge text { font-size: 14px; }
 @media (prefers-reduced-motion: reduce) { .flow-node rect, .flow-edge { transition: none; } }
+
+/* Mouvement : flux continu, impulsions, comète */
+.flow-grid { fill: color-mix(in srgb, var(--pc, var(--accent)) 22%, transparent); }
+.flow-halo { fill: color-mix(in srgb, var(--accent-2) 35%, transparent); animation: flow-halo 1.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.flow-trail { fill: var(--accent-2); }
+.flow-chip { fill: var(--accent-2); }
+.flow-chip-t { font: 700 11.5px var(--font-ui); fill: #1b1200; }
+.flow-edge.on { stroke-dasharray: 12 9; animation: flow-march .7s linear infinite; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--pc, var(--accent)) 70%, transparent)); }
+.flow-edge.done { stroke-dasharray: 10 10; animation: flow-march 2.4s linear infinite; }
+.flow-node.on { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--pc, var(--accent)) 55%, transparent)); }
+.flow-node.on .flow-ico { animation: flow-ico 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.flow-ring { fill: none; stroke: var(--pc, var(--accent)); stroke-width: 3; transform-box: fill-box; transform-origin: center; opacity: 0; }
+.flow-ring.dest { animation: flow-ring 1.3s ease-out 1.6s 1 both; }
+.flow-ring.src { animation: flow-ring .9s ease-out 0s 1 both; }
+.flow-bar { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--pc, var(--accent)) 14%, transparent); overflow: hidden; }
+.flow-bar i { display: block; height: 100%; background: var(--pc, var(--accent)); animation: flow-bar 3.4s linear 1 both; }
+@keyframes flow-march { to { stroke-dashoffset: -21; } }
+@keyframes flow-halo { 0%, 100% { transform: scale(.8); opacity: .9; } 50% { transform: scale(1.35); opacity: .35; } }
+@keyframes flow-ico { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+@keyframes flow-ring { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.22, 1.5); } }
+@keyframes flow-bar { from { width: 0; } to { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .flow-edge.on, .flow-edge.done, .flow-halo, .flow-node.on .flow-ico, .flow-ring, .flow-bar i { animation: none; } }

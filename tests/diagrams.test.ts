@@ -17,6 +17,10 @@ describe('schémas animés', () => {
     }
     expect(Object.keys(FLOW_BY_LESSON).length).toBe(FLOWS.length);
   });
+  it('chaque cours du parcours Azure a son schéma', async () => {
+    const { LESSON_BY_ID } = await import('../src/content/index.ts');
+    expect(Object.keys(LESSON_BY_ID).filter((id) => !FLOW_BY_LESSON[id])).toEqual([]);
+  });
   for (const [id, load] of Object.entries(CONTENT_LOADERS)) {
     it(`chaque leçon du parcours ${id} a son schéma`, async () => {
       const C = await load();
