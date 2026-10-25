@@ -1,0 +1,9 @@
+// Ressource : connecteurs multicloud présents dans Azure Resource Graph
+// Version de portée : MDC-2026.10.25-r1 | Nature : lecture seule | Permission : Reader sur la portée
+// Impact : aucun (requête) | Coût : sans frais propres | Nettoyage : aucun
+// Statut : NON EXÉCUTÉE contre un locataire. À valider dans votre environnement avant usage.
+// Source : page de dépannage des connecteurs de Defender for Cloud (consultée le 2026-10-25).
+resources
+| where ['type'] =~ "microsoft.security/securityconnectors"
+| project name, location, subscriptionId, resourceGroup
+| order by subscriptionId asc, name asc

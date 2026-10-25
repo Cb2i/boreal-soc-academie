@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CONTENT_LOADERS } from '../src/tracks/loaders.ts';
 import { CAPABILITIES } from '../src/msec/mdc/caps/index.ts';
@@ -50,6 +52,15 @@ describe('Defender for Cloud : matrice, fiches et scénarios', async () => {
   });
   it('scénarios : chaque famille transversale compte au moins un scénario', () => {
     for (const f of SCENARIO_FAMILIES) expect(SCENARIOS_MDC.filter((s) => s.family === f).length, f).toBeGreaterThanOrEqual(1);
+  });
+  it('ressources : fichiers présents, statut honnête, sans tiret cadratin', () => {
+    expect(C.RESOURCES.length).toBeGreaterThanOrEqual(10);
+    for (const r of C.RESOURCES) {
+      const p = resolve('public/ressources-mdc', r.file);
+      expect(existsSync(p), r.file).toBe(true);
+      expect(readFileSync(p, 'utf8').includes(dash), r.file).toBe(false);
+      expect(C.MODULE_BY_ID[r.module], r.id).toBeDefined();
+    }
   });
   it('limites : identifiants uniques et sans tiret cadratin', () => {
     expect(new Set(LIMITS.map((l) => l.id)).size).toBe(LIMITS.length);

@@ -1,0 +1,11 @@
+// Ressource : alertes et incidents Defender for Cloud dans Microsoft Sentinel
+// Version de portée : MDC-2026.10.25-r1 | Nature : lecture seule | Permission : lecture sur l'espace de travail Log Analytics
+// Impact : aucun | Coût : requête sur données déjà ingérées | Nettoyage : aucun
+// Prérequis : connecteur Defender for Cloud activé dans Sentinel (sinon les incidents sont vides).
+// Statut : NON EXÉCUTÉE contre un espace de travail. Simulée dans la plateforme seulement.
+SecurityAlert
+| where TimeGenerated > ago(7d)
+| where ProductName == "Azure Security Center"
+| summarize arg_max(TimeGenerated, *) by SystemAlertId
+| summarize nbAlertes = count() by AlertSeverity
+| order by nbAlertes desc

@@ -1,0 +1,12 @@
+// Ressource : recommandations non conformes par gravité (Azure Resource Graph, table securityresources)
+// Version de portée : MDC-2026.10.25-r1 | Nature : lecture seule | Permission : Reader sur la portée
+// Impact : aucun | Coût : sans frais propres | Nettoyage : aucun
+// Limites : résultat tronqué à 1000 enregistrements par défaut; un total égal à 1000 est suspect.
+// Statut : NON EXÉCUTÉE contre un locataire. Vérifier les noms de propriétés dans votre environnement.
+securityresources
+| where type =~ "microsoft.security/assessments"
+| extend etat = tostring(properties.status.code), nomRecommandation = tostring(properties.displayName)
+| where etat =~ "Unhealthy"
+| summarize nbRessources = count() by nomRecommandation
+| order by nbRessources desc
+| take 50

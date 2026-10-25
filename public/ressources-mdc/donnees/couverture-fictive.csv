@@ -1,0 +1,7 @@
+abonnement,environnement,proprietaire,defender_cspm,servers_plan,machines_attendues,machines_en_bonne_sante
+nordlys-prod-01,production,infra-a,oui,P2,40,38
+nordlys-prod-02,production,infra-b,oui,P1,25,25
+nordlys-prod-03,production,infra-c,non,aucun,12,0
+nordlys-dev-01,developpement,dev-a,non,aucun,30,0
+nordlys-dev-02,developpement,dev-b,oui,P1,18,12
+nordlys-test-01,test,qa,non,P1,8,8
