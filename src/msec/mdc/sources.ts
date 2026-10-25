@@ -92,5 +92,13 @@ export const MDC_SOURCES: SourceDef[] = [
   S('sentinel-connector', 'Ingest Defender for Cloud alerts to Microsoft Sentinel', 'https://learn.microsoft.com/azure/sentinel/connect-defender-for-cloud', 'Connecteur Sentinel'),
   S('resource-graph', 'Azure Resource Graph sample queries for Defender for Cloud', 'resource-graph-samples', 'Requêtes Resource Graph'),
   S('arg-samples', 'Azure Resource Graph sample queries by category', 'https://learn.microsoft.com/azure/governance/resource-graph/samples/samples-by-category', 'Exemples Resource Graph'),
+  S('free-trial', 'Check the status of your free trial', 'free-trial', 'Essai gratuit de 30 jours'),
+  S('disable-plans', 'Disable Microsoft Defender for Cloud plans', 'disable-plans', 'Désactivation des plans et facturation'),
+  S('dwu', 'Estimate and track cost with the Cloud security billing model', 'defender-portal/estimate-track-costs', 'Modèle de facturation en unités de charge (DWU)', 'preview', 'Modèle en préversion : les unités et le calendrier peuvent changer.'),
+  S('portal-compare', 'Azure portal vs Defender portal feature comparison', 'azure-portal-vs-defender-portal-comparison', 'Comparaison des portails', 'reference', 'Tableau mis à jour en continu : des fonctions arrivent dans le portail Defender au fil du temps.'),
+  S('portal-faq', 'FAQ for Defender portal', 'defender-portal/integration-faq', 'Questions sur le portail Defender'),
+  S('powershell-onboarding', 'Onboard Defender for Cloud using PowerShell', 'powershell-onboarding', 'Activation par PowerShell'),
+  S('set-pricing', 'Set-AzSecurityPricing', 'https://learn.microsoft.com/powershell/module/az.security/set-azsecuritypricing', 'Commande PowerShell de tarification', 'reference'),
+  S('storage-iac', 'Enable Defender for Storage by using infrastructure as code', 'defender-for-storage-infrastructure-as-code-enablement', 'Activation du stockage par IaC'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
