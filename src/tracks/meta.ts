@@ -33,7 +33,7 @@ export interface TrackMeta {
 const COMMON_NAV: TrackNavItem[] = [
   { fr: 'Formation', en: 'Course', also: ['module', 'cours', 'exercice', 'evaluation', 'cas'] },
   { sub: 'suivi', fr: 'Suivi', en: 'Tracking' },
-  { sub: 'projets', fr: 'Projets', en: 'Projects', also: ['projet'] },
+  { sub: 'projets', fr: 'Labs', en: 'Labs', also: ['projet'] },
   { sub: 'ressources', fr: 'Ressources', en: 'Resources' },
   { sub: 'couverture', fr: 'Couverture', en: 'Coverage' },
 ];
@@ -109,7 +109,7 @@ export const TRACKS: TrackMeta[] = [
       { fr: 'Scénarios', en: 'Scenarios', also: ['module', 'cours', 'exercice', 'evaluation', 'cas'] },
       { sub: 'catalogue', fr: 'Catalogue', en: 'Catalog', also: ['fiche'] },
       { sub: 'suivi', fr: 'Suivi', en: 'Tracking' },
-      { sub: 'projets', fr: 'Projets', en: 'Projects', also: ['projet'] },
+      { sub: 'projets', fr: 'Labs', en: 'Labs', also: ['projet'] },
       { sub: 'couverture', fr: 'Couverture', en: 'Coverage' },
     ],
   },

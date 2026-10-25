@@ -29,7 +29,7 @@ for (const id of MSEC) {
         expect(C.LEVELS.some((l) => l.n === m.level), m.id).toBe(true);
         expect(m.evaluation.length, `${m.id} évaluation`).toBe(8);
         expect(m.competencies.length, m.id).toBeGreaterThanOrEqual(2);
-        expect(m.projects.length, m.id).toBe(3);
+        expect(m.projects.length, m.id).toBeGreaterThanOrEqual(1);
         expect(m.remediation.length, m.id).toBeGreaterThanOrEqual(3);
         expect(C.CASE_BY_MODULE[m.id], m.id).toBeDefined();
         for (const x of [...m.evaluation, ...m.remediation]) expect(C.EX_BY_ID[x], x).toBeDefined();

@@ -19,7 +19,10 @@ import { x15 } from './x15.ts';
 import { x16 } from './x16.ts';
 import { XDR_FINAL } from './final.ts';
 import { XDR_RESOURCES } from './resources.ts';
+import { withLabs } from '../labs.ts';
+import { XDR_LABS_1 } from './labs1.ts';
 
-export const XDR_MODULES: ModuleContent[] = [x01, x02, x03, x04, x05, x06, x07, x08, x09, x10, x11, x12, x13, x14, x15, x16];
+const XDR_LABS = [...XDR_LABS_1];
+export const XDR_MODULES: ModuleContent[] = withLabs([x01, x02, x03, x04, x05, x06, x07, x08, x09, x10, x11, x12, x13, x14, x15, x16], XDR_LABS);
 const resources: ResourceDef[] = XDR_RESOURCES;
 export const CONTENT = buildContent(XDR_LEVELS, XDR_MODULES, XDR_FINAL, resources);

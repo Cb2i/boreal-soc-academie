@@ -216,6 +216,29 @@ export interface AiCompetency {
   criteria: { id: string; text: string }[];
 }
 
+/** Une partie d'un lab : consignes détaillées, corrigé attendu et point de contrôle. Les textes sont en mini-markdown. */
+export interface LabPart {
+  title: string;
+  goal: string;
+  steps: string;
+  expected: string;
+  check: string;
+}
+
+/** Description d'un lab guidé : scénario client fictif, mission, données fournies, parties, livrables. */
+export interface LabSpec {
+  client: string;
+  mission: string;
+  duration: string;
+  /** simule : tout se fait sur le site avec des données fictives. tenant : une version sur locataire réel est proposée en option. */
+  mode: 'simule' | 'tenant';
+  facts?: { title: string; head: string[]; rows: string[][] }[];
+  parts: LabPart[];
+  deliverables: string[];
+  /** Contexte du terrain de jeu KQL pour les blocs de code du lab. */
+  context?: 'sentinel' | 'defender-xdr';
+}
+
 export interface AiProject {
   id: string;
   /** Identifiant du module, ou "final" pour les projets de synthèse. */
@@ -232,6 +255,8 @@ export interface AiProject {
   extensions: string[];
   /** Ressources téléchargeables associées (identifiants du manifeste). */
   resources?: string[];
+  /** Lab guidé détaillé (remplace l'ancienne fiche projet à l'affichage). */
+  lab?: LabSpec;
   /** Laboratoire connecté facultatif : tout reste simulé par défaut. */
   connected?: { accounts: string; permissions: string; costs: string; secrets: string; cleanup: string; limits: string };
 }
