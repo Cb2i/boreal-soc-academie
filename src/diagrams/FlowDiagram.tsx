@@ -45,28 +45,117 @@ function layout(n: number, narrow: boolean) {
   const cols = narrow ? 2 : Math.min(3, n);
   const rows = Math.ceil(n / cols);
   const gx = (W - cols * NW) / (cols + 1);
-  const gy = 64;
+  const gy = 84;
   const H = rows * NH + (rows - 1) * gy + 56;
-  return { W, NW, cols, rows, H, pos: (i: number) => {
+  return { W, NW, cols, rows, H, gx, gy, row: (i: number) => Math.floor(i / cols), col: (i: number) => { const r = Math.floor(i / cols); return r % 2 === 0 ? i % cols : cols - 1 - (i % cols); }, pos: (i: number) => {
     const r = Math.floor(i / cols);
     const cInRow = r % 2 === 0 ? i % cols : cols - 1 - (i % cols);
     return { x: gx + cInRow * (NW + gx) + NW / 2, y: 28 + r * (NH + gy) + NH / 2 };
   } };
 }
 
-function edge(a: { x: number; y: number }, b: { x: number; y: number }, NW: number, off = 0) {
-  // Point de départ et d'arrivée sur le bord des rectangles.
-  const dx = b.x - a.x, dy = b.y - a.y;
-  const k = Math.min(dx !== 0 ? (NW / 2 + 4) / Math.abs(dx) : 9, dy !== 0 ? (NH / 2 + 4) / Math.abs(dy) : 9);
-  const s = { x: a.x + dx * k, y: a.y + dy * k };
-  const e = { x: b.x - dx * k, y: b.y - dy * k };
-  const horizontal = Math.abs(dx) >= Math.abs(dy);
-  const len = Math.hypot(dx, dy) || 1;
-  const nx = (-dy / len) * off, ny = (dx / len) * off;
-  const c1 = horizontal ? { x: (s.x + e.x) / 2 + nx, y: s.y + ny } : { x: s.x + nx, y: (s.y + e.y) / 2 + ny };
-  const c2 = horizontal ? { x: (s.x + e.x) / 2 + nx, y: e.y + ny } : { x: e.x + nx, y: (s.y + e.y) / 2 + ny };
-  const m = { x: (s.x + e.x) / 2 + nx * 0.75, y: (s.y + e.y) / 2 + ny * 0.75 };
-  return { d: `M${s.x},${s.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${e.x},${e.y}`, s, e, mid: horizontal && off === 0 ? { x: m.x, y: m.y - 14 } : m };
+type Pt = { x: number; y: number };
+
+/** Chemin à angles droits arrondis : les flèches suivent les couloirs entre les cases, jamais à travers. */
+function roundedPath(pts: Pt[], r = 10) {
+  let d = `M${pts[0].x},${pts[0].y}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1], p1 = pts[i], p2 = pts[i + 1];
+    const l1 = Math.hypot(p1.x - p0.x, p1.y - p0.y), l2 = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    const k = Math.min(r, l1 / 2, l2 / 2);
+    const a = { x: p1.x - ((p1.x - p0.x) / l1) * k, y: p1.y - ((p1.y - p0.y) / l1) * k };
+    const b = { x: p1.x + ((p2.x - p1.x) / l2) * k, y: p1.y + ((p2.y - p1.y) / l2) * k };
+    d += ` L${a.x},${a.y} Q${p1.x},${p1.y} ${b.x},${b.y}`;
+  }
+  const last = pts[pts.length - 1];
+  return d + ` L${last.x},${last.y}`;
+}
+
+const LANES = [0, -26, 26, -52, 52];
+
+function routeEdges(flow: Flow, idx: Record<string, number>, L: ReturnType<typeof layout>) {
+  const hw = L.NW / 2, hh = NH / 2, stub = 4;
+  const pairSeen: Record<string, number> = {};
+  const chanSeen: Record<string, number> = {};
+  const faceSeen: Record<string, number> = {};
+  const face = (node: number, side: string) => { const k = `${node}${side}`; const n = (faceSeen[k] = (faceSeen[k] ?? -1) + 1); return [0, -18, 18][n % 3]; }; // plusieurs flèches sur la même face : décalées
+  const lane = (key: string) => {
+    const o = LANES[(chanSeen[key] = (chanSeen[key] ?? -1) + 1) % LANES.length];
+    return key[0] === 'v' ? Math.sign(o) * Math.min(Math.abs(o) / 2, L.gx / 2 - 8) : o;
+  };
+  const cx = (c: number) => L.gx + c * (L.NW + L.gx) + hw;
+  const gapX = (c: number) => cx(c) + hw + L.gx / 2; // couloir à droite de la colonne c
+  const cy = (r: number) => 28 + r * (NH + L.gy) + hh;
+  const chanY = (r: number) => cy(r) + hh + L.gy / 2; // couloir sous la rangée r
+  const routes = flow.steps.map((st) => {
+    const a = idx[st[0]] ?? 0, b = idx[st[1]] ?? 0;
+    const A = L.pos(a), B = L.pos(b);
+    const ra = L.row(a), rb = L.row(b), ca = L.col(a), cb = L.col(b);
+    const pk = a < b ? `${a}-${b}` : `${b}-${a}`;
+    const n = (pairSeen[pk] = (pairSeen[pk] ?? -1) + 1);
+    const po = n === 0 ? 0 : (n % 2 ? 9 : -9) * (a < b ? 1 : -1); // lignes parallèles pour l'aller et le retour
+    let pts: Pt[];
+    if (a === b) {
+      pts = [{ x: A.x - 20, y: A.y - hh - stub }, { x: A.x - 20, y: A.y - hh - 18 }, { x: A.x + 20, y: A.y - hh - 18 }, { x: A.x + 20, y: A.y - hh - stub }];
+    } else if (ra === rb && Math.abs(ca - cb) === 1) {
+      const dir = B.x > A.x ? 1 : -1;
+      pts = [{ x: A.x + dir * (hw + stub), y: A.y + po }, { x: B.x - dir * (hw + stub), y: A.y + po }];
+    } else if (ca === cb && Math.abs(ra - rb) === 1) {
+      const dir = B.y > A.y ? 1 : -1;
+      pts = [{ x: A.x + po, y: A.y + dir * (hh + stub) }, { x: A.x + po, y: B.y - dir * (hh + stub) }];
+    } else if (ra === rb) {
+      const up = ra > 0;
+      const y0 = up ? chanY(ra - 1) : ra < L.rows - 1 ? chanY(ra) : A.y - hh - 14;
+      const y = y0 + lane(`h${y0}`);
+      const s = up || ra >= L.rows - 1 ? -1 : 1;
+      const ax = A.x + po + face(a, s < 0 ? 't' : 'b'), bx = B.x + po + face(b, s < 0 ? 't' : 'b');
+      pts = [{ x: ax, y: A.y + s * (hh + stub) }, { x: ax, y }, { x: bx, y }, { x: bx, y: B.y + s * (hh + stub) }];
+    } else if (ca === cb) {
+      const gc = ca < L.cols - 1 ? gapX(ca) : gapX(ca - 1);
+      const x = gc + lane(`v${gc}`);
+      const dir = gc > A.x ? 1 : -1;
+      pts = [{ x: A.x + dir * (hw + stub), y: A.y + po }, { x, y: A.y + po }, { x, y: B.y + po }, { x: B.x + dir * (hw + stub), y: B.y + po }];
+    } else if (Math.abs(ra - rb) === 1) {
+      const y0 = chanY(Math.min(ra, rb));
+      const y = y0 + lane(`h${y0}`);
+      const dir = rb > ra ? 1 : -1;
+      const ax = A.x + po + face(a, dir > 0 ? 'b' : 't'), bx = B.x + po + face(b, dir > 0 ? 't' : 'b');
+      pts = [{ x: ax, y: A.y + dir * (hh + stub) }, { x: ax, y }, { x: bx, y }, { x: bx, y: B.y - dir * (hh + stub) }];
+    } else {
+      const dir = rb > ra ? 1 : -1;
+      const gcol = gapX(Math.min(ca, cb));
+      const x = gcol + lane(`v${gcol}`);
+      const yA0 = dir > 0 ? chanY(ra) : chanY(ra - 1), yB0 = dir > 0 ? chanY(rb - 1) : chanY(rb);
+      const yA = yA0 + lane(`h${yA0}`), yB = yB0 + lane(`h${yB0}`);
+      const ax = A.x + po + face(a, dir > 0 ? 'b' : 't'), bx = B.x + po + face(b, dir > 0 ? 't' : 'b');
+      pts = [{ x: ax, y: A.y + dir * (hh + stub) }, { x: ax, y: yA }, { x, y: yA }, { x, y: yB }, { x: bx, y: yB }, { x: bx, y: B.y - dir * (hh + stub) }];
+    }
+    return pts;
+  });
+  // Pastilles : on teste plusieurs positions par tronçon et on garde celle qui ne touche ni une autre pastille ni une autre ligne.
+  const segDist = (p: Pt, a: Pt, b: Pt) => {
+    const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2));
+    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+  };
+  const placed: Pt[] = [];
+  return routes.map((pts, ei) => {
+    let best = { x: pts[0].x, y: pts[0].y }, bestScore = Infinity;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const len = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y);
+      if (len < 26 && pts.length > 2) continue;
+      for (const t of [0.5, 0.35, 0.65, 0.2, 0.8]) {
+        const c = { x: pts[i].x + (pts[i + 1].x - pts[i].x) * t, y: pts[i].y + (pts[i + 1].y - pts[i].y) * t };
+        let sc = (0.5 - Math.abs(t - 0.5)) * -10 - Math.min(len, 120) / 12 + Math.abs(t - 0.5) * 30;
+        for (const q of placed) if (Math.hypot(q.x - c.x, q.y - c.y) < 30) sc += 1000;
+        routes.forEach((o, oj) => { if (oj === ei) return; for (let k = 0; k < o.length - 1; k++) if (segDist(c, o[k], o[k + 1]) < 15) sc += 400; });
+        for (let k = 0; k < pts.length - 1; k++) if (k !== i && segDist(c, pts[k], pts[k + 1]) < 15) sc += 300;
+        if (sc < bestScore) { bestScore = sc; best = c; }
+      }
+    }
+    placed.push(best);
+    return { d: roundedPath(pts), s: pts[0], e: pts[pts.length - 1], mid: best };
+  });
 }
 
 export function FlowDiagram({ flow }: { flow: Flow }) {
@@ -87,19 +176,7 @@ export function FlowDiagram({ flow }: { flow: Flow }) {
   const L = useMemo(() => layout(flow.nodes.length, narrow), [flow, narrow]);
   const NW = L.NW;
   const idx = useMemo(() => Object.fromEntries(flow.nodes.map((n, i) => [n[0], i])), [flow]);
-  const edges = useMemo(() => {
-    const seen: Record<string, number> = {};
-    return flow.steps.map((s) => {
-      const a = idx[s[0]] ?? 0, b = idx[s[1]] ?? 0;
-      const key = a < b ? `${a}-${b}` : `${b}-${a}`;
-      const k = seen[key] ?? 0;
-      seen[key] = k + 1;
-      // Sens normalisé pour que deux flèches de sens contraires se séparent de part et d'autre.
-      const sign = a < b ? 1 : -1;
-      const off = k === 0 ? 0 : (k % 2 ? 26 : -26) * sign;
-      return edge(L.pos(a), L.pos(b), NW, a === b ? 0 : off);
-    });
-  }, [flow, L, idx, NW]);
+  const edges = useMemo(() => routeEdges(flow, idx, L), [flow, L, idx]);
 
   useEffect(() => {
     const el = host.current;
