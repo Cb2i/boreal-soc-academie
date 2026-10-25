@@ -8,11 +8,11 @@
     "resources": 28
   },
   "xdr": {
-    "modules": 1,
-    "lessons": 3,
-    "exercises": 31,
-    "projects": 3,
-    "competencies": 3,
+    "modules": 5,
+    "lessons": 15,
+    "exercises": 151,
+    "projects": 15,
+    "competencies": 15,
     "resources": 0
   }
 }
