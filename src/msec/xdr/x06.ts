@@ -1,0 +1,233 @@
+// Module 6 : Defender Vulnerability Management (niveau 2).
+import type { AiCompetency, AiLesson, AiProject } from '../../agentic/types.ts';
+import { assemble } from '../assemble.ts';
+import { kit } from '../kit.ts';
+import { sref } from '../sources.ts';
+
+const md = (...lines: string[]) => lines.join('\n');
+const { a, Q, M } = kit('x06');
+const c1 = { comp: 'x06-c1', lesson: 'x06-l1', tags: ['score-exposition', 'inventaires', 'delais-donnees'] };
+const c2 = { comp: 'x06-c2', lesson: 'x06-l2', tags: ['recommandations', 'remediation-intune', 'exceptions'] };
+const c3 = { comp: 'x06-c3', lesson: 'x06-l3', tags: ['bases-reference', 'secure-score', 'priorisation'] };
+
+const l1: AiLesson = {
+  id: 'x06-l1', module: 'x06', title: 'Gestion des vulnérabilités : inventaires, score d’exposition et délais', minutes: 40,
+  summary: 'Lire le tableau de bord, comprendre le score d’exposition et ses limites, savoir quand les données se rafraîchissent.',
+  objectives: ['Décrire ce que mesure le score d’exposition et comment il est calculé.', 'Expliquer les délais de mise à jour des données.', 'Citer les sections du portail de gestion des vulnérabilités.'],
+  prerequisites: ['Modules 3 et 4'],
+  body: md(
+    '## Rôle de la gestion des vulnérabilités',
+    'Microsoft Defender Vulnerability Management (MDVM) fournit une **découverte continue des actifs**, une **évaluation basée sur le risque** et des outils de **correction** pour les terminaux, avec un inventaire des logiciels, des certificats, des extensions de navigateur, du matériel et du microprogramme. Il ne remplace pas votre processus de gestion des changements : il fournit le **signal** et le suivi, et c’est votre organisation qui décide du calendrier de correction.',
+    '## Sections du portail',
+    'Dans le portail Defender, la gestion des vulnérabilités regroupe : **Overview** (tableau de bord), **Vulnerabilities** (CVE), **Inventories** (logiciels, certificats, extensions, matériel), **Remediation** (demandes de correction et exceptions) et **Baseline assessments** (évaluation des bases de référence). Au moment de la consultation, deux expériences coexistent : l’expérience existante sous Endpoints et une expérience de préversion rattachée à **Exposure Management**. Vérifiez laquelle votre locataire affiche avant de suivre une procédure : les menus diffèrent.',
+    '## Le score d’exposition',
+    'Le **score d’exposition** est un indicateur de la façon dont les appareils de l’organisation sont exposés aux attaques. Le modèle actuel combine plusieurs facteurs : la **probabilité d’exploitation** (par exemple l’EPSS), le **contexte de l’actif** et l’**impact** de chaque CVE par actif. Le score de l’organisation est la **moyenne** des scores des actifs. Il est recalculé chaque jour : comptez jusqu’à 24 heures avant de voir un effet. Le score ne varie pas toujours de façon monotone : l’arrivée de nouvelles CVE ou d’un nouveau logiciel peut le faire monter même sans mauvais geste de votre part.',
+    '## Délais de données',
+    '- Les changements de **logiciels** se reflètent en environ **2 heures**.',
+    '- Les changements de **configuration** prennent de **4 à 24 heures**.',
+    '- Les appareils **inactifs depuis 30 jours** sont exclus du score ; la gestion des vulnérabilités affiche les appareils utilisés dans les 30 derniers jours, alors que Defender for Endpoint les marque « Inactive » après 7 jours.',
+    'Conséquence : après une correction, ne concluez pas à l’échec avant ces délais, et ne présentez pas un score instantané dans un rapport de changement.',
+    '## Ce que le score ne dit pas',
+    'Le score d’exposition n’est pas le Secure Score for Devices (qui mesure l’adoption de bonnes configurations) ; les deux coexistent. Un score bas n’est pas une preuve d’absence d’intrusion, et un score élevé ne dit pas qu’une attaque est en cours : c’est un indicateur de **surface**, à croiser avec les alertes et les incidents.',
+  ),
+  demo: { title: 'Lire un tableau de bord', body: md(
+    'Valeurs **fictives** :',
+    '```text',
+    'Appareils découverts   412     Appareils actifs (30 j)   389',
+    'Score d’exposition     moyenne des scores des actifs     Mise à jour : quotidienne',
+    'Logiciel remplacé il y a 1 h : visible dans environ 2 h ; réglage modifié : 4 à 24 h',
+    '```',
+    '**Lecture commentée.** On vérifie la fraîcheur des données avant de juger un changement.',
+    '**Ce que la démo ne prouve pas.** Aucun locataire n’a produit ces chiffres.') },
+  guided: 'x06-g1', autonomous: 'x06-a1', quiz: ['x06-q1a', 'x06-q1b', 'x06-q1c'],
+  revision: md('## Fiche : score d’exposition', '- Facteurs : probabilité d’exploitation, contexte de l’actif, impact par CVE.', '- Score de l’organisation : moyenne des scores des actifs.', '- Recalcul quotidien, jusqu’à 24 h.', '- Logiciels : environ 2 h ; configuration : 4 à 24 h.', '- Inactifs depuis 30 jours : exclus du score.', '- Deux expériences de portail : vérifier laquelle s’affiche.'),
+  links: [sref('mdvm-overview'), sref('mdvm-dashboard'), sref('mdvm-exposure-score'), sref('mdvm-exposure-mgmt')], teaches: ['score-exposition', 'inventaires', 'delais-donnees'],
+};
+
+const l2: AiLesson = {
+  id: 'x06-l2', module: 'x06', title: 'Recommandations de sécurité, demandes de correction et exceptions', minutes: 40,
+  summary: 'Transformer les recommandations en demandes de correction suivies, et gérer les exceptions de façon contrôlée.',
+  objectives: ['Décrire le flux recommandation, demande de correction, suivi.', 'Distinguer une correction d’une exception et savoir la justifier.', 'Citer les prérequis et dépendances de la demande de correction.'],
+  prerequisites: ['Leçon 1'],
+  body: md(
+    '## Du signal à l’action',
+    'Une **recommandation de sécurité** est une action suggérée, classée par impact potentiel sur le score d’exposition, avec les logiciels vulnérables, les appareils concernés et les CVE associées. Le cycle sain est : **trier** (impact, actifs critiques, exploitation connue), **demander la correction**, **suivre**, **vérifier** puis **clore**. Chaque étape a un propriétaire : l’équipe sécurité décide de la priorité, l’équipe des opérations TI corrige.',
+    '## Demande de correction',
+    'Depuis une recommandation, l’option **Request remediation** crée une demande de correction et peut ouvrir un **billet dans Microsoft Intune** ; la progression se suit dans la page **Remediation**. C’est une fonction de réponse avancée qui dépend de l’intégration Intune et des droits de l’utilisateur : vérifiez la configuration (connecteur, rôles) avant de promettre ce flux. La demande n’installe rien par elle-même : elle formalise le travail et crée une trace, et la correction réelle passe par vos canaux de déploiement.',
+    '## Exceptions',
+    'Quand une correction est impossible ou différée (compatibilité applicative, fenêtre de maintenance), on crée une **exception** avec une **justification** et une **durée**. L’exception ne règle pas le risque : elle l’**accepte** et le rend visible. Elle doit avoir un propriétaire, une date d’expiration et une revue. Les évaluations de bases de référence ont aussi leurs exceptions. Une exception sans expiration devient une dette cachée.',
+    '## Vérifier la correction',
+    'Après déploiement, attendez le rafraîchissement (environ 2 heures pour un logiciel), puis contrôlez que l’appareil n’apparaît plus dans la recommandation. Si un appareil reste exposé, recherchez : appareil éteint ou inactif, déploiement non appliqué, plusieurs versions installées, ou donnée en retard.',
+    '## Priorisation',
+    'Ordre de travail raisonnable : CVE avec exploitation connue sur appareils exposés à Internet, actifs de grande valeur, puis le reste par impact décroissant. Ne priorisez pas seulement par score de gravité (CVSS) : l’exploitabilité et le contexte comptent.',
+    '## Pourquoi un appareil reste exposé après la correction',
+    'Cinq causes fréquentes à vérifier dans cet ordre : (1) la **donnée est en retard** (moins de 2 heures pour un logiciel, jusqu’à 24 heures pour une configuration) ; (2) l’appareil est **éteint, hors ligne ou inactif**, donc le déploiement n’a pas eu lieu ; (3) le déploiement a **échoué** ou n’a pas été assigné au bon groupe ; (4) **plusieurs versions** du logiciel coexistent, et une ancienne reste installée dans un autre dossier ; (5) le logiciel est **géré par l’utilisateur** et se met à jour hors de vos outils. Notez la cause dans la demande de correction : ces notes alimentent l’amélioration du processus.',
+    '## Qui fait quoi',
+    'Un RACI simple évite les blocages : la **sécurité** priorise, reçoit les alertes d’exploitation et valide les exceptions ; les **opérations TI** testent et déploient ; le **propriétaire applicatif** accepte les fenêtres de maintenance ; la **direction** accepte formellement les risques résiduels importants. Sans cette répartition, les recommandations s’accumulent sans propriétaire et le score stagne.',
+  ),
+  demo: { title: 'Statuer sur une recommandation', body: md(
+    'Cas **fictifs** :',
+    '```text',
+    'Recommandation              Appareils   Action',
+    'Mettre à jour le navigateur  38         Demande de correction, suivi Intune',
+    'Retirer un logiciel ancien   2          Exception 60 j, propriétaire : métier, revue prévue',
+    '```',
+    '**Lecture commentée.** Une exception est une décision de risque documentée, pas une fermeture.',
+    '**Ce que la démo ne prouve pas.** Aucun billet n’a été créé.') },
+  guided: 'x06-g2', autonomous: 'x06-a2', quiz: ['x06-q2a', 'x06-q2b', 'x06-q2c'],
+  revision: md('## Fiche : recommandations et exceptions', '- Cycle : trier, demander, suivre, vérifier, clore.', '- Request remediation : billet Intune, suivi dans Remediation ; dépend de l’intégration et des droits.', '- Exception : justification, durée, propriétaire, revue.', '- Vérifier après environ 2 h pour un logiciel.', '- Prioriser par exploitabilité et contexte, pas seulement CVSS.'),
+  links: [sref('mdvm-recommendations'), sref('mdvm-overview'), sref('mdvm-exposure-score')], teaches: ['recommandations', 'remediation-intune', 'exceptions'],
+};
+
+const l3: AiLesson = {
+  id: 'x06-l3', module: 'x06', title: 'Bases de référence, Secure Score for Devices et gouvernance', minutes: 35,
+  summary: 'Évaluer la conformité aux bases de référence, distinguer les scores et organiser la revue périodique.',
+  objectives: ['Décrire l’évaluation des bases de référence et ses exceptions.', 'Distinguer score d’exposition et Secure Score for Devices.', 'Organiser une revue périodique avec des indicateurs honnêtes.'],
+  prerequisites: ['Leçons 1 et 2'],
+  body: md(
+    '## Évaluation des bases de référence',
+    'L’évaluation des **bases de référence de sécurité** compare la configuration des appareils à un profil de référence (par exemple les bases de Microsoft ou des CIS) et indique la **conformité** par appareil et par paramètre. Elle sert à détecter la **dérive** : un poste qui s’écarte de la configuration cible. On crée un profil, on l’applique à des groupes d’appareils, et on suit le taux de conformité. Des exceptions peuvent être posées sur des paramètres, avec les mêmes exigences de justification et de durée.',
+    '**Attention** : l’évaluation décrit l’état et la dérive ; elle n’applique pas la configuration. Pour corriger, on passe par Intune, une stratégie de groupe ou un autre outil de configuration. Les paramètres mesurés dépendent du système d’exploitation et des versions.',
+    '## Deux scores, deux questions',
+    '- **Score d’exposition** : à quel point les appareils sont-ils exposés (vulnérabilités, contexte) ?',
+    '- **Secure Score for Devices** : dans quelle mesure adopte-t-on les configurations de sécurité recommandées ?',
+    'Ils sont distincts, et la transition vers le nouveau modèle de score d’exposition ne modifie pas le Secure Score for Devices. Ne les additionnez pas dans un même indicateur sans l’expliquer.',
+    '## Gouvernance et revue périodique',
+    'Une revue mensuelle utile contient : appareils non couverts (inactifs, non intégrés), CVE à exploitation connue ouvertes, délai moyen de correction, exceptions arrivant à échéance, dérive des bases de référence et décisions à prendre. Évitez les indicateurs flatteurs sans définition : un « score en baisse » doit s’accompagner de la date de calcul, de la population (appareils actifs) et des changements de périmètre.',
+    '## Limites et dépendances',
+    'La précision dépend de la couverture d’intégration des appareils, de la fraîcheur des données et des licences : certaines fonctions avancées demandent le module complémentaire ou la licence appropriée. Vérifiez la licence avant de promettre une fonction à un client.',
+    '## Lecture d’un écart de conformité',
+    'Un taux de conformité de 82 % à une base de référence ne dit pas lequel des 18 % restants compte. Classez les paramètres non conformes par **risque** (désactivation d’une protection, protocole hérité actif, journalisation insuffisante) et par **effort** (paramètre isolé ou changement qui casse une application). Traitez d’abord le risque élevé à faible effort, planifiez le risque élevé à effort élevé avec un pilote, et documentez par exception ce que l’entreprise décide de garder. Un écart connu et accepté vaut mieux qu’un écart ignoré.',
+    '## Boucle d’amélioration',
+    'Chaque revue produit trois sorties : des **décisions** (corriger, accepter, reporter), des **actions** avec propriétaire et date, et des **changements de processus** (par exemple ajouter un anneau de déploiement plus tôt ou raccourcir la durée par défaut des exceptions). Suivez le délai moyen entre la publication d’une CVE exploitée et la correction de 90 % des appareils actifs : c’est un indicateur plus parlant que le score seul, à condition d’en publier la définition.',
+  ),
+  demo: { title: 'Préparer une revue', body: md(
+    'Ordre du jour **fictif** :',
+    '```text',
+    '1. Couverture : appareils actifs vs intégrés',
+    '2. CVE exploitées connues ouvertes',
+    '3. Exceptions à échéance',
+    '4. Dérive des bases de référence',
+    '5. Décisions et propriétaires',
+    '```',
+    '**Lecture commentée.** On commence par la couverture : un score calculé sur la moitié du parc ment par omission.',
+    '**Ce que la démo ne prouve pas.** Aucune donnée réelle.') },
+  guided: 'x06-g3', autonomous: 'x06-a3', quiz: ['x06-q3a', 'x06-q3b', 'x06-q3c'],
+  revision: md('## Fiche : bases de référence et gouvernance', '- Bases de référence : mesure de conformité et de dérive, n’applique rien.', '- Exceptions : justification et durée.', '- Score d’exposition et Secure Score for Devices : deux mesures distinctes.', '- Revue : couverture, CVE exploitées, exceptions, dérive, décisions.', '- Vérifier la licence avant de promettre une fonction.'),
+  links: [sref('mdvm-baselines'), sref('mdvm-secure-score'), sref('mdvm-exposure-score'), sref('mdvm-overview')], teaches: ['bases-reference', 'secure-score', 'priorisation'],
+};
+
+const exercises = [
+  a.match({ id: 'x06-g1', title: 'Délais de données', comp: c1.comp, tags: c1.tags, role: 'guided', dim: 'comprendre', lesson: 'x06-l1',
+    st: 'Associez chaque changement au délai de visibilité.', items: [['p1', 'Changement de logiciel'], ['p2', 'Changement de configuration'], ['p3', 'Recalcul du score']],
+    options: [['s1', 'Environ 2 heures'], ['s2', '4 à 24 heures'], ['s3', 'Quotidien, jusqu’à 24 heures']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Les logiciels se reflètent en environ 2 heures, la configuration en 4 à 24 heures, et le score se recalcule chaque jour.' }),
+  a.order({ id: 'x06-a1', title: 'Lire un tableau de bord', comp: c1.comp, tags: c1.tags, role: 'autonomous', dim: 'fonctionner', lesson: 'x06-l1',
+    st: 'Ordonnez une lecture rigoureuse du tableau de bord.',
+    items: [['s1', 'Vérifier quelle expérience du portail est affichée'], ['s2', 'Vérifier la couverture (appareils actifs et intégrés)'], ['s3', 'Vérifier la fraîcheur des données'], ['s4', 'Lire le score et ses tendances'], ['s5', 'Consulter les recommandations prioritaires']], correct: ['s1', 's2', 's3', 's4', 's5'],
+    exp: 'On vérifie le contexte, la couverture et la fraîcheur avant d’interpréter le score.' }),
+  Q('x06-q1a', 'quiz', 'comprendre', c1, 'Score de l’organisation', 'Comment le score d’exposition de l’organisation est-il obtenu ?', ['C’est la moyenne des scores des actifs.', 'Chaque actif a un score propre.'], [['La somme des CVE.', 'Non.'], ['Le score du pire appareil.', 'Non.'], ['Une valeur choisie par l’administrateur.', 'Non.']], 'Le score de l’organisation est la moyenne des scores des actifs.'),
+  Q('x06-q1b', 'quiz', 'fonctionner', c1, 'Appareils inactifs', 'Que devient un appareil inactif depuis 30 jours dans le score ?', ['Il est exclu du score.', 'Seuls les appareils récents comptent.'], [['Il compte double.', 'Non.'], ['Il est supprimé du locataire.', 'Non.'], ['Il reste dans le score.', 'Il est exclu.']], 'Les appareils inactifs depuis 30 jours sont exclus du score.'),
+  Q('x06-q1c', 'quiz', 'securiser', c1, 'Score en hausse', 'Le score monte après de nouvelles CVE publiées. Que conclure ?', ['Le score peut bouger sans mauvais geste de l’organisation.', 'Il n’est pas toujours monotone.'], [['L’équipe a mal travaillé.', 'Conclusion hâtive.'], ['Le score est faux.', 'Non.'], ['Il faut le désactiver.', 'Non.']], 'Le score n’est pas garanti monotone ; il dépend des nouvelles CVE et logiciels.'),
+
+  a.workflow({ id: 'x06-g2', title: 'Cycle de recommandation', comp: c2.comp, tags: c2.tags, role: 'guided', dim: 'fonctionner', lesson: 'x06-l2',
+    st: 'Ordonnez le traitement d’une recommandation.',
+    blocks: [['b1', 'Trier selon impact et exploitation'], ['b2', 'Demander la correction'], ['b3', 'Suivre dans Remediation'], ['b4', 'Vérifier après le rafraîchissement'], ['b5', 'Clore la demande'], ['b6', 'Fermer sans vérifier']],
+    required: ['b1', 'b2', 'b3', 'b4', 'b5'], forbidden: ['b6'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4'], ['b4', 'b5']], notes: { b6: 'Sans vérification, on ne sait pas si le risque est réduit.' }, solution: ['b1', 'b2', 'b3', 'b4', 'b5'],
+    exp: 'Trier, demander, suivre, vérifier puis clore : la vérification est indispensable.' }),
+  a.inspect({ id: 'x06-a2', title: 'Relire un registre d’exceptions', comp: c2.comp, tags: c2.tags, role: 'autonomous', dim: 'maintenir', lesson: 'x06-l2', language: 'text',
+    st: 'Registre d’exceptions fictif. Repérez les failles.',
+    lines: [['e1', 'Exception A : logiciel ancien, justification : compatibilité métier, expire le 2027-01-31, propriétaire : finance.'], ['e2', 'Exception B : aucune justification, sans date d’expiration.', { ok: 'a1', fixes: [['a1', 'Exiger une justification, une expiration et un propriétaire'], ['a2', 'Accepter']] }], ['e3', 'Exception C : justification « on verra », propriétaire : personne.', { ok: 'b1', fixes: [['b1', 'Désigner un propriétaire et une justification précise'], ['b2', 'Accepter']] }]],
+    exp: 'Une exception sans justification, expiration ni propriétaire est une dette cachée.' }),
+  Q('x06-q2a', 'quiz', 'comprendre', c2, 'Demande de correction', 'Que fait Request remediation ?', ['Crée une demande suivie, avec un billet Intune possible.', 'Elle formalise le travail et crée une trace.'], [['Installe immédiatement le correctif.', 'Elle n’installe rien.'], ['Supprime la CVE.', 'Non.'], ['Désactive l’appareil.', 'Non.']], 'La demande formalise la correction et se suit dans Remediation.'),
+  Q('x06-q2b', 'quiz', 'securiser', c2, 'Nature d’une exception', 'Une exception sur une recommandation…', ['accepte le risque et le rend visible.', 'Elle n’élimine pas le risque.'], [['élimine le risque.', 'Non.'], ['corrige le logiciel.', 'Non.'], ['masque la CVE à jamais.', 'Elle expire.']], 'Une exception est une décision de risque documentée, avec durée.'),
+  Q('x06-q2c', 'quiz', 'fonctionner', c2, 'Dépendance du flux', 'De quoi dépend le flux de demande de correction vers Intune ?', ['De l’intégration Intune et des droits.', 'Il faut vérifier la configuration.'], [['De rien.', 'Il y a des dépendances.'], ['Du nombre d’alertes.', 'Non.'], ['De l’heure de la journée.', 'Non.']], 'Le flux dépend de l’intégration à Intune et des permissions.'),
+
+  a.config({ id: 'x06-g3', title: 'Paramétrer une revue mensuelle', comp: c3.comp, tags: c3.tags, role: 'guided', dim: 'maintenir', lesson: 'x06-l3',
+    st: 'Choisissez les éléments d’une revue mensuelle honnête.',
+    fields: [
+      { id: 'couv', label: 'Mesurer la couverture des appareils', kind: 'toggle', accept: ['on'], why: 'Un score sur un parc partiel est trompeur.' },
+      { id: 'exc', label: 'Revoir les exceptions à échéance', kind: 'toggle', accept: ['on'], why: 'Les exceptions doivent expirer.' },
+      { id: 'sum', label: 'Fusionner score d’exposition et Secure Score en un seul chiffre sans explication', kind: 'toggle', accept: ['off'], why: 'Ce sont deux mesures distinctes.' },
+    ], solution: { couv: 'on', exc: 'on', sum: 'off' }, exp: 'La revue mesure la couverture et les exceptions, et ne fusionne pas des scores différents.' }),
+  a.match({ id: 'x06-a3', title: 'Quel score répond à quoi', comp: c3.comp, tags: c3.tags, role: 'autonomous', dim: 'comprendre', lesson: 'x06-l3',
+    st: 'Associez chaque question à la mesure appropriée.', items: [['p1', 'À quel point sommes-nous exposés aux CVE ?'], ['p2', 'Adoptons-nous les configurations recommandées ?'], ['p3', 'Un poste s’écarte-t-il du profil de référence ?']],
+    options: [['s1', 'Score d’exposition'], ['s2', 'Secure Score for Devices'], ['s3', 'Évaluation des bases de référence']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque mesure répond à une question différente : exposition, adoption de configurations, dérive.' }),
+  Q('x06-q3a', 'quiz', 'comprendre', c3, 'Rôle des bases de référence', 'Que fait l’évaluation des bases de référence ?', ['Mesure la conformité et la dérive.', 'Elle n’applique pas la configuration.'], [['Applique automatiquement les paramètres.', 'Elle mesure seulement.'], ['Supprime les logiciels.', 'Non.'], ['Chiffre les disques.', 'Non.']], 'Elle mesure la conformité ; la correction passe par Intune ou GPO.'),
+  Q('x06-q3b', 'quiz', 'fonctionner', c3, 'Secure Score et transition', 'La transition du modèle de score d’exposition modifie-t-elle le Secure Score for Devices ?', ['Non, il reste inchangé.', 'Les deux mesures sont distinctes.'], [['Oui, il est supprimé.', 'Non.'], ['Oui, il est fusionné.', 'Non.'], ['Il double.', 'Non.']], 'Le Secure Score for Devices n’est pas modifié par cette transition.'),
+  Q('x06-q3c', 'quiz', 'maintenir', c3, 'Indicateur honnête', 'Pour rapporter une baisse de score, que faut-il ajouter ?', ['La date de calcul et la population.', 'Et les changements de périmètre.'], [['Rien.', 'Insuffisant.'], ['Une capture d’écran seulement.', 'Insuffisant.'], ['Une couleur verte.', 'Décoratif.']], 'Un indicateur sans date ni population est ambigu.'),
+
+  Q('x06-ev1', 'eval', 'comprendre', c1, 'Facteurs du score', 'Quels éléments entrent dans le modèle de score d’exposition ?', ['Probabilité d’exploitation, contexte de l’actif et impact de chaque CVE.', 'Trois familles de facteurs.'], [['Seulement la couleur de l’alerte.', 'Non.'], ['Seulement le nombre d’utilisateurs.', 'Non.'], ['Seulement l’âge du matériel.', 'Non.']], 'Le modèle combine exploitabilité, contexte et impact.'),
+  M('x06-ev2', 'eval', 'fonctionner', c1, 'Sections du portail', 'Cochez les sections de la gestion des vulnérabilités.', [['Vulnerabilities.', 'Liste des CVE.'], ['Inventories.', 'Logiciels, certificats, matériel.'], ['Baseline assessments.', 'Conformité.'], ['Remediation.', 'Suivi des demandes.']], [['Mail flow.', 'Autre produit.']], 'Mail flow ne fait pas partie de cette gestion.'),
+  a.workflow({ id: 'x06-ev3', title: 'Suivre une correction', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'maintenir', lesson: 'x06-l2',
+    st: 'Ordonnez le suivi d’une correction d’un navigateur sur 38 appareils.',
+    blocks: [['b1', 'Créer la demande de correction'], ['b2', 'Déployer par Intune selon les anneaux'], ['b3', 'Attendre le rafraîchissement'], ['b4', 'Vérifier les appareils restants'], ['b5', 'Traiter les cas résiduels par exception datée'], ['b6', 'Déclarer le succès avant le rafraîchissement']],
+    required: ['b1', 'b2', 'b3', 'b4', 'b5'], forbidden: ['b6'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4'], ['b4', 'b5']], notes: { b6: 'Les données ont un délai.' }, solution: ['b1', 'b2', 'b3', 'b4', 'b5'],
+    exp: 'On déploie par anneaux, on attend le rafraîchissement, on vérifie et on traite les résidus.' }),
+  a.fix({ id: 'x06-ev4', title: 'Corriger une exception', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'securiser', lesson: 'x06-l2', language: 'json',
+    st: 'Corrigez l’exception : justification précise, expiration, propriétaire.',
+    starter: JSON.stringify({ recommandation: 'Mettre à jour le logiciel X', justification: '', expiration: null, proprietaire: '' }, null, 2),
+    rules: [{ kind: 'matches', path: 'justification', regex: '.{15,}', message: 'Justification précise.', dim: 'securiser' }, { kind: 'exists', path: 'expiration', message: 'Ajoutez une expiration.', dim: 'maintenir' }, { kind: 'matches', path: 'proprietaire', regex: '.{3,}', message: 'Nommez un propriétaire.', dim: 'maintenir' }],
+    solution: JSON.stringify({ recommandation: 'Mettre à jour le logiciel X', justification: 'Incompatibilité avec une application métier jusqu’à la mise à jour du fournisseur.', expiration: '2027-01-31', proprietaire: 'finance-ti' }, null, 2), exp: 'Une exception a une justification, une expiration et un propriétaire.' }),
+  Q('x06-ev5', 'eval', 'comprendre', c3, 'Deux scores', 'Quelle mesure indique l’adoption de configurations de sécurité recommandées ?', ['Secure Score for Devices.', 'Il mesure l’adoption de configurations.'], [['Score d’exposition.', 'Il mesure l’exposition.'], ['Score d’alerte.', 'Inexistant.'], ['Score de licence.', 'Inexistant.']], 'Secure Score for Devices mesure l’adoption de configurations.'),
+  a.inspect({ id: 'x06-ev6', title: 'Relire un rapport de revue', comp: c3.comp, tags: c3.tags, role: 'eval', dim: 'maintenir', lesson: 'x06-l3', language: 'text',
+    st: 'Extrait d’un rapport mensuel. Repérez les faiblesses.',
+    lines: [['r1', 'Le score a baissé de 12 points cette semaine, bravo à l’équipe.', { ok: 'a1', fixes: [['a1', 'Ajouter la date de calcul, la population et les changements de périmètre'], ['a2', 'Accepter']] }], ['r2', '63 appareils inactifs depuis 30 jours ne sont pas comptés.'], ['r3', 'Les exceptions arrivant à échéance seront revues le mois prochain.', { ok: 'b1', fixes: [['b1', 'Lister les exceptions à échéance et les décisions à prendre maintenant'], ['b2', 'Accepter']] }]],
+    exp: 'Un indicateur sans contexte est ambigu ; les exceptions à échéance doivent être décidées à temps.' }),
+  a.config({ id: 'x06-ev7', title: 'Prérequis du flux de correction', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'fonctionner', lesson: 'x06-l2',
+    st: 'Vérifiez ce qu’il faut avant de promettre la demande de correction vers Intune.',
+    fields: [
+      { id: 'integ', label: 'Intégration entre Defender et Intune configurée', kind: 'toggle', accept: ['on'], why: 'Le flux en dépend.' },
+      { id: 'droits', label: 'Droits d’utilisateur vérifiés', kind: 'toggle', accept: ['on'], why: 'Fonction de réponse avancée.' },
+      { id: 'promesse', label: 'Promettre une installation immédiate', kind: 'toggle', accept: ['off'], why: 'La demande n’installe rien par elle-même.' },
+    ], solution: { integ: 'on', droits: 'on', promesse: 'off' }, exp: 'Intégration et droits d’abord ; aucune promesse d’installation immédiate.' }),
+  a.short({ id: 'x06-ev8', title: 'Jours d’inactivité', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'comprendre', lesson: 'x06-l1',
+    st: 'Après combien de jours d’inactivité un appareil est-il exclu du score d’exposition ? (nombre)', accepted: ['30'], numeric: { value: 30 }, ph: 'un nombre',
+    exp: 'Les appareils inactifs depuis 30 jours sont exclus du score d’exposition ; Defender for Endpoint les marque Inactive dès 7 jours.' }),
+
+  a.workflow({ id: 'x06-cs1', title: 'Cas : lire le tableau de bord de Nordlys', comp: c1.comp, tags: c1.tags, role: 'case', dim: 'comprendre', lesson: 'x06-l1',
+    st: 'Ordonnez la lecture du tableau de bord avant de rapporter au comité.',
+    blocks: [['t1', 'Vérifier l’expérience du portail affichée'], ['t2', 'Vérifier la couverture des appareils'], ['t3', 'Vérifier la fraîcheur des données'], ['t4', 'Lire le score et la tendance'], ['t5', 'Rapporter avec date, population et limites'], ['t6', 'Rapporter le score sans contexte']],
+    required: ['t1', 't2', 't3', 't4', 't5'], forbidden: ['t6'], before: [['t1', 't2'], ['t2', 't3'], ['t3', 't4'], ['t4', 't5']], notes: { t6: 'Un chiffre sans contexte induit en erreur.' }, solution: ['t1', 't2', 't3', 't4', 't5'],
+    exp: 'On valide contexte, couverture et fraîcheur avant de rapporter, avec les limites.' }),
+  a.match({ id: 'x06-cs2', title: 'Cas : décisions sur trois recommandations', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'securiser', lesson: 'x06-l2',
+    st: 'Associez chaque situation à la décision appropriée.', items: [['p1', 'CVE exploitée connue, appareils exposés à Internet'], ['p2', 'Logiciel ancien requis par une application métier'], ['p3', 'Faible impact sur des appareils isolés']],
+    options: [['s1', 'Correction prioritaire'], ['s2', 'Exception datée avec propriétaire'], ['s3', 'Correction planifiée selon l’impact']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'L’exploitation connue sur appareils exposés passe d’abord ; la contrainte métier mène à une exception datée.' }),
+  a.config({ id: 'x06-cs3', title: 'Cas : cadre de gouvernance', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'x06-l3',
+    st: 'Paramétrez le cadre de revue de Nordlys.',
+    fields: [
+      { id: 'cad', label: 'Revue mensuelle planifiée', kind: 'toggle', accept: ['on'], why: 'Rythme régulier.' },
+      { id: 'exp', label: 'Exceptions avec expiration obligatoire', kind: 'toggle', accept: ['on'], why: 'Pas de dette cachée.' },
+      { id: 'lic', label: 'Licences vérifiées avant d’annoncer une fonction', kind: 'toggle', accept: ['on'], why: 'Certaines fonctions exigent une licence.' },
+    ], solution: { cad: 'on', exp: 'on', lic: 'on' }, exp: 'Rythme, expirations et licences vérifiées.' }),
+  a.open({ id: 'x06-cs-open', title: 'Cas : processus de gestion des vulnérabilités', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'x06-l3',
+    st: 'Rédigez le processus de gestion des vulnérabilités d’une organisation fictive.',
+    deliverable: 'Un processus : sources de signal, priorisation, demande de correction, exceptions, vérification, revue mensuelle, indicateurs avec définitions, limites.',
+    rubric: [['r1', 'La priorisation tient compte de l’exploitabilité et du contexte.', 'securiser'], ['r2', 'Les exceptions ont justification, durée et propriétaire.', 'maintenir'], ['r3', 'Les délais de données sont reconnus.', 'comprendre'], ['r4', 'Les indicateurs sont définis.', 'maintenir'], ['r5', 'Les dépendances (licences, intégration) sont notées.', 'fonctionner']],
+    exp: 'Pas de note automatique : on juge la rigueur du processus.' }),
+
+  Q('x06-rm1', 'remediation', 'comprendre', c1, 'Remédiation : délai logiciel', 'En combien de temps un changement de logiciel se reflète-t-il environ ?', ['Environ 2 heures.', 'Pour la configuration : 4 à 24 heures.'], [['Immédiatement.', 'Non.'], ['Une semaine.', 'Non.'], ['Un mois.', 'Non.']], 'Un changement de logiciel est visible en environ 2 heures.'),
+  Q('x06-rm2', 'remediation', 'securiser', c2, 'Remédiation : exception', 'Que doit comporter une exception ?', ['Justification, durée et propriétaire.', 'Plus une revue.'], [['Rien.', 'Insuffisant.'], ['Un smiley.', 'Non.'], ['Une date passée.', 'Non.']], 'Une exception exige justification, durée et propriétaire.'),
+  Q('x06-rm3', 'remediation', 'maintenir', c3, 'Remédiation : deux scores', 'Peut-on fusionner score d’exposition et Secure Score en un seul chiffre sans explication ?', ['Non, ce sont deux mesures distinctes.', 'Expliquez chacune.'], [['Oui toujours.', 'Trompeur.'], ['Ils sont identiques.', 'Faux.'], ['Seulement le lundi.', 'Non.']], 'Les deux mesures répondent à des questions différentes.'),
+];
+
+const competencies: AiCompetency[] = [
+  { id: 'x06-c1', module: 'x06', name: 'Lire l’exposition et ses délais', description: 'Score, inventaires et fraîcheur des données.', criteria: [{ id: 'x06-c1-1', text: 'J’explique ce que mesure le score d’exposition.' }, { id: 'x06-c1-2', text: 'Je tiens compte des délais de données.' }, { id: 'x06-c1-3', text: 'Je vérifie la couverture avant d’interpréter.' }] },
+  { id: 'x06-c2', module: 'x06', name: 'Traiter recommandations et exceptions', description: 'Demandes de correction, suivi et exceptions.', criteria: [{ id: 'x06-c2-1', text: 'Je suis le cycle trier, demander, suivre, vérifier.' }, { id: 'x06-c2-2', text: 'Je documente chaque exception.' }, { id: 'x06-c2-3', text: 'Je connais les dépendances du flux Intune.' }] },
+  { id: 'x06-c3', module: 'x06', name: 'Gouverner par bases de référence et revue', description: 'Dérive, scores distincts et revue honnête.', criteria: [{ id: 'x06-c3-1', text: 'J’interprète l’évaluation des bases de référence.' }, { id: 'x06-c3-2', text: 'Je distingue les deux scores.' }, { id: 'x06-c3-3', text: 'Je rapporte des indicateurs définis.' }] },
+];
+
+const projects: AiProject[] = [
+  { id: 'x06-p1', module: 'x06', level: 'débutant', title: 'Glossaire d’exposition', problem: 'Rédiger un glossaire des notions de la gestion des vulnérabilités.', architecture: 'Document de deux pages.', tools: ['Éditeur de texte'], data: 'Aucune donnée réelle.', steps: ['Lister les termes.', 'Définir chacun.', 'Ajouter les délais.'], success: ['Chaque terme cite une source.'], risks: ['Confondre les deux scores.'], extensions: ['Ajouter des exemples.'] },
+  { id: 'x06-p2', module: 'x06', level: 'intermédiaire', title: 'Registre d’exceptions et revue mensuelle', problem: 'Concevoir un registre d’exceptions et un ordre du jour de revue.', architecture: 'Tableur et gabarit de revue.', tools: ['Tableur'], data: 'Exceptions fictives.', steps: ['Définir les champs.', 'Définir les échéances.', 'Rédiger le gabarit.'], success: ['Aucune exception sans expiration.'], risks: ['Dette cachée.'], extensions: ['Mesurer le délai moyen.'],
+    connected: { accounts: 'Un locataire de test avec Defender Vulnerability Management.', permissions: 'Lecture des recommandations dans le locataire de test.', costs: 'Licences de test à votre charge.', secrets: 'Aucun secret.', cleanup: 'Supprimer les exceptions de test.', limits: 'Facultatif : le registre se fait sur papier.' } },
+  { id: 'x06-p3', module: 'x06', level: 'avancé', title: 'Programme de gestion des vulnérabilités', problem: 'Concevoir un programme complet : priorisation, délais cibles, rôles, indicateurs et escalade.', architecture: 'Document de conception avec RACI.', tools: ['Éditeur de texte'], data: 'Aucune donnée réelle.', steps: ['Définir les rôles.', 'Définir les délais cibles.', 'Définir les indicateurs.', 'Définir l’escalade.'], success: ['Chaque indicateur est défini avec sa limite.'], risks: ['Indicateurs flatteurs.'], extensions: ['Relier au processus de changement.'] },
+];
+
+export const x06 = assemble({ id: 'x06', level: 2, n: 6, title: 'Defender Vulnerability Management',
+  summary: 'Inventaires, score d’exposition, recommandations, demandes de correction, exceptions, bases de référence et gouvernance.',
+  lessons: [l1, l2, l3], exercises, competencies, projects,
+  caseTitle: 'Piloter l’exposition de Nordlys',
+  caseScenario: 'Vous lisez un tableau de bord fictif, tranchez trois recommandations et cadrez une revue mensuelle. Tout reste sur papier.', caseMinutes: 40 });
