@@ -41,7 +41,7 @@ function wrap(text: string, lim: number, maxLines: number): string[] {
 
 function layout(n: number, narrow: boolean) {
   const W = narrow ? 520 : 920;
-  const NW = narrow ? 210 : 220;
+  const NW = narrow ? 196 : 220;
   const cols = narrow ? 2 : Math.min(3, n);
   const rows = Math.ceil(n / cols);
   const gx = (W - cols * NW) / (cols + 1);
@@ -74,11 +74,18 @@ function roundedPath(pts: Pt[], r = 10) {
 const LANES = [0, -26, 26, -52, 52];
 
 function routeEdges(flow: Flow, idx: Record<string, number>, L: ReturnType<typeof layout>) {
-  const hw = L.NW / 2, hh = NH / 2, stub = 4;
+  const hw = L.NW / 2, hh = NH / 2, stub = L.gx < 50 ? 5 : 9;
   const pairSeen: Record<string, number> = {};
   const chanSeen: Record<string, number> = {};
   const faceSeen: Record<string, number> = {};
-  const face = (node: number, side: string) => { const k = `${node}${side}`; const n = (faceSeen[k] = (faceSeen[k] ?? -1) + 1); return [0, -18, 18][n % 3]; }; // plusieurs flèches sur la même face : décalées
+  // Chaque colonne a un couloir vertical entre deux rangées : toutes les flèches qui l'empruntent (par le bas de l'une ou le haut de l'autre) reçoivent un décalage distinct.
+  const gapKey = (node: number, side: string) => `${L.col(node)}g${side === 'b' ? L.row(node) : L.row(node) - 1}`;
+  const reserved = new Set<string>();
+  flow.steps.forEach((st) => {
+    const a = idx[st[0]] ?? 0, b = idx[st[1]] ?? 0;
+    if (a !== b && L.col(a) === L.col(b) && Math.abs(L.row(a) - L.row(b)) === 1) reserved.add(gapKey(a, L.row(b) > L.row(a) ? 'b' : 't'));
+  });
+  const face = (node: number, side: string) => { const k = gapKey(node, side); const n = (faceSeen[k] = (faceSeen[k] ?? -1) + 1); return reserved.has(k) ? [-50, 50, -74, 74][n % 4] : [0, -18, 18, -36, 36][n % 5]; };
   const lane = (key: string) => {
     const o = LANES[(chanSeen[key] = (chanSeen[key] ?? -1) + 1) % LANES.length];
     return key[0] === 'v' ? Math.sign(o) * Math.min(Math.abs(o) / 2, L.gx / 2 - 8) : o;
@@ -93,14 +100,14 @@ function routeEdges(flow: Flow, idx: Record<string, number>, L: ReturnType<typeo
     const ra = L.row(a), rb = L.row(b), ca = L.col(a), cb = L.col(b);
     const pk = a < b ? `${a}-${b}` : `${b}-${a}`;
     const n = (pairSeen[pk] = (pairSeen[pk] ?? -1) + 1);
-    const po = n === 0 || n > 2 ? 0 : (n === 1 ? 26 : -26) * (a < b ? 1 : -1); // aller et retour : lignes parallèles côte à côte; au-delà de 3, on contourne par un couloir
+    const po = n === 0 || n > 1 ? 0 : (n === 1 ? 26 : -26) * (a < b ? 1 : -1); // aller et retour : lignes parallèles côte à côte; au-delà de 3, on contourne par un couloir
     let pts: Pt[];
     if (a === b) {
       pts = [{ x: A.x - 20, y: A.y - hh - stub }, { x: A.x - 20, y: A.y - hh - 18 }, { x: A.x + 20, y: A.y - hh - 18 }, { x: A.x + 20, y: A.y - hh - stub }];
-    } else if (ra === rb && Math.abs(ca - cb) === 1 && n < 3) {
+    } else if (ra === rb && Math.abs(ca - cb) === 1 && n < 2) {
       const dir = B.x > A.x ? 1 : -1;
       pts = [{ x: A.x + dir * (hw + stub), y: A.y + po }, { x: B.x - dir * (hw + stub), y: A.y + po }];
-    } else if (ca === cb && Math.abs(ra - rb) === 1 && n < 3) {
+    } else if (ca === cb && Math.abs(ra - rb) === 1 && n < 2) {
       const dir = B.y > A.y ? 1 : -1;
       pts = [{ x: A.x + po, y: A.y + dir * (hh + stub) }, { x: A.x + po, y: B.y - dir * (hh + stub) }];
     } else if (ra === rb) {
@@ -145,9 +152,16 @@ function routeEdges(flow: Flow, idx: Record<string, number>, L: ReturnType<typeo
     for (let i = 0; i < pts.length - 1; i++) {
       const len = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y);
       if (len < 26 && pts.length > 2) continue;
-      for (const t of [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.12, 0.88]) {
-        const c = { x: pts[i].x + (pts[i + 1].x - pts[i].x) * t, y: pts[i].y + (pts[i + 1].y - pts[i].y) * t };
-        let sc = (0.5 - Math.abs(t - 0.5)) * -10 - Math.min(len, 120) / 12 + Math.abs(t - 0.5) * 30;
+      const ux = (pts[i + 1].x - pts[i].x) / (len || 1), uy = (pts[i + 1].y - pts[i].y) / (len || 1);
+      const cands: { t: number; off: number }[] = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.12, 0.88].map((t) => ({ t, off: 0 }));
+      if (pts.length === 2) for (const t of [0.5, 0.35, 0.65]) for (const off of [-21, 21]) cands.push({ t, off });
+      for (const { t, off } of cands) {
+        const c = { x: pts[i].x + (pts[i + 1].x - pts[i].x) * t - uy * off, y: pts[i].y + (pts[i + 1].y - pts[i].y) * t + ux * off };
+        let sc = (0.5 - Math.abs(t - 0.5)) * -10 - Math.min(len, 120) / 12 + Math.abs(t - 0.5) * 30 + (off ? 60 : 0);
+        const pe = pts[pts.length - 1], ps = pts[0];
+        const de = Math.hypot(c.x - pe.x, c.y - pe.y), ds = Math.hypot(c.x - ps.x, c.y - ps.y);
+        if (de < 36) sc += 1500 + (36 - de) * 10;
+        if (ds < 20) sc += 800;
         for (const q of placed) if (Math.hypot(q.x - c.x, q.y - c.y) < 27) sc += 1000;
         for (const nd of nodeRects) if (c.x > nd.x - 12 && c.x < nd.x + nd.w + 12 && c.y > nd.y - 12 && c.y < nd.y + nd.h + 12) sc += 2000;
         routes.forEach((o, oj) => { if (oj === ei) return; for (let k = 0; k < o.length - 1; k++) if (segDist(c, o[k], o[k + 1]) < 15) sc += 400; });
@@ -201,9 +215,36 @@ export function FlowDiagram({ flow }: { flow: Flow }) {
       <svg viewBox={`0 0 ${L.W} ${L.H}`} role="img" aria-label={`${flow.title}. ${flow.steps.map((s, i) => `${i + 1}. ${s[2]}`).join(' ')}`} className={`flow-svg${narrow ? ' narrow' : ''}${reduce ? ' still' : ''}`}>
         <defs>
           <pattern id={`grid-${flow.lesson}`} width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="1.1" className="flow-grid" /></pattern>
-          <marker id={`ah-${flow.lesson}`} viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1,1 L9,5 L1,9" className="flow-ah" fill="none" /></marker>
+          <marker id={`ah-${flow.lesson}`} viewBox="0 0 10 10" refX="7" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1,1 L9,5 L1,9" className="flow-ah" fill="none" /></marker>
         </defs>
         <rect width={L.W} height={L.H} fill={`url(#grid-${flow.lesson})`} />
+        {flow.nodes.map((n, i) => {
+          const p = L.pos(i);
+          const on = curIdx.has(i);
+          return (
+            <g key={n[0]} transform={`translate(${p.x - NW / 2},${p.y - NH / 2})`}>
+              <g className={`flow-node${n[4] ? ` t-${n[4]}` : ''}${on ? ' on' : ''}${on && idx[cur[1]] === i ? ' dest' : ''}`}>
+                <rect width={NW} height={NH} rx="16" />
+                <g transform="translate(14,16) scale(1.5)"><g className="flow-ico"><path d={GLYPH[n[3]]} /></g></g>
+                {(() => {
+                  const tx = narrow ? 52 : 62;
+                  const labLim = narrow ? 15 : 18;
+                  const subLim = narrow ? 18 : 22;
+                  const ll = wrap(n[1], labLim, 2);
+                  const sl = wrap(n[2], subLim, ll.length === 1 ? 2 : 1);
+                  const ly = ll.length === 1 ? (sl.length === 1 ? [36] : [30]) : [29, 47];
+                  const sy = ll.length === 1 ? (sl.length === 1 ? [56] : [49, 64]) : [66];
+                  return (
+                    <>
+                      {ll.map((t, k) => <text key={`l${k}`} x={tx} y={ly[k]} className="flow-lab">{t}</text>)}
+                      {sl.map((t, k) => <text key={`s${k}`} x={tx} y={sy[k]} className="flow-sub">{t}</text>)}
+                    </>
+                  );
+                })()}
+              </g>
+            </g>
+          );
+        })}
         {edges.map((ed, i) => {
           const st = i === step ? 'on' : i < step ? 'done' : 'idle';
           return (
@@ -224,33 +265,6 @@ export function FlowDiagram({ flow }: { flow: Flow }) {
             <animateMotion path={edges[step].d} dur="1.05s" begin="0s" fill="freeze" calcMode="spline" keyTimes="0;1" keyPoints="0;1" keySplines=".45 .05 .2 1" />
           </g>
         )}
-        {flow.nodes.map((n, i) => {
-          const p = L.pos(i);
-          const on = curIdx.has(i);
-          return (
-            <g key={n[0]} transform={`translate(${p.x - NW / 2},${p.y - NH / 2})`}>
-              <g className={`flow-node${n[4] ? ` t-${n[4]}` : ''}${on ? ' on' : ''}${on && idx[cur[1]] === i ? ' dest' : ''}`}>
-                <rect width={NW} height={NH} rx="16" />
-                <g transform="translate(14,16) scale(1.5)"><g className="flow-ico"><path d={GLYPH[n[3]]} /></g></g>
-                {(() => {
-                  const tx = narrow ? 56 : 62;
-                  const labLim = narrow ? 16 : 18;
-                  const subLim = narrow ? 21 : 22;
-                  const ll = wrap(n[1], labLim, 2);
-                  const sl = wrap(n[2], subLim, ll.length === 1 ? 2 : 1);
-                  const ly = ll.length === 1 ? (sl.length === 1 ? [36] : [30]) : [29, 47];
-                  const sy = ll.length === 1 ? (sl.length === 1 ? [56] : [49, 64]) : [66];
-                  return (
-                    <>
-                      {ll.map((t, k) => <text key={`l${k}`} x={tx} y={ly[k]} className="flow-lab">{t}</text>)}
-                      {sl.map((t, k) => <text key={`s${k}`} x={tx} y={sy[k]} className="flow-sub">{t}</text>)}
-                    </>
-                  );
-                })()}
-              </g>
-            </g>
-          );
-        })}
       </svg>
       <div className={`flow-panel k-${cur[6] ?? 'n'}`} aria-live="polite" key={step}>
         <span className="pill">{tr('Étape', 'Step')} {step + 1}/{N}</span>
