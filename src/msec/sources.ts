@@ -323,6 +323,12 @@ export const SOURCES: SourceDef[] = [
   { id: 'intune-mtd-overview', title: 'Microsoft Learn : Mobile Threat Defense integration with Intune', url: L + 'intune/device-security/mobile-threat-defense/overview', product: 'Intune', topic: 'Partenaires MTD et plateformes', status: 'ga' },
   { id: 'intune-mde-integration', title: 'Microsoft Learn : Integrate Microsoft Defender for Endpoint with Intune for Device Compliance', url: L + 'intune/device-security/microsoft-defender/overview', product: 'Intune', topic: 'Intégration Defender et Intune par plateforme', status: 'ga' },
   { id: 'mde-non-windows', title: 'Microsoft Learn : Microsoft Defender for Endpoint on other platforms', url: L + 'defender-endpoint/non-windows', product: 'Defender for Endpoint', topic: 'Capacités sur macOS, Linux, Android et iOS', status: 'ga' },
+  { id: 'intune-collect-diagnostics', title: 'Microsoft Learn : Device action: collect diagnostics (windows)', url: L + 'intune/device-management/actions/collect-diagnostics', product: 'Intune', topic: 'Collecte de diagnostics Windows, rétention de 28 jours', status: 'ga' },
+  { id: 'intune-monitor-profile', title: 'Microsoft Learn : View and monitor device configuration policies in Microsoft Intune', url: L + 'intune/device-configuration/monitor-device-profile', product: 'Intune', topic: 'Suivi des profils, échecs d affectation, rapports rapides', status: 'ga' },
+  { id: 'intune-audit-logs', title: 'Microsoft Learn : Use audit logs to track and monitor events in Microsoft Intune', url: L + 'intune/governance/monitor-audit-logs', product: 'Intune', topic: 'Journaux d audit, export et Graph, deux ans d événements', status: 'ga' },
+  { id: 'intune-troubleshoot-policies', title: 'Microsoft Learn : Troubleshooting policies and profiles in Microsoft Intune', url: L + 'troubleshoot/mem/intune/device-configuration/troubleshoot-policies-in-microsoft-intune', product: 'Intune', topic: 'Volet de dépannage intégré, licence, géré, jointure Entra', status: 'ga' },
+  { id: 'intune-graph-overview', title: 'Microsoft Learn : Working with Intune in Microsoft Graph', url: L + 'graph/api/resources/intune-graph-overview', product: 'Intune', topic: 'API Graph pour la gestion des appareils', status: 'ga' },
+  { id: 'win-mdm-collect-logs', title: 'Microsoft Learn : Collect MDM logs', url: L + 'windows/client-management/mdm-collect-logs', product: 'Windows', topic: 'Rapport de diagnostic MDM Windows', status: 'ga' },
 ];
 
 export const SOURCE_BY_ID: Record<string, SourceDef> = Object.fromEntries(SOURCES.map((s) => [s.id, s]));

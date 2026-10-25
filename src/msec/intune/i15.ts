@@ -1,0 +1,222 @@
+// Module 15 : Surveillance et dépannage (niveau 5).
+import type { AiCompetency, AiLesson, AiProject } from '../../agentic/types.ts';
+import { assemble } from '../assemble.ts';
+import { kit } from '../kit.ts';
+import { sref } from '../sources.ts';
+
+const md = (...lines: string[]) => lines.join('\n');
+const { a, Q, M } = kit('i15');
+const c1 = { comp: 'i15-c1', lesson: 'i15-l1', tags: ['rapports', 'etat-par-parametre', 'echecs-affectation', 'quatre-etats'] };
+const c2 = { comp: 'i15-c2', lesson: 'i15-l2', tags: ['synchronisation', 'journaux-locaux', 'diagnostic-mdm', 'collecte'] };
+const c3 = { comp: 'i15-c3', lesson: 'i15-l3', tags: ['audit', 'graph', 'derive', 'revue-microsoft'] };
+
+const l1: AiLesson = {
+  id: 'i15-l1', module: 'i15', title: 'Lire les rapports : de « politique créée » à « protection opérationnelle »', minutes: 50,
+  summary: 'Utiliser les rapports Intune pour distinguer quatre états et trouver où une politique s’arrête.',
+  objectives: ['Distinguer politique créée, assignée, reçue et protection opérationnelle.', 'Utiliser l’état par appareil, l’état par paramètre et les échecs d’affectation.', 'Expliquer pourquoi un rapport peut retarder sur l’appareil.'],
+  prerequisites: ['Modules 2 et 9'],
+  body: md(
+    '## Quatre états, quatre preuves',
+    'La fiche de configuration du programme distingue quatre états qu’on confond trop souvent. **Politique créée** : elle existe dans le portail. **Politique assignée** : un groupe ou un filtre la cible. **Politique reçue** : l’appareil a synchronisé et appliqué le réglage. **Protection opérationnelle** : le composant qui applique (antivirus, pare-feu, chiffrement) est actif et la valeur effective correspond à l’intention. Un tableau de bord vert prouve au mieux le troisième état ; le quatrième se prouve par la valeur effective sur l’appareil ou par un signal d’un produit de preuve (module 5 et 9).',
+    '## Les rapports de profil',
+    'Pour un profil de configuration, on ouvre **Appareils > Gérer les appareils > Configuration**, puis la politique : l’état des appareils résume réussite, erreur, conflit et non applicable. Le bouton de rapport détaille l’appareil, l’utilisateur et l’état, avec filtre et export CSV. Le rapport **État par paramètre** va plus loin : pour chaque réglage de la politique, le nombre d’appareils en réussite, en conflit ou en erreur, avec la liste des appareils derrière chaque nombre. C’est l’outil le plus efficace pour trouver *quel* paramètre fait échouer un profil de cinquante réglages. Le rapport **Échecs d’affectation de la politique de configuration** (Appareils > Surveiller) liste les politiques qui ont échoué ou sont en conflit, avec l’appareil, le paramètre en échec et parfois un code d’erreur.',
+    '## Le délai fait partie du système',
+    'Intune rappelle trois types de synchronisation : **par changement** (une notification invite l’appareil à se synchroniser quand une politique est assignée, modifiée ou supprimée, ou quand un groupe change), **à l’initiative du client** (ouverture de session, changement d’état) et **appareil unique** (action manuelle). Le délai de notification varie d’immédiat à quelques heures, et selon la plateforme (les services Google sur Android, des conditions d’occupation sur iOS). Un appareil éteint ou hors ligne reçoit la politique à sa prochaine synchronisation. Les rapports peuvent aussi tarder à refléter l’état réel. Conséquence pratique : un appareil « non évalué » n’est pas un appareil en échec, et une politique retirée peut rester affectée jusqu’à la synchronisation suivante, ce qui est un comportement voulu.',
+    '## Le volet de dépannage',
+    'Le volet **Dépannage et soutien > Dépanner** permet de choisir un utilisateur et de vérifier d’un coup le statut de la licence Intune, la colonne **Géré** (un appareil doit être en gestion MDM, ou EAS et MDM, pour recevoir des politiques de conformité et de configuration), le type de jointure Microsoft Entra et l’état de conformité. Les politiques de protection des applications, elles, ne demandent pas d’inscription de l’appareil. Commencez toujours par ce volet : la moitié des « politiques qui ne s’appliquent pas » viennent d’une licence manquante ou d’un appareil non inscrit.',
+    '## Ce que les rapports ne disent pas',
+    'Un rapport indique que le CSP a accepté la valeur ; il ne dit pas qu’un produit tiers n’a pas pris le dessus (module 3), qu’un composant est en mode passif, ni qu’un paramètre non pris en charge a été ignoré. Notez toujours, à côté d’un rapport vert, la preuve complémentaire attendue.',
+  ),
+  demo: { title: 'Lecture d’un profil en échec', body: md(
+    'Constat **fictif** :',
+    '```text',
+    'Profil : Pare-feu postes (120 appareils)',
+    'Réussite 104 | Erreur 9 | Conflit 5 | Non applicable 2',
+    'État par paramètre : « Règle entrante RDP » = 5 conflits',
+    'Échecs d’affectation : 5 appareils, aussi ciblés par le profil Support distant',
+    '```',
+    '**Lecture commentée.** Le rapport par paramètre isole le réglage, et les échecs d’affectation nomment l’autre profil en cause. Les 9 erreurs restent à classer.',
+    '**Ce que la démo ne prouve pas.** Aucune console n’a été consultée.') },
+  guided: 'i15-g1', autonomous: 'i15-a1', quiz: ['i15-q1a', 'i15-q1b', 'i15-q1c'],
+  revision: md('## Fiche : rapports', '- Quatre états : créée, assignée, reçue, opérationnelle.', '- État par paramètre : trouve le réglage fautif.', '- Échecs d’affectation : erreurs et conflits.', '- Trois synchronisations : par changement, client, appareil unique.', '- Dépannage : licence, géré, jointure Entra.', '- Un rapport vert ne prouve pas la protection.'),
+  links: [sref('intune-reports-overview'), sref('intune-monitor-profile'), sref('intune-troubleshoot-profiles'), sref('intune-troubleshoot-policies'), sref('intune-settings-catalog')], teaches: ['rapports', 'etat-par-parametre', 'echecs-affectation', 'quatre-etats'],
+};
+
+const l2: AiLesson = {
+  id: 'i15-l2', module: 'i15', title: 'Synchroniser, lire les journaux et collecter un diagnostic', minutes: 50,
+  summary: 'Forcer une synchronisation, collecter les journaux utiles et lire le diagnostic MDM sans perturber l’utilisateur.',
+  objectives: ['Forcer une synchronisation et suivre son avancement.', 'Collecter un diagnostic à distance et connaître sa rétention.', 'Choisir le bon journal local selon le symptôme.'],
+  prerequisites: ['Leçon 1', 'Module 13'],
+  body: md(
+    '## Synchroniser : la première réponse, pas la seule',
+    'L’action **Synchroniser** force un appareil à se connecter à Intune pour recevoir les actions et politiques en attente. Elle est offerte sur Android, iOS/iPadOS, macOS, tvOS, visionOS et Windows, avec le rôle Help Desk Operator, Endpoint Security Manager ou un rôle personnalisé qui contient la permission *Remote tasks/Sync devices*. Sur Windows, la synchronisation couvre le traitement des politiques, la détection des applications, les scripts et les remédiations ; l’onglet **État de la synchronisation** de l’appareil n’existe que sur Windows et iOS/iPadOS, avec l’aperçu de la nouvelle vue activé. Une synchronisation réussie ne corrige pas une politique mal ciblée : si l’état reste « en attente », retournez au ciblage et aux filtres.',
+    '## Collecter les diagnostics à distance',
+    'L’action **Collecter les diagnostics** (Windows) récupère les journaux sans interrompre l’utilisateur : journaux de l’extension de gestion Intune, ETL de mise à jour Windows, rapport de Defender (`MpSupportFiles.cab`), état de jointure (`dsregcmd /status`), profils de pare-feu, proxy WinHTTP, et plus. Les résultats sont conservés **28 jours**, avec **10 collectes** au plus par appareil, et l’action en masse accepte **25 appareils** à la fois. Elle peut aussi se déclencher automatiquement lors d’un échec Windows Autopilot, une fois par jour par appareil. On ne peut pas collecter ni télécharger les diagnostics par un appel direct à Graph : il faut passer par le centre d’administration. Précision de confidentialité : les diagnostics peuvent contenir des noms d’utilisateur ou d’appareil, et le personnel de Microsoft peut y accéder pendant un incident de soutien. Traitez-les comme des données sensibles.',
+    '## Journaux locaux et rapport MDM',
+    'Quand on a l’appareil en main, trois sources dominent. Le **rapport de diagnostic MDM** (`MdmDiagnosticsTool`, ou Paramètres > Comptes > Accès Professionnel ou scolaire > Exporter les journaux de gestion) donne les profils reçus et leurs erreurs. Le journal d’événements **DeviceManagement-Enterprise-Diagnostics-Provider** (Admin) montre la livraison de chaque paramètre OMA-DM, comme vu au module 13. Les journaux de l’**extension de gestion Intune** (`%ProgramData%\\Microsoft\\IntuneManagementExtension\\Logs`) servent pour les scripts, les applications Win32 et les remédiations. Un symptôme guide le choix : politique absente, regarder le rapport MDM ; application ou script qui échoue, regarder l’extension ; mise à jour qui traîne, les journaux de Windows Update.',
+    '## Cas classique : l’erreur 0x80072f9a',
+    'Un appareil Windows dont le module TPM a été réinitialisé en usine perd son identité Microsoft Entra, parce qu’elle y est stockée. La synchronisation échoue avec « 0x80072f9a » et la seule issue est la **réinscription**. Ce genre de cause matérielle n’apparaît dans aucun rapport de profil : d’où l’intérêt de la collecte.',
+    '## Procédure en cinq gestes',
+    '1) Volet de dépannage : licence, géré, jointure. 2) Rapport par paramètre. 3) Synchroniser et attendre l’état. 4) Collecter les diagnostics. 5) Lire le journal qui correspond au symptôme. Documentez chaque geste : c’est la preuve que vous avez dépanné et pas deviné.',
+  ),
+  demo: { title: 'Dossier de dépannage', body: md(
+    'Dossier **fictif** :',
+    '```text',
+    'Symptôme : profil BitLocker en attente depuis 3 jours (poste de test)',
+    '1. Licence OK, appareil géré MDM, jointure Entra OK',
+    '2. Rapport par paramètre : aucun paramètre en erreur',
+    '3. Synchronisation lancée : toujours en attente',
+    '4. Diagnostics collectés (28 jours de rétention)',
+    '5. dsregcmd : TPM réinitialisé, sync 0x80072f9a',
+    'Décision : réinscription planifiée',
+    '```',
+    '**Lecture commentée.** Le rapport restait vague ; la collecte a trouvé la cause.',
+    '**Ce que la démo ne prouve pas.** Aucun appareil n’a été dépanné.') },
+  guided: 'i15-g2', autonomous: 'i15-a2', quiz: ['i15-q2a', 'i15-q2b', 'i15-q2c'],
+  revision: md('## Fiche : synchronisation et journaux', '- Synchroniser : forcer, pas corriger un mauvais ciblage.', '- Collecte : 28 jours, 10 collectes, 25 appareils en masse.', '- Pas de collecte par Graph direct.', '- Rapport MDM, journal DMEDP, extension de gestion.', '- 0x80072f9a : TPM réinitialisé, réinscription.', '- Diagnostics : données sensibles.'),
+  links: [sref('intune-sync-action'), sref('intune-collect-diagnostics'), sref('win-mdm-collect-logs'), sref('intune-oma-troubleshoot'), sref('intune-troubleshoot-profiles')], teaches: ['synchronisation', 'journaux-locaux', 'diagnostic-mdm', 'collecte'],
+};
+
+const l3: AiLesson = {
+  id: 'i15-l3', module: 'i15', title: 'Audit, Graph et revue après une mise à jour de Microsoft', minutes: 45,
+  summary: 'Tracer qui a changé quoi, interroger l’état par Graph et réviser le contenu quand la documentation change.',
+  objectives: ['Lire un événement du journal d’audit Intune.', 'Décrire les usages sûrs de Graph pour la surveillance.', 'Appliquer une procédure de revue après un changement de documentation.'],
+  prerequisites: ['Leçons 1 et 2'],
+  body: md(
+    '## Le journal d’audit : qui a changé quoi',
+    'Le journal d’audit Intune (**Administration du locataire > Journaux d’audit**) enregistre les créations, modifications, affectations et suppressions faites dans le service. Chaque événement indique **l’acteur** (qui, et par quelle application ; une action faite dans le portail liste toujours l’extension du portail Intune) et les **cibles** avec les propriétés modifiées. On l’exporte en CSV, on l’envoie vers Azure Monitor (stockage, concentrateur d’événements ou Log Analytics) pour le conserver et l’interroger en KQL, et l’API Graph donne **deux ans** d’événements d’audit. En enquête : une politique a été modifiée à 2 h du matin ? Le journal dit par qui. Il ne dit pas si la modification était légitime, ni si elle a été appliquée aux appareils.',
+    '## Graph : lire, pas bricoler',
+    'Les ressources Graph de gestion des appareils permettent de lire les appareils gérés, les profils, les états de conformité et d’exécuter l’action de synchronisation. Trois règles de prudence. **Lecture d’abord** : les rapports et inventaires par Graph évitent le clic-par-clic sans risque. **Moindre privilège** : accordez des permissions en lecture à l’application, pas la gestion complète. **Licence requise** : utiliser Graph pour configurer Intune exige que le service soit correctement licencié. Pour les diagnostics, Graph ne suffit pas (leçon 2). Les versions bêta de l’API peuvent changer : ne bâtissez pas une surveillance de production sur un point d’accès bêta sans le noter au registre des limites.',
+    '## Surveiller la dérive sans surcharge',
+    'Un contrôle utile combine un rapport récurrent (appareils non conformes, échecs d’affectation), le journal d’audit routé vers Log Analytics et une alerte sur les changements de politiques critiques (pare-feu, conformité, accès conditionnel). Gardez peu d’alertes mais toutes actionnables, avec un propriétaire. Aucune de ces briques ne remplace la vérification périodique d’échantillons sur appareil.',
+    '## Après une mise à jour de Microsoft',
+    'La documentation de Microsoft change souvent : gabarits dépréciés (macOS, modèles d’administration), nouvelles versions prises en charge (Linux), échéances reportées (applications clientes approuvées). Le programme prévoit une **procédure de revue** : 1) lire la source et sa date ; 2) repérer les fiches, exercices et cases de matrice touchés ; 3) corriger le contenu, la nature de la couverture et la date de vérification ; 4) relancer les tests de contenu ; 5) consigner le changement au journal des modifications et, s’il subsiste un doute, au registre des limites. La règle : on ne change jamais une affirmation sans changer sa source et sa date.',
+  ),
+  demo: { title: 'Alerte sur modification de politique', body: md(
+    'Règle **fictive** :',
+    '```text',
+    'Source        : journal d’audit Intune dans Log Analytics',
+    'Condition     : modification ou suppression d’une politique de conformité',
+    'Seuil         : toute occurrence hors fenêtre de changement',
+    'Propriétaire  : équipe sécurité des postes',
+    'Réponse       : comparer au billet de changement',
+    '```',
+    '**Lecture commentée.** Peu de règles, une action claire, un propriétaire.',
+    '**Ce que la démo ne prouve pas.** Aucune alerte n’a été déclenchée.') },
+  guided: 'i15-g3', autonomous: 'i15-a3', quiz: ['i15-q3a', 'i15-q3b', 'i15-q3c'],
+  revision: md('## Fiche : audit et revue', '- Audit : acteur, cibles, propriétés modifiées.', '- Export CSV, Azure Monitor, Graph sur deux ans.', '- Graph : lecture d’abord, moindre privilège, licence requise.', '- Diagnostics : pas par Graph.', '- Revue : source, cases, correction, tests, journal.', '- Jamais de changement sans source ni date.'),
+  links: [sref('intune-audit-logs'), sref('intune-graph-overview'), sref('intune-reports-overview'), sref('intune-sync-action')], teaches: ['audit', 'graph', 'derive', 'revue-microsoft'],
+};
+
+const exercises = [
+  a.match({ id: 'i15-g1', title: 'État et preuve', comp: c1.comp, tags: c1.tags, role: 'guided', dim: 'comprendre', lesson: 'i15-l1',
+    st: 'Associez chaque état à la preuve qui le démontre.', items: [['p1', 'Politique assignée'], ['p2', 'Politique reçue'], ['p3', 'Protection opérationnelle']],
+    options: [['s1', 'Le ciblage et les filtres de la politique'], ['s2', 'L’état de l’appareil et du paramètre dans le rapport'], ['s3', 'La valeur effective sur l’appareil ou un signal de produit']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque état se prouve différemment, et le rapport seul n’atteint pas le dernier.' }),
+  a.config({ id: 'i15-a1', title: 'Premier diagnostic', comp: c1.comp, tags: c1.tags, role: 'autonomous', dim: 'maintenir', lesson: 'i15-l1',
+    st: 'Choisissez la première vérification pour un utilisateur dont rien ne s’applique.',
+    fields: [
+      { id: 'pane', label: 'Premier outil', kind: 'select', options: [{ id: 'wipe', label: 'Réinitialiser l’appareil' }, { id: 'troubleshoot', label: 'Volet Dépanner' }, { id: 'delete', label: 'Supprimer la politique' }], accept: ['troubleshoot'], why: 'Licence, géré et jointure se vérifient d’abord.' },
+      { id: 'managed', label: 'Vérifier la colonne Géré', kind: 'toggle', accept: ['on'], why: 'Il faut MDM ou EAS et MDM.' },
+      { id: 'license', label: 'Vérifier la licence Intune', kind: 'toggle', accept: ['on'], why: 'Sans licence, rien ne s’applique.' },
+    ], solution: { pane: 'troubleshoot', managed: 'on', license: 'on' }, exp: 'Volet de dépannage, colonne Géré et licence d’abord.' }),
+  Q('i15-q1a', 'quiz', 'comprendre', c1, 'Rapport par paramètre', 'À quoi sert l’état par paramètre ?', ['À trouver quel réglage d’un profil est en erreur ou en conflit.', 'Réussite, conflit, erreur par réglage.'], [['À chiffrer le disque.', 'Faux.'], ['À supprimer le profil.', 'Faux.'], ['À licencier.', 'Faux.']], 'Il isole le réglage fautif parmi plusieurs.'),
+  Q('i15-q1b', 'quiz', 'fonctionner', c1, 'Appareil hors ligne', 'Que se passe-t-il pour un appareil éteint lors de l’assignation ?', ['Il reçoit la politique à sa prochaine synchronisation.', 'Délai normal.'], [['Il est exclu.', 'Faux.'], ['Il est réinitialisé.', 'Faux.'], ['Il bloque la politique.', 'Faux.']], 'Le délai fait partie du système.'),
+  Q('i15-q1c', 'quiz', 'securiser', c1, 'Rapport vert', 'Un profil est en réussite partout : la protection est-elle prouvée ?', ['Non, il faut la valeur effective ou un signal de produit.', 'Quatrième état.'], [['Oui, toujours.', 'Faux.'], ['Seulement le lundi.', 'Faux.'], ['Seulement sur Windows.', 'Faux.']], 'Le rapport prouve la réception, pas l’état opérationnel.'),
+
+  a.match({ id: 'i15-g2', title: 'Symptôme et journal', comp: c2.comp, tags: c2.tags, role: 'guided', dim: 'comprendre', lesson: 'i15-l2',
+    st: 'Associez chaque symptôme à la source à consulter.', items: [['p1', 'Profil absent de l’appareil'], ['p2', 'Script ou application Win32 en échec'], ['p3', 'Mise à jour Windows qui traîne']],
+    options: [['s1', 'Rapport de diagnostic MDM'], ['s2', 'Journaux de l’extension de gestion Intune'], ['s3', 'Journaux de Windows Update']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Le symptôme observé oriente directement vers le bon journal à consulter.' }),
+  a.workflow({ id: 'i15-a2', title: 'Dépanner un profil en attente', comp: c2.comp, tags: c2.tags, role: 'autonomous', dim: 'maintenir', lesson: 'i15-l2',
+    st: 'Ordonnez le dépannage d’un profil resté en attente.',
+    blocks: [['b1', 'Vérifier licence, géré et jointure'], ['b2', 'Lire le rapport par paramètre'], ['b3', 'Synchroniser l’appareil'], ['b4', 'Collecter les diagnostics'], ['b5', 'Lire le journal adapté au symptôme'], ['b6', 'Réinitialiser l’appareil d’emblée']],
+    required: ['b1', 'b2', 'b3', 'b4', 'b5'], forbidden: ['b6'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4'], ['b4', 'b5']], notes: { b6: 'Destructif et prématuré.' }, solution: ['b1', 'b2', 'b3', 'b4', 'b5'],
+    exp: 'Vérifications, rapport, synchronisation, collecte puis journal.' }),
+  Q('i15-q2a', 'quiz', 'comprendre', c2, 'Rétention', 'Combien de jours les diagnostics collectés sont-ils conservés ?', ['28 jours.', 'Avec 10 collectes au plus par appareil.'], [['7 jours.', 'Faux.'], ['365 jours.', 'Faux.'], ['Indéfiniment.', 'Faux.']], 'La rétention est de 28 jours.'),
+  Q('i15-q2b', 'quiz', 'fonctionner', c2, 'Collecte par Graph', 'Peut-on collecter les diagnostics par un appel Graph direct ?', ['Non : il faut le centre d’administration.', 'Limite documentée.'], [['Oui, toujours.', 'Faux.'], ['Seulement en bêta.', 'Faux.'], ['Seulement sur Mac.', 'Faux.']], 'Le centre d’administration est requis pour la collecte.'),
+  Q('i15-q2c', 'quiz', 'maintenir', c2, 'Erreur 0x80072f9a', 'Que signale l’erreur 0x80072f9a après une réinitialisation du TPM ?', ['L’identité Entra de l’appareil est perdue : il faut réinscrire.', 'Identité stockée dans le TPM.'], [['Une panne réseau.', 'Faux.'], ['Une licence expirée.', 'Faux.'], ['Un conflit de profils.', 'Faux.']], 'Seule la réinscription rétablit l’identité.'),
+
+  a.workflow({ id: 'i15-g3', title: 'Revue après changement', comp: c3.comp, tags: c3.tags, role: 'guided', dim: 'maintenir', lesson: 'i15-l3',
+    st: 'Ordonnez la revue du contenu après un changement de documentation.',
+    blocks: [['b1', 'Lire la source et sa date'], ['b2', 'Repérer fiches, exercices et cases touchés'], ['b3', 'Corriger contenu, nature et date'], ['b4', 'Relancer les tests'], ['b5', 'Consigner au journal des modifications'], ['b6', 'Changer le texte sans changer la source']],
+    required: ['b1', 'b2', 'b3', 'b4', 'b5'], forbidden: ['b6'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4'], ['b4', 'b5']], notes: { b6: 'Affirmation sans source.' }, solution: ['b1', 'b2', 'b3', 'b4', 'b5'],
+    exp: 'Source, repérage, correction, tests puis journal.' }),
+  a.fix({ id: 'i15-a3', title: 'Corriger une règle d’alerte', comp: c3.comp, tags: c3.tags, role: 'autonomous', dim: 'securiser', lesson: 'i15-l3', language: 'json',
+    st: 'Corrigez la règle de surveillance du journal d’audit.',
+    starter: JSON.stringify({ source: 'bêta-non-notée', proprietaire: '', permissionGraph: 'gestion-complete' }, null, 2),
+    rules: [{ kind: 'equals', path: 'source', value: 'audit-log-analytics', message: 'Router l’audit vers Log Analytics.', dim: 'fonctionner' }, { kind: 'type', path: 'proprietaire', type: 'string', message: 'Désigner un propriétaire.', dim: 'maintenir' }, { kind: 'equals', path: 'permissionGraph', value: 'lecture', message: 'Moindre privilège.', dim: 'securiser' }],
+    solution: JSON.stringify({ source: 'audit-log-analytics', proprietaire: 'equipe-securite-postes', permissionGraph: 'lecture' }, null, 2), exp: 'Source stable, propriétaire désigné et permission en lecture.' }),
+  Q('i15-q3a', 'quiz', 'comprendre', c3, 'Contenu du journal', 'Que contient un événement du journal d’audit ?', ['L’acteur, les cibles et les propriétés modifiées.', 'Qui a changé quoi.'], [['La valeur effective sur l’appareil.', 'Non.'], ['Le contenu des courriels.', 'Non.'], ['Les mots de passe.', 'Non.']], 'L’audit trace les changements, pas leur effet sur l’appareil.'),
+  Q('i15-q3b', 'quiz', 'fonctionner', c3, 'Permission Graph', 'Quelle permission Graph accorder à une application de surveillance ?', ['Lecture seule, selon le moindre privilège.', 'Pas la gestion complète.'], [['Gestion complète.', 'Excessif.'], ['Administrateur global.', 'Excessif.'], ['Aucune limite.', 'Faux.']], 'La surveillance n’exige pas d’écrire.'),
+  Q('i15-q3c', 'quiz', 'maintenir', c3, 'Source et date', 'Pourquoi changer la source en même temps que le texte ?', ['Une affirmation sans source ni date n’est pas vérifiable.', 'Traçabilité.'], [['Pour la forme.', 'Faux.'], ['Pour la licence.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'La source et la date rendent la révision vérifiable.'),
+
+  Q('i15-ev1', 'eval', 'comprendre', c1, 'États', 'Combien d’états distingue-t-on entre la création et la protection effective ?', ['Quatre : créée, assignée, reçue, opérationnelle.', 'Chacun a sa preuve.'], [['Un seul.', 'Faux.'], ['Deux.', 'Incomplet.'], ['Aucun.', 'Faux.']], 'Quatre états, quatre preuves.'),
+  M('i15-ev2', 'eval', 'securiser', c1, 'Preuves', 'Cochez ce qui démontre une protection opérationnelle.', [['La valeur effective lue sur l’appareil.', 'Preuve directe.'], ['Un signal du produit de preuve.', 'Preuve indépendante.']], [['Une politique créée au portail.', 'Premier état seulement.'], ['Un profil vert uniquement.', 'Réception seulement.']], 'La valeur effective et le signal produit prouvent l’état opérationnel.'),
+  a.order({ id: 'i15-ev3', title: 'Trouver le paramètre fautif', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'fonctionner', lesson: 'i15-l1',
+    st: 'Ordonnez la recherche d’un paramètre en conflit.',
+    items: [['s1', 'Ouvrir le profil et son état des appareils'], ['s2', 'Ouvrir l’état par paramètre'], ['s3', 'Repérer le paramètre en conflit'], ['s4', 'Ouvrir les échecs d’affectation'], ['s5', 'Identifier l’autre profil en cause']], correct: ['s1', 's2', 's3', 's4', 's5'],
+    exp: 'Profil, paramètre, conflit, échecs d’affectation puis autre profil.' }),
+  a.fix({ id: 'i15-ev4', title: 'Corriger un dossier de dépannage', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'maintenir', lesson: 'i15-l2', language: 'json',
+    st: 'Corrigez le dossier.',
+    starter: JSON.stringify({ premierGeste: 'reinitialisation', diagnostics: 'graph-direct', retentionJours: 7 }, null, 2),
+    rules: [{ kind: 'equals', path: 'premierGeste', value: 'volet-depannage', message: 'Commencer par le volet de dépannage.', dim: 'fonctionner' }, { kind: 'equals', path: 'diagnostics', value: 'centre-administration', message: 'Collecte par le centre d’administration.', dim: 'maintenir' }, { kind: 'range', path: 'retentionJours', min: 28, max: 28, message: 'Rétention de 28 jours.', dim: 'comprendre' }],
+    solution: JSON.stringify({ premierGeste: 'volet-depannage', diagnostics: 'centre-administration', retentionJours: 28 }, null, 2), exp: 'Volet de dépannage, collecte par le centre et rétention de 28 jours.' }),
+  a.match({ id: 'i15-ev5', title: 'Symptôme et cause', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'maintenir', lesson: 'i15-l2',
+    st: 'Associez chaque symptôme à sa cause probable.', items: [['p1', 'Synchronisation 0x80072f9a'], ['p2', 'Aucune politique reçue, appareil non géré'], ['p3', 'Politique retirée encore affectée']],
+    options: [['s1', 'Identité Entra perdue après réinitialisation du TPM'], ['s2', 'L’appareil n’est pas inscrit en MDM'], ['s3', 'Pas encore de synchronisation depuis le retrait']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque symptôme a une cause documentée distincte.' }),
+  a.workflow({ id: 'i15-ev6', title: 'Enquêter sur une modification', comp: c3.comp, tags: c3.tags, role: 'eval', dim: 'securiser', lesson: 'i15-l3',
+    st: 'Ordonnez l’enquête sur une politique modifiée de nuit.',
+    blocks: [['b1', 'Ouvrir le journal d’audit'], ['b2', 'Lire l’acteur et les cibles'], ['b3', 'Comparer au billet de changement'], ['b4', 'Vérifier l’effet sur un échantillon d’appareils'], ['b5', 'Consigner la conclusion'], ['b6', 'Supposer que la modification est légitime']],
+    required: ['b1', 'b2', 'b3', 'b4', 'b5'], forbidden: ['b6'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4'], ['b4', 'b5']], notes: { b6: 'Aucune vérification.' }, solution: ['b1', 'b2', 'b3', 'b4', 'b5'],
+    exp: 'Audit, acteur, billet, effet puis conclusion.' }),
+  a.short({ id: 'i15-ev7', title: 'Collecte en masse', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'comprendre', lesson: 'i15-l2',
+    st: 'Combien d’appareils Windows la collecte de diagnostics en masse accepte-t-elle à la fois ? (nombre)', accepted: ['25'], numeric: { value: 25 }, ph: 'un nombre',
+    exp: 'L’action en masse accepte 25 appareils Windows à la fois.' }),
+  a.short({ id: 'i15-ev8', title: 'Historique Graph', comp: c3.comp, tags: c3.tags, role: 'eval', dim: 'comprendre', lesson: 'i15-l3',
+    st: 'Combien d’années d’événements d’audit l’API Graph permet-elle de lire ? (nombre)', accepted: ['2', 'deux'], numeric: { value: 2 }, ph: 'un nombre',
+    exp: 'L’API Graph donne deux ans d’événements d’audit.' }),
+
+  a.inspect({ id: 'i15-cs1', title: 'Cas : suivi chez Aurore Logistique', comp: c1.comp, tags: c1.tags, role: 'case', dim: 'securiser', lesson: 'i15-l1', language: 'text',
+    st: 'Plan fictif. Repérez les défauts.',
+    lines: [['p1', 'Le tableau de bord est vert, donc le parc est protégé.', { ok: 'a1', fixes: [['a1', 'Ajouter la valeur effective ou un signal produit'], ['a2', 'Accepter']] }], ['p2', 'Les appareils non évalués sont comptés comme en échec.', { ok: 'b1', fixes: [['b1', 'Distinguer non évalué et en échec'], ['b2', 'Accepter']] }], ['p3', 'On supprime la politique dès la première erreur.', { ok: 'c1', fixes: [['c1', 'Lire l’état par paramètre d’abord'], ['c2', 'Accepter']] }]],
+    exp: 'Trois défauts : fausse preuve, mauvais classement et réaction destructive.' }),
+  a.workflow({ id: 'i15-cs2', title: 'Cas : poste en échec de synchronisation', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'maintenir', lesson: 'i15-l2',
+    st: 'Ordonnez le dépannage d’un poste qui ne se synchronise plus.',
+    blocks: [['t1', 'Vérifier licence, géré et jointure'], ['t2', 'Tenter une synchronisation'], ['t3', 'Collecter les diagnostics'], ['t4', 'Lire l’état de jointure et l’erreur'], ['t5', 'Planifier la réinscription si l’identité est perdue'], ['t6', 'Réinstaller Windows d’emblée']],
+    required: ['t1', 't2', 't3', 't4', 't5'], forbidden: ['t6'], before: [['t1', 't2'], ['t2', 't3'], ['t3', 't4'], ['t4', 't5']], notes: { t6: 'Disproportionné.' }, solution: ['t1', 't2', 't3', 't4', 't5'],
+    exp: 'Vérifications, synchronisation, collecte, lecture puis réinscription.' }),
+  a.match({ id: 'i15-cs3', title: 'Cas : outil de surveillance', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i15-l3',
+    st: 'Associez chaque besoin de surveillance à l’outil.', items: [['p1', 'Qui a modifié une politique'], ['p2', 'Inventaire des appareils en lecture'], ['p3', 'Alerte sur une modification critique']],
+    options: [['s1', 'Journal d’audit Intune'], ['s2', 'Graph en lecture seule'], ['s3', 'Audit routé vers Log Analytics']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque outil de surveillance répond à un besoin précis et distinct.' }),
+  a.open({ id: 'i15-cs-open', title: 'Cas : plan de surveillance', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i15-l3',
+    st: 'Rédigez le plan de surveillance et de dépannage d’une organisation fictive.',
+    deliverable: 'Un document : rapports, alertes, procédure de dépannage, audit, revue après changement de documentation.',
+    rubric: [['r1', 'Les quatre états sont distingués.', 'comprendre'], ['r2', 'La procédure de dépannage est ordonnée.', 'maintenir'], ['r3', 'Les alertes sont peu nombreuses et actionnables.', 'securiser'], ['r4', 'Graph est utilisé avec moindre privilège.', 'securiser'], ['r5', 'La revue après changement est décrite.', 'maintenir']],
+    exp: 'Pas de note automatique : on juge la cohérence du plan.' }),
+
+  Q('i15-rm1', 'remediation', 'comprendre', c1, 'Remédiation : états', 'Pourquoi un profil vert ne prouve-t-il pas la protection ?', ['Il prouve la réception, pas l’état opérationnel.', 'Quatrième état.'], [['Il est toujours faux.', 'Faux.'], ['Il est caché.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'La valeur effective reste à prouver.'),
+  Q('i15-rm2', 'remediation', 'fonctionner', c2, 'Remédiation : sync', 'Une synchronisation corrige-t-elle un mauvais ciblage ?', ['Non : il faut corriger le ciblage ou les filtres.', 'Elle ne fait que livrer.'], [['Oui, toujours.', 'Faux.'], ['Seulement le soir.', 'Faux.'], ['Seulement sur Mac.', 'Faux.']], 'La synchronisation livre ce qui est assigné.'),
+  Q('i15-rm3', 'remediation', 'maintenir', c3, 'Remédiation : revue', 'Pourquoi consigner un changement de documentation ?', ['Pour garder la traçabilité des affirmations et des sources.', 'Journal des modifications.'], [['Pour la forme.', 'Faux.'], ['Pour la licence.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Sans journal, la dérive du contenu est invisible.'),
+];
+
+const competencies: AiCompetency[] = [
+  { id: 'i15-c1', module: 'i15', name: 'Lire les rapports Intune', description: 'États, rapports et délais.', criteria: [{ id: 'i15-c1-1', text: 'Je distingue les quatre états.' }, { id: 'i15-c1-2', text: 'J’utilise l’état par paramètre.' }, { id: 'i15-c1-3', text: 'Je tiens compte des délais.' }] },
+  { id: 'i15-c2', module: 'i15', name: 'Dépanner un appareil', description: 'Synchronisation, collecte et journaux.', criteria: [{ id: 'i15-c2-1', text: 'Je suis la procédure en cinq gestes.' }, { id: 'i15-c2-2', text: 'Je collecte les diagnostics.' }, { id: 'i15-c2-3', text: 'Je choisis le bon journal.' }] },
+  { id: 'i15-c3', module: 'i15', name: 'Auditer et réviser', description: 'Audit, Graph et revue après mise à jour.', criteria: [{ id: 'i15-c3-1', text: 'Je lis un événement d’audit.' }, { id: 'i15-c3-2', text: 'J’applique le moindre privilège à Graph.' }, { id: 'i15-c3-3', text: 'J’applique la procédure de revue.' }] },
+];
+
+const projects: AiProject[] = [
+  { id: 'i15-p1', module: 'i15', level: 'débutant', title: 'Fiche de lecture des rapports', problem: 'Rédiger une fiche d’une page qui associe chaque rapport Intune à la question à laquelle il répond.', architecture: 'Tableau rapport, question, limite.', tools: ['Tableur'], data: 'Rapports fictifs.', steps: ['Lister les rapports.', 'Nommer la question.', 'Nommer la limite.'], success: ['Chaque limite est écrite.'], risks: ['Rapport vert pris pour preuve.'], extensions: ['Ajouter les délais.'] },
+  { id: 'i15-p2', module: 'i15', level: 'intermédiaire', title: 'Procédure de dépannage', problem: 'Rédiger et tester sur des cas fictifs la procédure de dépannage en cinq gestes.', architecture: 'Procédure avec arbre de décision.', tools: ['Éditeur de texte'], data: 'Dossiers fictifs.', steps: ['Écrire les gestes.', 'Relier symptômes et journaux.', 'Tester sur trois dossiers.'], success: ['Chaque dossier est classé avec une preuve.'], risks: ['Action destructive prématurée.'], extensions: ['Ajouter un gabarit de dossier.'],
+    connected: { accounts: 'Un locataire de test avec Intune et un poste Windows de test inscrit.', permissions: 'Help Desk Operator dans le locataire de test.', costs: 'Licences de test.', secrets: 'Aucun secret requis.', cleanup: 'Supprimer les collectes de diagnostics et désinscrire le poste de test.', limits: 'Facultatif : le parcours principal fonctionne avec des dossiers fictifs.' } },
+  { id: 'i15-p3', module: 'i15', level: 'avancé', title: 'Plan de surveillance et de revue', problem: 'Concevoir la surveillance (rapports, audit, alertes) et la procédure de revue après changement de documentation.', architecture: 'Plan avec propriétaires, seuils et calendrier de revue.', tools: ['Éditeur de texte', 'Tableur'], data: 'Journaux fictifs.', steps: ['Choisir les alertes.', 'Désigner les propriétaires.', 'Décrire la revue.', 'Lister les limites.'], success: ['Chaque alerte est actionnable.'], risks: ['Trop d’alertes.'], extensions: ['Ajouter un indicateur de fraîcheur des sources.'] },
+];
+
+export const i15 = assemble({ id: 'i15', level: 5, n: 15, title: 'Surveillance et dépannage',
+  summary: 'Rapports, état par paramètre, synchronisation, journaux locaux, diagnostics, journal d’audit, Graph et procédure de revue après une mise à jour de Microsoft.',
+  lessons: [l1, l2, l3], exercises, competencies, projects,
+  caseTitle: 'Surveiller et dépanner le parc d’Aurore Logistique',
+  caseScenario: 'Vous lisez les rapports, dépannez un poste et planifiez la revue. Actions simulées.', caseMinutes: 45 });
