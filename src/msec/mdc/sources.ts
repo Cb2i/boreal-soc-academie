@@ -129,5 +129,13 @@ export const MDC_SOURCES: SourceDef[] = [
   S('va-containers', 'Vulnerability assessment for containers (MDVM)', 'agentless-vulnerability-assessment-azure', 'Évaluation des vulnérabilités des conteneurs sans agent'),
   S('faq-general', 'Common questions: general', 'faq-general', 'Questions fréquentes : sans agent et coûts'),
   S('containers-faq', 'Common questions about protecting containers', 'faq-defender-for-containers', 'Conteneurs : registres pris en charge et migration'),
+  S('servers-select', 'Select a Defender for Servers plan and deployment scope', 'plan-defender-for-servers-select-plan', 'Choix du plan Servers et de l’étendue'),
+  S('servers-data-workspace', 'Defender for Servers data storage and workspaces', 'plan-defender-for-servers-data-workspace', 'Données et espaces de travail pour Servers'),
+  S('ingestion-benefit', 'Free data ingestion benefit', 'data-ingestion-benefit', 'Gratuité de 500 Mo par jour et par machine', 'ga', 'Types de données couverts à revérifier.'),
+  S('jit-overview', 'Just-in-time machine access overview', 'just-in-time-access-overview', 'Accès juste-à-temps : principe et réseau'),
+  S('jit-enable', 'Enable just-in-time access', 'enable-just-in-time-access', 'Accès juste-à-temps : activation, permissions et demandes'),
+  S('fim', 'File integrity monitoring', 'file-integrity-monitoring-overview', 'Surveillance de l’intégrité des fichiers'),
+  S('fim-enable', 'Enable file integrity monitoring (Defender for Endpoint)', 'file-integrity-monitoring-enable-defender-endpoint', 'Activation de la surveillance de l’intégrité'),
+  S('fim-migrate', 'Migrate file integrity monitoring from MMA or AMA', 'migrate-file-integrity-monitoring', 'Migration depuis les anciens agents', 'reference', 'Support de MMA terminé en novembre 2024.'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
