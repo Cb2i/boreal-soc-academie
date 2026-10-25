@@ -168,5 +168,8 @@ export const MDC_SOURCES: SourceDef[] = [
   S('ciem-enable', 'Enable cloud infrastructure entitlement management (CIEM)', 'enable-permissions-management', 'Activer le CIEM Azure, AWS, GCP'),
   S('cloudtrail', 'Integrate AWS CloudTrail logs with Defender for Cloud', 'integrate-cloud-trail', 'Ingestion CloudTrail pour le CIEM', 'preview', 'Préversion : fonctions susceptibles de changer.'),
   S('logging-ingestion', 'GCP Cloud Logging ingestion', 'logging-ingestion', 'Ingestion Cloud Logging pour le CIEM', 'preview', 'Préversion : fonctions susceptibles de changer.'),
+  S('aws-sentinel', 'Connect a Sentinel connected AWS account to Defender for Cloud', 'sentinel-connected-aws', 'Compte AWS déjà connecté à Sentinel'),
+  S('aws-db-verify', 'Verify protection for open-source relational databases on AWS', 'verify-protection-open-source-relational-databases-aws', 'Vérifier la protection des bases libres sur AWS'),
+  S('containers-troubleshoot', 'Troubleshoot Microsoft Defender for Containers', 'defender-for-containers-troubleshoot', 'Dépannage de Defender for Containers (EKS)'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
