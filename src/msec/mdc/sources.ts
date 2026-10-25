@@ -195,5 +195,9 @@ export const MDC_SOURCES: SourceDef[] = [
   S('ah-cloudaudit', 'CloudAuditEvents (advanced hunting)', 'https://learn.microsoft.com/defender-xdr/advanced-hunting-cloudauditevents-table', 'Table CloudAuditEvents', 'reference'),
   S('ah-cloudprocess', 'CloudProcessEvents (advanced hunting)', 'https://learn.microsoft.com/defender-xdr/advanced-hunting-cloudprocessevents-table', 'Table CloudProcessEvents', 'preview', 'Table présentée en préversion dans le schéma consulté.'),
   S('powerbi', 'Add Defender for Cloud data to Power BI', 'add-data-power-bi', 'Données Defender for Cloud dans Power BI'),
+  S('workflow-auto', 'Automate remediation responses (workflow automation)', 'workflow-automations', 'Automatisation de flux de travail et applications logiques'),
+  S('workflow-iac', 'Create an automatic response with ARM template or Bicep', 'quickstart-automation-alert', 'Automatisation d’alerte déployée par modèle'),
+  S('pricings-ref', 'Microsoft.Security pricings (template reference)', 'https://learn.microsoft.com/azure/templates/microsoft.security/pricings', 'Référence du type Microsoft.Security/pricings', 'reference', 'Plusieurs versions d’API coexistent (dont 2024-01-01 et 2026-07-01); choisir selon la page officielle à la date de mise en œuvre.'),
+  S('iac-mapping', 'Map IaC templates to cloud resources', 'iac-template-mapping', 'Cartographie des modèles IaC vers les ressources'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
