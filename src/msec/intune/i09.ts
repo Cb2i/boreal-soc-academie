@@ -1,0 +1,222 @@
+// Module 9 : Conformité et contrôle d'accès (niveau 3).
+import type { AiCompetency, AiLesson, AiProject } from '../../agentic/types.ts';
+import { assemble } from '../assemble.ts';
+import { kit } from '../kit.ts';
+import { sref } from '../sources.ts';
+
+const md = (...lines: string[]) => lines.join('\n');
+const { a, Q, M } = kit('i09');
+const c1 = { comp: 'i09-c1', lesson: 'i09-l1', tags: ['conformite', 'delai-de-grace', 'actions-non-conformite'] };
+const c2 = { comp: 'i09-c2', lesson: 'i09-l2', tags: ['risque-appareil', 'acces-conditionnel', 'comptes-urgence'] };
+const c3 = { comp: 'i09-c3', lesson: 'i09-l3', tags: ['byod', 'protection-applications', 'plateformes'] };
+
+const l1: AiLesson = {
+  id: 'i09-l1', module: 'i09', title: 'Politiques de conformité : actions, délais de grâce et réglages du locataire', minutes: 50,
+  summary: 'Concevoir des politiques de conformité dont les actions, les délais et les réglages du locataire produisent un contrôle d’accès prévisible.',
+  objectives: ['Distinguer une politique de conformité d’une politique de configuration.', 'Planifier les actions de non-conformité et le délai de grâce.', 'Régler le traitement des appareils sans politique et la période de validité.'],
+  prerequisites: ['Modules 2 et 5'],
+  body: md(
+    '## Conformité n’est pas configuration',
+    'Une **politique de configuration** impose un état (activer BitLocker). Une **politique de conformité** *évalue* un état et en tire un verdict : conforme, non conforme ou en période de grâce. Ce verdict ne protège rien par lui-même ; il devient une protection quand l’accès conditionnel (Microsoft Entra) le consomme pour accorder ou refuser l’accès. Un plan sans accès conditionnel produit des rapports, pas de blocage. Inversement, une politique d’accès conditionnel qui exige un appareil conforme sans politique de conformité testée mène à un blocage inattendu.',
+    '## Actions de non-conformité',
+    'Chaque politique contient d’office l’action **Mark device noncompliant**, planifiée à **0 jour** : dès que l’appareil se synchronise et échoue à l’évaluation, il est marqué non conforme et l’accès conditionnel s’applique aussitôt. On ne peut pas retirer cette action, mais on peut changer sa planification pour créer un **délai de grâce**. D’autres actions s’ajoutent : courriel à l’utilisateur, verrouillage à distance, ajout à la liste de retrait (un administrateur doit ensuite retirer explicitement l’appareil), notification poussée. Toutes ne sont pas disponibles sur toutes les plateformes. Le champ de planification accepte les jours entiers et des fractions par pas de 0,25 (6 heures) dans le centre d’administration ; d’autres valeurs exigent Microsoft Graph. Les courriels partent de microsoft-noreply@microsoft.com et sont attendus dans les 6 heures : une règle de messagerie qui les bloque annule l’action sans erreur visible.',
+    '## Le délai de grâce : un compromis assumé',
+    'Un délai de zéro jour bloque tout de suite, ce qui est sûr mais bruyant (un correctif en cours d’installation suffit). Un délai de plusieurs jours laisse à l’utilisateur le temps de corriger, mais prolonge l’accès d’un appareil réellement dégradé. Règle de pratique : zéro jour pour les signaux de compromission (risque Defender élevé), un à trois jours pour l’hygiène (correctifs, mises à jour des signatures). Pendant la grâce, l’état affiché est **In grace period**.',
+    '## Réglages à l’échelle du locataire',
+    'Deux réglages (Endpoint security > Device compliance > Compliance policy settings) changent tout. **Mark devices with no compliance policy assigned as** : la valeur par défaut est **Compliant**, donc un appareil sans politique passe. Si l’accès conditionnel exige la conformité, passez à **Not compliant** pour que seuls les appareils confirmés conformes entrent. **Compliance status validity period** : 30 jours par défaut (1 à 120) ; un appareil qui ne rapporte pas à temps est traité comme non conforme.',
+    '## Lire les états sans se tromper',
+    'Les états sont Compliant, In grace period, Not evaluated et Not compliant. *Not evaluated* est l’état initial d’un appareil neuf, sans politique, ou qui ne s’est pas synchronisé depuis la dernière mise à jour de la politique ; ce n’est pas un échec. Un paramètre en état **Error** ne change pas l’état de l’appareil pendant jusqu’à **sept jours**, puis l’appareil devient non conforme (ou en période de grâce si elle est définie). La vue par paramètre montre qu’un appareil conforme à *ce* paramètre peut être non conforme à cause d’*une autre* politique.',
+    '## Cas concret : ce que le verdict ne dit pas',
+    'Un appareil « Compliant » prouve que les paramètres évalués étaient satisfaits à la dernière synchronisation. Il ne prouve pas que d’autres protections (ASR, pare-feu hors des paramètres évalués) sont actives, ni que la synchronisation est récente si la période de validité est longue.',
+  ),
+  demo: { title: 'Grâce selon le signal', body: md(
+    'Plan **fictif** :',
+    '```text',
+    'Signal                    Délai   Action supplémentaire',
+    'Risque Defender élevé     0 j     Notification poussée',
+    'BitLocker absent          1 j     Courriel à J+1',
+    'Signatures trop vieilles  3 j     Courriel à J+2',
+    '```',
+    '**Lecture commentée.** Plus le signal indique une compromission, plus le délai raccourcit.',
+    '**Ce que la démo ne prouve pas.** Aucun appareil n’a été évalué.') },
+  guided: 'i09-g1', autonomous: 'i09-a1', quiz: ['i09-q1a', 'i09-q1b', 'i09-q1c'],
+  revision: md('## Fiche : conformité', '- La conformité évalue ; l’accès conditionnel applique.', '- Action par défaut : non conforme à 0 jour ; on change la planification pour un délai de grâce.', '- Sans politique : Compliant par défaut ; passer à Not compliant avec l’accès conditionnel.', '- Validité 30 jours par défaut ; Error jusqu’à 7 jours sans changement d’état.', '- Not evaluated n’est pas un échec.'),
+  links: [sref('intune-compliance-create'), sref('intune-noncompliance-actions'), sref('intune-compliance-overview'), sref('intune-compliance-monitor')], teaches: ['conformite', 'delai-de-grace', 'actions-non-conformite'],
+};
+
+const l2: AiLesson = {
+  id: 'i09-l2', module: 'i09', title: 'Risque de l’appareil Defender et accès conditionnel sans verrouillage', minutes: 55,
+  summary: 'Faire circuler le risque Defender jusqu’à l’accès conditionnel, et le déployer sans enfermer les administrateurs dehors.',
+  objectives: ['Décrire le flux du risque de l’appareil de Defender vers Intune puis Entra.', 'Choisir un niveau de risque maximal toléré.', 'Déployer une politique d’accès conditionnel en mode rapport seulement avec des comptes d’urgence exclus.'],
+  prerequisites: ['Leçon 1', 'Module 5'],
+  body: md(
+    '## Le chemin du signal',
+    'Defender for Endpoint évalue le risque d’un appareil (Clear, Low, Medium, High) à partir des alertes actives. Ce niveau est transmis à Intune, qui le compare au seuil de la politique de conformité (**Require the device to be at or under the machine risk score**). L’appareil au-dessus du seuil est marqué non conforme ; Intune l’indique à Entra, et la politique d’accès conditionnel qui exige un appareil conforme refuse l’accès. Quand l’enquête et la remédiation (automatique ou manuelle) retirent le risque, ou que les alertes sont résolues, l’appareil redevient conforme et l’accès revient. L’utilisateur peut continuer à se servir de l’appareil pendant l’enquête ; seul l’accès aux ressources protégées est coupé.',
+    '## Choisir le seuil',
+    '*Clear* est le plus strict : toute menace, même faible, rend l’appareil non conforme. *Low* tolère les menaces faibles, *Medium* tolère faibles et moyennes, *High* autorise tous les niveaux et ne sert qu’au rapport. Un seuil Clear sur tout le parc génère des blocages pour des alertes bénignes ; Medium est un point de départ fréquent, Clear pour les postes à privilèges. Documentez le choix : c’est une décision de risque, pas un réglage technique.',
+    '## Prérequis et licences',
+    'Il faut Defender for Endpoint, Intune (produit distinct, non inclus partout) et Microsoft Entra ID P1 ou P2 pour l’accès conditionnel. Les appareils Windows 10 ou plus récent doivent être enregistrés dans Entra, inscrits dans Intune et intégrés à Defender ; les appareils simplement enregistrés fonctionnent s’ils sont inscrits à Intune. Rôles : Security Administrator ou la permission équivalente pour Defender, Endpoint Security Manager pour Intune, Conditional Access Administrator pour Entra. Validez toujours la page de licences à la révision.',
+    '## Déployer sans enfermer personne',
+    'Créez d’abord la politique de conformité et confirmez qu’**au moins un appareil de test est conforme**. Créez ensuite la politique d’accès conditionnel en **mode rapport seulement** (Report-only) : elle consigne ce qui se serait passé sans bloquer. Attendez environ 24 heures de connexions, filtrez le journal de connexion sur la colonne Report-only, vérifiez que seuls les appareils attendus échouent, puis passez à **On**. Le contrôle « Require device to be marked as compliant » ne bloque pas l’inscription à Intune.',
+    '## Comptes d’urgence et exclusions',
+    'Excluez les **comptes d’accès d’urgence** (break-glass) de toute politique qui bloque ou restreint la connexion, de préférence par un groupe dédié. Excluez aussi, si vous les utilisez, le rôle **Directory Synchronization Accounts** de Microsoft Entra Connect. Testez régulièrement (par exemple chaque trimestre) que les comptes d’urgence se connectent avec la configuration actuelle, et préparez des politiques de contingence activables en cas de panne. Un compte d’urgence soumis à une exigence de conformité peut être inutilisable au moment précis où on en a besoin. Les politiques en mode rapport seulement ne bloquent pas et n’exigent pas d’exclusion.',
+    '## Pièges fréquents',
+    'La valeur par défaut « sans politique = Compliant » annule l’intention de la politique d’accès. Une politique ciblant toutes les ressources et tous les utilisateurs, sans exclusion, est la recette classique du verrouillage. Enfin, le risque Defender dépend de la télémétrie : un appareil qui n’envoie plus de signal (module 15) peut paraître propre.',
+  ),
+  demo: { title: 'Déploiement par étapes', body: md(
+    'Plan **fictif** :',
+    '```text',
+    'J0   Politique de conformité (risque max : Medium) sur le groupe pilote',
+    'J1   Un appareil de test confirmé conforme',
+    'J2   Accès conditionnel en mode rapport seulement, urgence exclue',
+    'J3+  Revue du journal ; passage à Activé par vagues',
+    '```',
+    '**Lecture commentée.** La politique d’accès n’est activée qu’après la preuve qu’un appareil conforme existe.',
+    '**Ce que la démo ne prouve pas.** Aucun locataire n’a été modifié.') },
+  guided: 'i09-g2', autonomous: 'i09-a2', quiz: ['i09-q2a', 'i09-q2b', 'i09-q2c'],
+  revision: md('## Fiche : risque et accès conditionnel', '- Risque Defender vers conformité Intune vers accès conditionnel Entra.', '- Clear > Low > Medium > High : High n’est que du rapport.', '- Conformité testée avant l’accès conditionnel ; mode rapport seulement d’abord.', '- Exclure les comptes d’urgence et tester chaque trimestre.', '- Licences : Defender, Intune, Entra P1 ou P2.'),
+  links: [sref('mde-conditional-access'), sref('mde-ca-overview'), sref('intune-compliance-win-settings'), sref('entra-ca-emergency'), sref('entra-ca-plan')], teaches: ['risque-appareil', 'acces-conditionnel', 'comptes-urgence'],
+};
+
+const l3: AiLesson = {
+  id: 'i09-l3', module: 'i09', title: 'BYOD et appareils mobiles : protection des applications plutôt que gestion de l’appareil', minutes: 45,
+  summary: 'Protéger les données sur des appareils personnels sans prétendre les contrôler, et ne pas transposer les paramètres Windows.',
+  objectives: ['Choisir entre conformité d’appareil et protection des applications.', 'Configurer le contrôle d’octroi « exiger une politique de protection des applications ».', 'Tenir compte du retrait du contrôle « application cliente approuvée ».'],
+  prerequisites: ['Leçons 1 et 2'],
+  body: md(
+    '## Deux modèles de contrôle',
+    'Sur un appareil de l’organisation, on gère l’appareil (inscription, conformité). Sur un appareil personnel (BYOD), l’organisation n’a ni le droit ni l’intérêt de tout contrôler. La **gestion des applications mobiles (MAM)** protège les données dans des applications précises, indépendamment de l’inscription : chiffrement, copier-coller limité, NIP d’accès, effacement sélectif. L’accès conditionnel peut alors exiger, pour iOS et Android, une **politique de protection des applications**. Le choix n’est pas une question de préférence mais de ce que l’on peut prouver : un appareil non inscrit n’a pas de verdict de conformité, seulement des applications protégées.',
+    '## Le contrôle d’octroi',
+    'Le modèle de politique « exiger les applications clientes approuvées ou une protection des applications » cible les plateformes Android et iOS, exige l’appareil enregistré dans Entra (via une application d’agent : Microsoft Authenticator sur iOS, Authenticator ou Portail d’entreprise sur Android) et utilise « Require one of the selected controls ». Si une application ne prend pas en charge la protection des applications, l’utilisateur est bloqué dans cette application : testez la liste d’applications avant la mise en production, en mode rapport seulement. En mode rapport seulement, le journal peut afficher « Report-only: Failure » même quand toutes les conditions sont remplies, car le contrôle n’est pas satisfait tant que la politique n’est pas activée.',
+    '## Retrait de « application cliente approuvée »',
+    'Le contrôle « Require approved client app » est retiré. La date a été repoussée de mars à **30 juin 2026**, après quoi les politiques qui l’utilisent passent en lecture seule (désactivation et suppression restent possibles ; l’application continue d’être appliquée tant qu’elles sont activées). Migrez vers « application cliente approuvée **ou** protection des applications », puis vers la protection seule pour toute nouvelle politique. Cette échéance a déjà changé une fois : revérifiez la page de migration à chaque révision plutôt que de la mémoriser.',
+    '## Plateformes : ne rien transposer',
+    'La protection des applications est disponible sur iOS et Android, et en préversion sur Windows pour le navigateur Microsoft Edge seulement. Les paramètres de conformité diffèrent par plateforme (module 14) : un réglage Windows comme le score de risque Defender ne s’applique pas à une tablette iOS. Un appareil Android en gestion d’administrateur d’appareil n’est plus pris en charge par l’approche moderne ; la gestion Android Enterprise la remplace.',
+    '## Ce qu’une politique BYOD doit assumer',
+    'Elle assume de ne pas voir l’appareil : pas de preuve de chiffrement du disque, pas de vérification du système au-delà de ce que l’application agent expose. Elle compense par la protection des données dans l’application, un effacement sélectif à la fin de l’emploi, et une exigence de version minimale du système lorsque la plateforme l’expose. Consignez ce risque résiduel dans le dossier de décision plutôt que de le cacher.',
+  ),
+  demo: { title: 'Choisir le modèle', body: md(
+    'Décision **fictive** :',
+    '```text',
+    'Poste de l’organisation, Windows : conformité + accès conditionnel',
+    'Téléphone personnel, courriel   : protection des applications',
+    'Tablette personnelle sans agent : accès refusé',
+    '```',
+    '**Lecture commentée.** Le modèle suit ce que l’on peut vérifier sur chaque appareil.',
+    '**Ce que la démo ne prouve pas.** Aucun appareil personnel n’a été testé.') },
+  guided: 'i09-g3', autonomous: 'i09-a3', quiz: ['i09-q3a', 'i09-q3b', 'i09-q3c'],
+  revision: md('## Fiche : BYOD', '- MAM protège les applications, pas l’appareil.', '- Octroi : exiger la protection des applications ; appareil enregistré via un agent.', '- Application cliente approuvée : retrait repoussé au 30 juin 2026, à revérifier.', '- Protection des applications : iOS et Android ; Windows en préversion pour Edge.', '- Ne pas transposer les paramètres Windows.'),
+  links: [sref('entra-ca-app-protection'), sref('entra-ca-grant'), sref('entra-ca-migrate-approved'), sref('intune-compliance-create')], teaches: ['byod', 'protection-applications', 'plateformes'],
+};
+
+const exercises = [
+  a.match({ id: 'i09-g1', title: 'État et sens', comp: c1.comp, tags: c1.tags, role: 'guided', dim: 'comprendre', lesson: 'i09-l1',
+    st: 'Associez chaque état de conformité à son sens.', items: [['p1', 'Compliant'], ['p2', 'In grace period'], ['p3', 'Not evaluated']],
+    options: [['s1', 'Les paramètres évalués sont satisfaits'], ['s2', 'Non conforme mais dans le délai défini'], ['s3', 'Pas encore évalué : neuf, sans politique ou sans synchronisation']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Not evaluated est un état initial, pas un échec de conformité.' }),
+  a.config({ id: 'i09-a1', title: 'Réglages du locataire', comp: c1.comp, tags: c1.tags, role: 'autonomous', dim: 'securiser', lesson: 'i09-l1',
+    st: 'Vous exigez la conformité dans l’accès conditionnel. Paramétrez le locataire.',
+    fields: [
+      { id: 'nopol', label: 'Appareils sans politique de conformité', kind: 'select', options: [{ id: 'ok', label: 'Compliant' }, { id: 'ko', label: 'Not compliant' }], accept: ['ko'], why: 'Sinon un appareil sans politique passe.' },
+      { id: 'grace', label: 'Délai de l’action par défaut pour le risque élevé', kind: 'select', options: [{ id: 'd0', label: '0 jour' }, { id: 'd14', label: '14 jours' }], accept: ['d0'], why: 'Un signal de compromission ne tolère pas de délai.' },
+      { id: 'mail', label: 'Courriel de rappel à J+2 pour les écarts d’hygiène', kind: 'toggle', accept: ['on'], why: 'Laisse le temps de corriger.' },
+    ], solution: { nopol: 'ko', grace: 'd0', mail: 'on' }, exp: 'Sans politique = non conforme, zéro jour pour le risque et rappel pour l’hygiène.' }),
+  Q('i09-q1a', 'quiz', 'comprendre', c1, 'Rôle du verdict', 'Que fait un verdict de non-conformité à lui seul ?', ['Rien de bloquant : il faut l’accès conditionnel pour l’appliquer.', 'Le verdict est consommé par Entra.'], [['Il bloque tout.', 'Faux.'], ['Il efface l’appareil.', 'Faux.'], ['Il corrige les paramètres.', 'Faux.']], 'Le blocage vient de l’accès conditionnel.'),
+  Q('i09-q1b', 'quiz', 'fonctionner', c1, 'Valeur par défaut', 'Que vaut par défaut un appareil sans politique de conformité ?', ['Compliant.', 'À changer si l’accès exige la conformité.'], [['Not compliant.', 'Faux.'], ['Bloqué.', 'Faux.'], ['Retiré.', 'Faux.']], 'La valeur par défaut est Compliant.'),
+  Q('i09-q1c', 'quiz', 'maintenir', c1, 'Paramètre en erreur', 'Combien de temps un paramètre en Error laisse-t-il l’état inchangé au plus ?', ['Sept jours.', 'Puis non conforme ou en grâce.'], [['Une heure.', 'Faux.'], ['Trente jours.', 'C’est la période de validité.'], ['Jamais.', 'Faux.']], 'Après sept jours l’appareil devient non conforme ou en grâce.'),
+
+  a.workflow({ id: 'i09-g2', title: 'Déployer l’accès conditionnel', comp: c2.comp, tags: c2.tags, role: 'guided', dim: 'fonctionner', lesson: 'i09-l2',
+    st: 'Ordonnez le déploiement d’une politique exigeant un appareil conforme.',
+    blocks: [['b1', 'Créer la politique de conformité'], ['b2', 'Confirmer un appareil de test conforme'], ['b3', 'Créer l’accès conditionnel en mode rapport seulement, urgence exclue'], ['b4', 'Revoir le journal après 24 heures'], ['b5', 'Passer à Activé'], ['b6', 'Activer directement pour tous sans exclusion']],
+    required: ['b1', 'b2', 'b3', 'b4', 'b5'], forbidden: ['b6'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4'], ['b4', 'b5']], notes: { b6: 'Risque de verrouillage.' }, solution: ['b1', 'b2', 'b3', 'b4', 'b5'],
+    exp: 'Conformité, test, rapport seulement, revue puis activation.' }),
+  a.inspect({ id: 'i09-a2', title: 'Relire une politique d’accès', comp: c2.comp, tags: c2.tags, role: 'autonomous', dim: 'securiser', lesson: 'i09-l2', language: 'text',
+    st: 'Politique fictive. Repérez les défauts.',
+    lines: [['p1', 'Cible : tous les utilisateurs, aucune exclusion.', { ok: 'a1', fixes: [['a1', 'Exclure les comptes d’urgence'], ['a2', 'Accepter']] }], ['p2', 'État : Activé dès la création.', { ok: 'b1', fixes: [['b1', 'Commencer en mode rapport seulement'], ['b2', 'Accepter']] }], ['p3', 'Seuil de risque : High pour bloquer les compromissions.', { ok: 'c1', fixes: [['c1', 'Utiliser Medium ou plus strict'], ['c2', 'Accepter']] }]],
+    exp: 'Aucune exclusion, activation directe et seuil High sont trois défauts.' }),
+  Q('i09-q2a', 'quiz', 'comprendre', c2, 'Seuil Clear', 'Que signifie un seuil Clear ?', ['Toute menace rend l’appareil non conforme.', 'Le plus strict.'], [['Les menaces faibles sont tolérées.', 'Faux.'], ['Tous les niveaux sont tolérés.', 'C’est High.'], ['Aucune évaluation.', 'Faux.']], 'Clear est le seuil le plus strict.'),
+  Q('i09-q2b', 'quiz', 'fonctionner', c2, 'Mode rapport', 'Pourquoi le mode rapport seulement d’abord ?', ['Pour voir l’effet sans bloquer.', 'Évite le verrouillage.'], [['Pour accélérer les connexions.', 'Faux.'], ['Pour économiser une licence.', 'Faux.'], ['Il est obligatoire par la loi.', 'Faux.']], 'Il consigne l’effet sans bloquer.'),
+  Q('i09-q2c', 'quiz', 'maintenir', c2, 'Urgence', 'À quelle fréquence tester les comptes d’urgence ?', ['Régulièrement, par exemple chaque trimestre.', 'Recommandation.'], [['Jamais.', 'Faux.'], ['Une fois à la création.', 'Insuffisant.'], ['Seulement en panne.', 'Trop tard.']], 'Il faut un test périodique.'),
+
+  a.match({ id: 'i09-g3', title: 'Modèle et appareil', comp: c3.comp, tags: c3.tags, role: 'guided', dim: 'comprendre', lesson: 'i09-l3',
+    st: 'Associez chaque situation au contrôle approprié.', items: [['p1', 'Portable de l’organisation'], ['p2', 'Téléphone personnel avec courriel'], ['p3', 'Appareil personnel sans agent d’enregistrement']],
+    options: [['s1', 'Conformité de l’appareil'], ['s2', 'Protection des applications'], ['s3', 'Accès refusé']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Le contrôle suit ce que l’on peut prouver sur l’appareil.' }),
+  a.fix({ id: 'i09-a3', title: 'Corriger l’octroi BYOD', comp: c3.comp, tags: c3.tags, role: 'autonomous', dim: 'securiser', lesson: 'i09-l3', language: 'json',
+    st: 'Corrigez : nouvelle politique, mobile seulement.',
+    starter: JSON.stringify({ octroi: 'application-cliente-approuvee-seule', plateformes: 'toutes', mode: 'active' }, null, 2),
+    rules: [{ kind: 'equals', path: 'octroi', value: 'protection-des-applications', message: 'Utiliser la protection des applications.', dim: 'securiser' }, { kind: 'equals', path: 'plateformes', value: 'ios-android', message: 'Cibler iOS et Android.', dim: 'fonctionner' }, { kind: 'equals', path: 'mode', value: 'rapport-seulement', message: 'Commencer en rapport seulement.', dim: 'maintenir' }],
+    solution: JSON.stringify({ octroi: 'protection-des-applications', plateformes: 'ios-android', mode: 'rapport-seulement' }, null, 2), exp: 'Protection des applications, iOS et Android, rapport seulement.' }),
+  Q('i09-q3a', 'quiz', 'comprendre', c3, 'MAM', 'Que protège la gestion des applications mobiles ?', ['Les données dans des applications précises.', 'Pas l’appareil entier.'], [['Tout l’appareil.', 'Faux.'], ['Le réseau.', 'Faux.'], ['Le matériel.', 'Faux.']], 'MAM protège les applications.'),
+  Q('i09-q3b', 'quiz', 'fonctionner', c3, 'Application non prise en charge', 'Que se passe-t-il si une application ne prend pas en charge la protection des applications ?', ['L’utilisateur est bloqué dans cette application.', 'Tester en rapport seulement.'], [['Accès normal.', 'Faux.'], ['L’appareil est effacé.', 'Faux.'], ['Rien.', 'Faux.']], 'L’accès est refusé dans cette application.'),
+  Q('i09-q3c', 'quiz', 'maintenir', c3, 'Échéance', 'Pourquoi revérifier la date de retrait de l’application cliente approuvée ?', ['Elle a déjà été repoussée.', 'Les échéances changent.'], [['Elle n’existe plus.', 'Faux.'], ['Elle est fixe.', 'Faux.'], ['Elle est secrète.', 'Faux.']], 'La date a déjà été repoussée une fois.'),
+
+  Q('i09-ev1', 'eval', 'comprendre', c1, 'Action par défaut', 'Quelle est la planification de l’action par défaut ?', ['0 jour : non conforme immédiatement.', 'Modifiable.'], [['7 jours.', 'Faux.'], ['30 jours.', 'Faux.'], ['Elle n’existe pas.', 'Faux.']], 'L’action par défaut est à zéro jour.'),
+  M('i09-ev2', 'eval', 'securiser', c2, 'Déploiement sûr', 'Cochez les précautions avant d’activer une politique de conformité requise.', [['Exclure les comptes d’urgence.', 'Évite le verrouillage.'], ['Mode rapport seulement d’abord.', 'Voir l’effet.']], [['Activer pour tous sans test.', 'Risque.'], ['Exclure tous les administrateurs de la sécurité.', 'Faux.']], 'Exclusions et rapport seulement.'),
+  a.order({ id: 'i09-ev3', title: 'Chemin du risque', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'fonctionner', lesson: 'i09-l2',
+    st: 'Ordonnez le chemin du signal de risque.',
+    items: [['s1', 'Defender évalue le risque de l’appareil'], ['s2', 'Intune compare au seuil et marque non conforme'], ['s3', 'Entra reçoit le verdict'], ['s4', 'L’accès conditionnel refuse l’accès'], ['s5', 'La remédiation rétablit la conformité']], correct: ['s1', 's2', 's3', 's4', 's5'],
+    exp: 'Défense, conformité, Entra, blocage puis rétablissement.' }),
+  a.fix({ id: 'i09-ev4', title: 'Corriger le locataire', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'securiser', lesson: 'i09-l1', language: 'json',
+    st: 'Corrigez les réglages du locataire.',
+    starter: JSON.stringify({ sansPolitique: 'compliant', validiteJours: 120, grace: 'aucune-action-urgente' }, null, 2),
+    rules: [{ kind: 'equals', path: 'sansPolitique', value: 'not-compliant', message: 'Un appareil sans politique doit être non conforme.', dim: 'securiser' }, { kind: 'range', path: 'validiteJours', min: 7, max: 30, message: 'Réduire la période de validité.', dim: 'maintenir' }, { kind: 'equals', path: 'grace', value: 'zero-jour-pour-risque', message: 'Zéro jour pour le risque.', dim: 'securiser' }],
+    solution: JSON.stringify({ sansPolitique: 'not-compliant', validiteJours: 14, grace: 'zero-jour-pour-risque' }, null, 2), exp: 'Non conforme par défaut, validité courte et zéro jour pour le risque.' }),
+  a.match({ id: 'i09-ev5', title: 'Symptôme et cause', comp: c3.comp, tags: c3.tags, role: 'eval', dim: 'maintenir', lesson: 'i09-l3',
+    st: 'Associez chaque symptôme à sa cause probable.', items: [['p1', 'Un utilisateur est bloqué dans une application mobile précise'], ['p2', 'Le journal affiche Report-only: Failure alors que tout semble satisfait'], ['p3', 'Un appareil neuf apparaît Not evaluated']],
+    options: [['s1', 'L’application ne prend pas en charge la protection des applications'], ['s2', 'Le contrôle n’est pas satisfait tant que la politique n’est pas activée'], ['s3', 'État initial avant la première évaluation']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque symptôme a une cause documentée distincte.' }),
+  a.workflow({ id: 'i09-ev6', title: 'Plan de grâce', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'fonctionner', lesson: 'i09-l1',
+    st: 'Ordonnez la conception des actions de non-conformité pour un écart d’hygiène.',
+    blocks: [['b1', 'Choisir le délai de grâce'], ['b2', 'Ajouter un courriel de rappel'], ['b3', 'Vérifier que la messagerie accepte l’expéditeur'], ['b4', 'Piloter'], ['b5', 'Bloquer sans délai pour tout écart']],
+    required: ['b1', 'b2', 'b3', 'b4'], forbidden: ['b5'], before: [['b1', 'b2'], ['b2', 'b3'], ['b3', 'b4']], notes: { b5: 'Bruit inutile pour de l’hygiène.' }, solution: ['b1', 'b2', 'b3', 'b4'],
+    exp: 'Délai, rappel, livraison vérifiée puis pilote.' }),
+  a.short({ id: 'i09-ev7', title: 'Validité par défaut', comp: c1.comp, tags: c1.tags, role: 'eval', dim: 'comprendre', lesson: 'i09-l1',
+    st: 'Quelle est la période de validité du statut de conformité par défaut, en jours ? (nombre)', accepted: ['30'], numeric: { value: 30 }, ph: 'un nombre',
+    exp: 'La valeur par défaut est de 30 jours, configurable de 1 à 120.' }),
+  a.short({ id: 'i09-ev8', title: 'Jours de grâce en erreur', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'comprendre', lesson: 'i09-l1',
+    st: 'Combien de jours un paramètre en état Error laisse-t-il l’état de l’appareil inchangé au maximum ? (nombre)', accepted: ['7'], numeric: { value: 7 }, ph: 'un nombre',
+    exp: 'Jusqu’à sept jours, puis l’appareil devient non conforme ou en grâce.' }),
+
+  a.inspect({ id: 'i09-cs1', title: 'Cas : accès chez Aurore Logistique', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'securiser', lesson: 'i09-l2', language: 'text',
+    st: 'Plan fictif. Repérez les défauts.',
+    lines: [['p1', 'Les appareils sans politique restent Compliant.', { ok: 'a1', fixes: [['a1', 'Passer à Not compliant'], ['a2', 'Accepter']] }], ['p2', 'Aucun compte d’urgence n’est exclu.', { ok: 'b1', fixes: [['b1', 'Exclure un groupe d’urgence et le tester'], ['b2', 'Accepter']] }], ['p3', 'La politique est activée sans appareil de test conforme.', { ok: 'c1', fixes: [['c1', 'Confirmer un appareil conforme d’abord'], ['c2', 'Accepter']] }]],
+    exp: 'Trois défauts classiques de verrouillage.' }),
+  a.workflow({ id: 'i09-cs2', title: 'Cas : déploiement par vagues', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'securiser', lesson: 'i09-l2',
+    st: 'Ordonnez le déploiement complet.',
+    blocks: [['t1', 'Politique de conformité sur un groupe pilote'], ['t2', 'Appareil de test conforme'], ['t3', 'Accès conditionnel en rapport seulement'], ['t4', 'Revue du journal'], ['t5', 'Activation par vagues'], ['t6', 'Test trimestriel des comptes d’urgence'], ['t7', 'Activation globale sans revue']],
+    required: ['t1', 't2', 't3', 't4', 't5', 't6'], forbidden: ['t7'], before: [['t1', 't2'], ['t2', 't3'], ['t3', 't4'], ['t4', 't5'], ['t5', 't6']], notes: { t7: 'Pas de revue, risque de blocage.' }, solution: ['t1', 't2', 't3', 't4', 't5', 't6'],
+    exp: 'Pilote, preuve, rapport, revue, vagues et test d’urgence.' }),
+  a.match({ id: 'i09-cs3', title: 'Cas : BYOD', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i09-l3',
+    st: 'Associez chaque exigence au contrôle.', items: [['p1', 'Données de courriel sur téléphone personnel'], ['p2', 'Postes de l’organisation'], ['p3', 'Fin d’emploi d’un utilisateur BYOD']],
+    options: [['s1', 'Protection des applications'], ['s2', 'Conformité d’appareil et accès conditionnel'], ['s3', 'Effacement sélectif']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Chaque exigence a son contrôle propre : protection, conformité ou effacement.' }),
+  a.open({ id: 'i09-cs-open', title: 'Cas : stratégie d’accès', comp: c3.comp, tags: c3.tags, role: 'case', dim: 'maintenir', lesson: 'i09-l3',
+    st: 'Rédigez la stratégie de conformité et d’accès d’une organisation fictive.',
+    deliverable: 'Un document : conformité, grâce, risque Defender, accès conditionnel, comptes d’urgence, BYOD et risques résiduels.',
+    rubric: [['r1', 'Les réglages du locataire sont justifiés.', 'securiser'], ['r2', 'Le déploiement évite le verrouillage.', 'fonctionner'], ['r3', 'Le BYOD est traité par la protection des applications.', 'comprendre'], ['r4', 'Les risques résiduels sont nommés.', 'maintenir'], ['r5', 'Les échéances Microsoft sont à revérifier.', 'maintenir']],
+    exp: 'Pas de note automatique : on juge la cohérence de la stratégie.' }),
+
+  Q('i09-rm1', 'remediation', 'comprendre', c1, 'Remédiation : verdict', 'Pourquoi l’accès conditionnel est-il nécessaire ?', ['Il applique le verdict de conformité.', 'Sinon le verdict reste un rapport.'], [['Il corrige les appareils.', 'Faux.'], ['Il chiffre les disques.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Le verdict ne bloque rien seul.'),
+  Q('i09-rm2', 'remediation', 'fonctionner', c2, 'Remédiation : rapport', 'Pourquoi tester un appareil conforme avant l’activation ?', ['Sinon tout le monde peut être bloqué.', 'Éviter le verrouillage.'], [['Pour la vitesse.', 'Faux.'], ['Pour la licence.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Sans appareil conforme, l’accès conditionnel peut tout bloquer.'),
+  Q('i09-rm3', 'remediation', 'securiser', c3, 'Remédiation : BYOD', 'Pourquoi ne pas exiger la conformité sur un appareil personnel non inscrit ?', ['Il n’a pas de verdict de conformité ; on protège les applications.', 'Principe MAM.'], [['Il est trop rapide.', 'Faux.'], ['C’est interdit partout.', 'Faux.'], ['Aucune raison.', 'Faux.']], 'Un appareil non inscrit n’a pas de verdict.'),
+];
+
+const competencies: AiCompetency[] = [
+  { id: 'i09-c1', module: 'i09', name: 'Concevoir la conformité', description: 'Actions, grâce, réglages du locataire.', criteria: [{ id: 'i09-c1-1', text: 'Je planifie les actions et le délai de grâce.' }, { id: 'i09-c1-2', text: 'Je règle les appareils sans politique.' }, { id: 'i09-c1-3', text: 'Je lis correctement les états.' }] },
+  { id: 'i09-c2', module: 'i09', name: 'Déployer l’accès conditionnel sans verrouillage', description: 'Risque Defender, rapport seulement, urgence.', criteria: [{ id: 'i09-c2-1', text: 'Je décris le chemin du signal.' }, { id: 'i09-c2-2', text: 'Je choisis un seuil de risque justifié.' }, { id: 'i09-c2-3', text: 'J’exclus et je teste les comptes d’urgence.' }] },
+  { id: 'i09-c3', module: 'i09', name: 'Protéger les appareils personnels', description: 'MAM, octroi, échéances.', criteria: [{ id: 'i09-c3-1', text: 'Je choisis entre appareil et application.' }, { id: 'i09-c3-2', text: 'Je configure l’octroi correct.' }, { id: 'i09-c3-3', text: 'Je suis les échéances Microsoft.' }] },
+];
+
+const projects: AiProject[] = [
+  { id: 'i09-p1', module: 'i09', level: 'débutant', title: 'Tableau des actions de non-conformité', problem: 'Dresser le tableau des signaux, délais et actions pour une organisation fictive.', architecture: 'Tableau d’une page.', tools: ['Tableur'], data: 'Signaux fictifs.', steps: ['Lister les signaux.', 'Fixer les délais.', 'Choisir les actions.'], success: ['Chaque signal a un délai justifié.'], risks: ['Délai trop long pour un risque élevé.'], extensions: ['Ajouter les plateformes.'] },
+  { id: 'i09-p2', module: 'i09', level: 'intermédiaire', title: 'Plan d’accès conditionnel sans verrouillage', problem: 'Concevoir le plan de déploiement d’une politique exigeant un appareil conforme, avec exclusions et tests.', architecture: 'Plan par étapes avec critères.', tools: ['Éditeur de texte'], data: 'Locataire fictif.', steps: ['Définir la conformité.', 'Planifier le rapport seulement.', 'Exclure les urgences.', 'Définir la revue.'], success: ['Aucune étape ne peut verrouiller.'], risks: ['Exclusion oubliée.'], extensions: ['Ajouter une politique de contingence.'],
+    connected: { accounts: 'Un locataire de test avec Intune, Entra ID P1 et un appareil Windows de test.', permissions: 'Conditional Access Administrator et Endpoint Security Manager dans le locataire de test.', costs: 'Licences de test.', secrets: 'Ne stockez jamais les identifiants des comptes d’urgence dans un document.', cleanup: 'Désactiver les politiques de test et retirer les groupes.', limits: 'Facultatif : n’activez jamais une politique bloquante sur un locataire de production.' } },
+  { id: 'i09-p3', module: 'i09', level: 'avancé', title: 'Dossier de décision BYOD', problem: 'Rédiger le dossier de décision BYOD : modèle, applications, plateformes, risques résiduels et échéances.', architecture: 'Dossier avec décision et revue.', tools: ['Éditeur de texte'], data: 'Scénarios fictifs.', steps: ['Choisir le modèle.', 'Lister les applications.', 'Nommer les risques.', 'Planifier la revue des échéances.'], success: ['Le dossier est décisionnel.'], risks: ['Application non prise en charge.'], extensions: ['Ajouter un plan de communication.'] },
+];
+
+export const i09 = assemble({ id: 'i09', level: 3, n: 9, title: 'Conformité et contrôle d’accès',
+  summary: 'Politiques de conformité, délais de grâce, risque de l’appareil Defender, accès conditionnel sans verrouillage, comptes d’urgence et BYOD.',
+  lessons: [l1, l2, l3], exercises, competencies, projects,
+  caseTitle: 'Contrôler l’accès chez Aurore Logistique',
+  caseScenario: 'Vous concevez la conformité, l’accès conditionnel et le BYOD. Actions simulées.', caseMinutes: 45 });
