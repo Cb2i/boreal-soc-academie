@@ -2,6 +2,7 @@ import { buildContent } from '../../agentic/content/build.ts';
 import type { ModuleContent, ResourceDef } from '../../agentic/types.ts';
 import { INTUNE_LEVELS } from './levels.ts';
 import { i01 } from './i01.ts';
+import { i14 } from './i14.ts';
 import { i13 } from './i13.ts';
 import { i12 } from './i12.ts';
 import { i11 } from './i11.ts';
@@ -17,6 +18,6 @@ import { i02 } from './i02.ts';
 import { INTUNE_FINAL } from './final.ts';
 import { INTUNE_RESOURCES } from './resources.ts';
 
-export const INTUNE_MODULES: ModuleContent[] = [i01, i02, i03, i04, i05, i06, i07, i08, i09, i10, i11, i12, i13];
+export const INTUNE_MODULES: ModuleContent[] = [i01, i02, i03, i04, i05, i06, i07, i08, i09, i10, i11, i12, i13, i14];
 const resources: ResourceDef[] = INTUNE_RESOURCES;
 export const CONTENT = buildContent(INTUNE_LEVELS, INTUNE_MODULES, INTUNE_FINAL, resources);
