@@ -12,5 +12,6 @@ import { CAPS_D10 } from './d10.ts';
 import { CAPS_D11 } from './d11.ts';
 import { CAPS_D12 } from './d12.ts';
 import { CAPS_D13 } from './d13.ts';
+import { CAPS_D14 } from './d14.ts';
 
-export const CAPABILITIES: MdcCapability[] = [...CAPS_D01, ...CAPS_D02, ...CAPS_D03, ...CAPS_D04, ...CAPS_D05, ...CAPS_D06, ...CAPS_D07, ...CAPS_D08, ...CAPS_D09, ...CAPS_D10, ...CAPS_D11, ...CAPS_D12, ...CAPS_D13];
+export const CAPABILITIES: MdcCapability[] = [...CAPS_D01, ...CAPS_D02, ...CAPS_D03, ...CAPS_D04, ...CAPS_D05, ...CAPS_D06, ...CAPS_D07, ...CAPS_D08, ...CAPS_D09, ...CAPS_D10, ...CAPS_D11, ...CAPS_D12, ...CAPS_D13, ...CAPS_D14];
