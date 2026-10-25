@@ -106,5 +106,12 @@ export const MDC_SOURCES: SourceDef[] = [
   S('ama', 'Azure Monitor Agent in Defender for Cloud', 'auto-deploy-azure-monitoring-agent', 'Azure Monitor Agent et Defender for Cloud'),
   S('arc-monitor-mode', 'Extensions security for Azure Arc-enabled servers', 'https://learn.microsoft.com/azure/azure-arc/servers/security-extensions', 'Mode de surveillance de l’agent Arc', 'reference'),
   S('cspm-components', 'Protect your resources with Defender CSPM', 'tutorial-enable-cspm-plan', 'Composants de Defender CSPM'),
+  S('custom-recos', 'Create custom standards and recommendations', 'create-custom-recommendations', 'Recommandations et standards personnalisés (KQL)'),
+  S('security-policy', 'Security policies in Defender for Cloud', 'security-policy-concept', 'Standards, initiatives et recommandations'),
+  S('policy-reference', 'Azure Policy built-in definitions for Defender for Cloud', 'policy-reference', 'Définitions Azure Policy intégrées'),
+  S('explorer-howto', 'Build queries with cloud security explorer', 'how-to-manage-cloud-security-explorer', 'Explorateur de sécurité du cloud : modèles et requêtes'),
+  S('internet-exposure', 'Internet exposure analysis', 'internet-exposure-analysis', 'Analyse de l’exposition à Internet'),
+  S('attack-path-defender', 'Work with attack paths (Exposure Management)', 'https://learn.microsoft.com/security-exposure-management/work-attack-paths-overview', 'Chemins d’attaque dans le portail Defender : points d’étranglement et rayon d’impact', 'reference'),
+  S('secrets-vm', 'Remediate machine secrets', 'remediate-server-secrets', 'Secrets en clair sur les machines'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];

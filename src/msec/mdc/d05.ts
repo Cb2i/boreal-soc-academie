@@ -1,0 +1,198 @@
+// Module 5 : Posture de sécurité du cloud, CSPM (niveau 2).
+import { dsl, md } from './dsl.ts';
+
+const { lesson, Q, M, MT, OR, CF, IN, WF, FX, SH, OP, comps, P, assemble } = dsl('d05');
+const c1 = { comp: 'd05-c1', lesson: 'd05-l1', tags: ['standards', 'initiatives', 'mcsb', 'evaluation'] };
+const c2 = { comp: 'd05-c2', lesson: 'd05-l2', tags: ['niveau-securite', 'calcul', 'deux-modeles', 'resource-graph'] };
+const c3 = { comp: 'd05-c3', lesson: 'd05-l3', tags: ['recommandation-personnalisee', 'kql', 'standard-personnalise'] };
+
+const l1 = lesson(1, {
+  title: 'Standards, initiatives et recommandations : comment la posture est évaluée', minutes: 50,
+  summary: 'Comprendre la chaîne standard, initiative, définition de politique, évaluation et recommandation, et ce que contient le MCSB.',
+  objectives: ['Décrire la chaîne qui produit une recommandation.', 'Expliquer le rôle du Microsoft cloud security benchmark et des standards additionnels.', 'Lire une recommandation : description, remédiation, ressources, sévérité, risque.'],
+  prerequisites: ['Modules 1 à 4'],
+  body: md(
+    '## De la politique à la recommandation',
+    'Une **recommandation** est le résultat visible d’une **évaluation** : Defender for Cloud compare chaque ressource à une règle d’un **standard**. Pour Azure, un standard s’appuie sur une **initiative** Azure Policy, ensemble de définitions de politiques. Quand une ressource ne respecte pas une règle, elle devient « non saine » et la recommandation correspondante la liste. Pour AWS et GCP, le principe est le même mais les évaluations passent par les connecteurs. Dès l’enregistrement d’un abonnement, la référence **Microsoft cloud security benchmark** (MCSB) lui est affectée automatiquement : c’est l’initiative par défaut. Elle s’inspire de contrôles du CIS et du NIST avec une orientation cloud.',
+    '## Standards additionnels et personnalisés',
+    'On peut ajouter des **standards réglementaires** (module 7) et des **standards personnalisés** (leçon 3) dès qu’**au moins un plan payant** est activé. Le MCSB, lui, reste modifiable pour l’abonnement : on peut désactiver une définition ou changer un effet (audit, refus, désactivé). Un changement d’effet vers « refus » empêche la création de ressources non conformes : c’est un geste de gouvernance qui touche la production, donc à valider avec les équipes de ressources.',
+    '## Ce que contient une recommandation',
+    'Chaque recommandation présente une description du problème, des **étapes de remédiation**, les **ressources affectées** (saines, non saines, sans objet), la **sévérité** et, avec Defender CSPM, des **facteurs de risque** : exposition à Internet, sensibilité des données, mouvement latéral, chemins d’attaque. Le modèle de risque priorise, mais il **n’influence pas** le niveau de sécurité classique : une recommandation de sévérité moyenne mais à risque critique peut passer avant dans votre file sans changer votre score. Notez aussi les ressources « sans objet » : elles ne sont ni saines ni non saines, parce que la règle ne s’applique pas.',
+    '## Évaluation et délais',
+    'Les évaluations ne sont pas instantanées. Après un changement, comptez des minutes à plusieurs heures selon la source (une exemption demande 12 à 24 heures, les évaluations de conformité réglementaire environ 12 heures, le niveau de sécurité classique se recalcule toutes les 8 heures). Un test de correction se mesure donc **le lendemain** ou après la fenêtre documentée, pas dans la minute.',
+    '| Terme | Définition | Où le voir |',
+    '| --- | --- | --- |',
+    '| Standard | Ensemble de règles évaluées | Security policies |',
+    '| Initiative | Regroupement Azure Policy qui porte un standard | Azure Policy |',
+    '| Évaluation | Test d’une ressource contre une règle | Recommandations |',
+    '| Recommandation | Résultat visible et actionnable | Recommandations |',
+    '```text',
+    'Fiche de lecture (exemple fictif)',
+    'Reco       : « Storage accounts should restrict network access using virtual network rules »',
+    'Standard   : MCSB  |  Sévérité : Moyenne  |  Risque : Élevé (exposé à Internet, données sensibles)',
+    'Ressources : 12 non saines, 40 saines, 3 sans objet',
+    'Action     : restreindre l’accès réseau, réévaluer après la fenêtre documentée',
+    '```',
+    '## Erreurs fréquentes',
+    '- Confondre sévérité et risque : la première décrit la règle, le second la ressource dans son contexte.',
+    '- Passer une définition en « refus » sans avertir les équipes de ressources.',
+    '- Mesurer l’effet d’une correction immédiatement.',
+  ),
+  demo: { title: 'Lire une recommandation pas à pas', body: md(
+    'Recommandation **fictive** :',
+    '```text',
+    '1. Description  : le compte de stockage accepte le trafic de tous les réseaux',
+    '2. Standard     : MCSB (affecté par défaut)',
+    '3. Sévérité     : Moyenne ; Risque (Defender CSPM) : Élevé',
+    '4. Ressources   : 12 non saines (dont 3 portent des données sensibles)',
+    '5. Remédiation  : ajouter des règles de réseau virtuel, puis réévaluer le lendemain',
+    '```',
+    '**Lecture commentée.** On traite d’abord les trois comptes sensibles, malgré la sévérité moyenne, parce que le risque est élevé.',
+    '**Ce que la démo ne prouve pas.** Aucune évaluation réelle n’a eu lieu.') },
+  revision: md('## Fiche : posture', '- Standard, initiative, évaluation, recommandation.', '- MCSB affecté par défaut à l’enregistrement.', '- Standards additionnels et personnalisés : au moins un plan payant.', '- Sévérité de la règle, risque de la ressource dans son contexte.', '- Mesurer après la fenêtre de réévaluation.'),
+  links: ['security-policy', 'recos', 'recos-review', 'policy-reference', 'cspm'], teaches: ['standards', 'initiatives', 'mcsb', 'evaluation'],
+});
+
+const l2 = lesson(2, {
+  title: 'Niveau de sécurité : calcul classique, modèle fondé sur le risque et lecture par requête', minutes: 50,
+  summary: 'Savoir comment le niveau de sécurité classique est calculé, en quoi le modèle fondé sur le risque diffère et comment extraire les valeurs en lecture seule.',
+  objectives: ['Expliquer le calcul du niveau classique et ses exclusions.', 'Comparer les deux modèles sans mélanger leurs valeurs.', 'Extraire un niveau de sécurité avec Azure Resource Graph.'],
+  prerequisites: ['Leçon 1'],
+  body: md(
+    '## Le niveau classique',
+    'Le niveau de sécurité **classique** regroupe les recommandations en **contrôles**, chacun doté d’un score maximal. Le score d’un contrôle se calcule selon la proportion de ressources saines parmi les ressources évaluées : score maximal du contrôle, divisé par le total des ressources saines et non saines, multiplié par le nombre de ressources saines. Le niveau global additionne les scores des contrôles. Le recalcul a lieu toutes les **8 heures environ**. Seules les recommandations intégrées de la référence MCSB comptent ; les recommandations en **préversion** en sont exclues. Vous pouvez donc « corriger » une recommandation sans voir le score bouger si elle est en préversion ou hors MCSB.',
+    '## Le modèle fondé sur le risque',
+    'Le niveau de sécurité **fondé sur le risque** n’existe que dans le portail Defender. Il va de 0 à 100 et pondère les risques selon la criticité de l’actif : une faille sur une ressource critique pèse plus qu’une faille sur une ressource de laboratoire. Les deux modèles se calculent différemment et leurs valeurs ne se comparent pas. Pour couronner le tout, la documentation signale que plus de 200 recommandations AWS et GCP s’ajoutent au calcul classique depuis le 2026-06-30 : un score peut changer sans aucune action de votre part. Documentez la date du calcul et le portail dans tout rapport.',
+    '## Lire les valeurs par requête',
+    'Azure Resource Graph expose la table `SecurityResources`. On y lit les niveaux par abonnement et les contrôles. La requête suivante est en **lecture seule** et la structure des champs vient de la documentation ; validez les noms de propriétés dans votre environnement avant de l’industrialiser.',
+    '```kusto',
+    '// Requête indicative : champs à valider dans votre locataire. Lecture seule.',
+    '// Prérequis : Reader ou Security Reader sur les abonnements visés.',
+    'SecurityResources',
+    '| where type == "microsoft.security/securescores/securescorecontrols"',
+    '| extend controle = tostring(properties.displayName),',
+    '         sains = toint(properties.healthyResourceCount),',
+    '         nonSains = toint(properties.unhealthyResourceCount),',
+    '         actuel = todouble(properties.score.current),',
+    '         maximum = todouble(properties.score.max)',
+    '| project subscriptionId, controle, sains, nonSains, actuel, maximum, perte = maximum - actuel',
+    '| order by perte desc',
+    '```',
+    '## Ce que le niveau ne dit pas',
+    'Un niveau de 90 % ne signifie pas 10 % de risque. Il mesure la conformité aux règles évaluées, pas la probabilité d’une attaque. Une ressource exposée et non évaluée ne pèse rien. Utilisez le niveau comme **indicateur de tendance** et de suivi, pas comme preuve de sécurité.',
+    '## Erreurs fréquentes',
+    '- Comparer le niveau classique à celui du portail Defender.',
+    '- Annoncer une hausse de score sans vérifier une éventuelle modification de calcul.',
+    '- Traiter le score comme une mesure du risque réel.',
+  ),
+  demo: { title: 'Expliquer une baisse de score', body: md(
+    'Situation **fictive** : le score classique passe de 72 % à 66 % en une nuit.',
+    '```text',
+    'Hypothèse 1 : de nouvelles ressources non conformes sont apparues         -> comparer le nombre de ressources évaluées',
+    'Hypothèse 2 : de nouvelles recommandations entrent dans le calcul         -> relire les notes de publication (AWS et GCP depuis 2026-06-30)',
+    'Hypothèse 3 : une recommandation est sortie de préversion                 -> vérifier son état',
+    'Preuve      : requête sur les contrôles, avant et après',
+    '```',
+    '**Lecture commentée.** Trois causes possibles, trois preuves. La baisse n’indique pas forcément une dégradation de la sécurité.',
+    '**Ce que la démo ne prouve pas.** Valeurs inventées.') },
+  revision: md('## Fiche : niveau de sécurité', '- Classique : contrôles, proportion de ressources saines, recalcul toutes les 8 heures.', '- Préversion et recommandations hors MCSB exclues.', '- Fondé sur le risque : portail Defender seulement, pondéré par la criticité.', '- Les valeurs des deux modèles ne se comparent pas.', '- Le niveau est un indicateur de tendance, pas une mesure de risque.'),
+  links: ['secure-score', 'resource-graph', 'arg-samples', 'risk', 'release-notes'], teaches: ['niveau-securite', 'calcul', 'deux-modeles', 'resource-graph'],
+});
+
+const l3 = lesson(3, {
+  title: 'Recommandations et standards personnalisés avec KQL', minutes: 55,
+  summary: 'Écrire une recommandation personnalisée qui respecte le schéma attendu, la tester et l’assigner à un standard personnalisé.',
+  objectives: ['Respecter le schéma de sortie à sept colonnes et les valeurs de HealthStatus.', 'Écrire une requête qui retourne toutes les ressources du périmètre.', 'Créer un standard personnalisé et y affecter une recommandation avec les bons rôles.'],
+  prerequisites: ['Leçons 1 et 2', 'Notions de KQL'],
+  body: md(
+    '## Pourquoi personnaliser',
+    'La référence MCSB ne connaît pas vos règles internes : balises obligatoires, noms de ressources, réseaux interdits. Une **recommandation personnalisée** exprime votre règle en KQL et apparaît à côté des recommandations intégrées, y compris dans le tableau de bord de conformité. Elle s’écrit pour Azure, AWS et GCP. Les droits sont répartis ainsi : **Owner** sur l’abonnement pour créer un nouveau standard, **Security Admin** pour créer des recommandations. La création **par KQL exige le plan Defender CSPM** ; la création fondée sur Azure Policy reste ouverte à tous.',
+    '## Le schéma de sortie',
+    'La requête interroge la table `RawEntityMetadata` et doit se terminer par une projection de **sept colonnes** : `Id`, `Name`, `Environment` (Azure, AWS ou GCP), `Identifiers`, `AdditionalData`, `Record` et `HealthStatus`. Les seules valeurs de `HealthStatus` sont `UNHEALTHY` et `HEALTHY`, en majuscules. Les propriétés se lisent sous `Record.properties.*`, le type de ressource se compare avec `=~` (insensible à la casse) et les propriétés absentes se testent avec `isnull()`. Règle essentielle : la requête doit **retourner toutes les ressources du périmètre**, saines comme non saines. Une ressource omise est traitée comme **sans donnée**, pas comme saine.',
+    '```kusto',
+    '// Exemple adapté de la documentation (comptes de stockage : HTTPS obligatoire).',
+    '// Contexte : éditeur de requête d’une recommandation personnalisée. Lecture seule : la requête évalue, elle ne modifie rien.',
+    'RawEntityMetadata',
+    '| where Environment == "Azure" and Identifiers.Type =~ "Microsoft.Storage/storageAccounts"',
+    '| extend condition = (Record.properties.supportsHttpsTrafficOnly != true)',
+    '| extend HealthStatus = iff(condition, "UNHEALTHY", "HEALTHY")',
+    '| project Id, Name, Environment, Identifiers, AdditionalData, Record, HealthStatus',
+    '```',
+    '## Créer, tester, assigner',
+    'Dans Environment settings, sur l’abonnement, ouvrez **Security policies** et choisissez **Create custom recommendation** : nom, étendue, sévérité, problème de sécurité, puis la requête dans l’éditeur, qui permet de la tester avant de l’utiliser. Assignez ensuite la recommandation à un **standard personnalisé**, créé par **Create > Standard**. Testez la requête sur des abonnements aux configurations variées. Pour déployer à grande échelle, l’API composite de Defender for Cloud permet d’automatiser la création de recommandations déjà validées.',
+    '## Mauvaises pratiques',
+    'Une recommandation trop stricte noie les équipes d’alertes non actionnables. Une recommandation sans texte de remédiation ne mène nulle part. Une règle sans propriétaire se périme. Chaque recommandation personnalisée doit avoir un propriétaire, une justification et une date de revue.',
+    '## Erreurs fréquentes',
+    '- Oublier une des sept colonnes : la requête échoue.',
+    '- Filtrer les ressources saines : elles sont alors traitées comme sans donnée.',
+    '- Écrire `properties.httpsOnly` au lieu de `Record.properties.httpsOnly`.',
+  ),
+  demo: { title: 'Corriger une requête qui échoue', body: md(
+    'Requête **fictive** défectueuse :',
+    '```text',
+    'RawEntityMetadata',
+    '| where Identifiers.Type == "Microsoft.Web/sites" and properties.httpsOnly != true',
+    '| project Id, Name',
+    '```',
+    '**Lecture commentée.** Quatre défauts : comparaison sensible à la casse, propriété lue hors de `Record`, filtre qui retire les ressources saines, projection incomplète sans `HealthStatus`.',
+    '**Ce que la démo ne prouve pas.** La requête n’a pas été exécutée dans un environnement réel.') },
+  revision: md('## Fiche : recommandation personnalisée', '- Table RawEntityMetadata, sept colonnes, HealthStatus en majuscules.', '- Retourner toutes les ressources du périmètre.', '- Owner pour un standard, Security Admin pour une recommandation, Defender CSPM pour KQL.', '- Tester sur des abonnements variés, rédiger la remédiation.', '- Propriétaire, justification et revue.'),
+  links: ['custom-recos', 'security-policy', 'cspm', 'recos', 'compliance'], teaches: ['recommandation-personnalisee', 'kql', 'standard-personnalise'],
+});
+
+const exercises = [
+  OR('d05-g1', 'guided', 'comprendre', c1, 'La chaîne d’évaluation', 'Ordonnez la chaîne qui produit une recommandation.', ['Standard', 'Initiative Azure Policy', 'Évaluation de la ressource', 'Ressource non saine', 'Recommandation visible'], 'Le standard s’appuie sur une initiative, l’évaluation produit un état et la recommandation le rend visible.'),
+  MT('d05-a1', 'autonomous', 'comprendre', c1, 'Sévérité et risque', 'Associez chaque notion à ce qu’elle décrit.', [['Sévérité', 'La règle'], ['Risque', 'La ressource dans son contexte'], ['Sans objet', 'La règle ne s’applique pas']], 'La sévérité qualifie la règle, le risque la ressource et sans objet une règle inapplicable.'),
+  Q('d05-q1a', 'quiz', 'comprendre', c1, 'MCSB par défaut', 'Quel standard est affecté par défaut à un abonnement enregistré ?', ['Le Microsoft cloud security benchmark.', 'Initiative par défaut.'], [['PCI DSS.', 'Standard additionnel.'], ['ISO 27001.', 'Standard additionnel.'], ['Aucun.', 'Faux.']], 'Le MCSB est affecté automatiquement.'),
+  Q('d05-q1b', 'quiz', 'securiser', c1, 'Effet en refus', 'Que provoque le passage d’une définition en effet « refus » ?', ['Elle empêche la création de ressources non conformes.', 'Geste de gouvernance qui touche la production.'], [['Elle supprime les ressources existantes.', 'Faux.'], ['Elle ne change rien.', 'Faux.'], ['Elle coupe les alertes.', 'Faux.']], 'Le refus bloque les créations non conformes.'),
+  Q('d05-q1c', 'quiz', 'verifier', c1, 'Délai de mesure', 'Quand mesure-t-on l’effet d’une correction ?', ['Après la fenêtre de réévaluation documentée.', 'Pas dans la minute.'], [['Immédiatement.', 'Trop tôt.'], ['Jamais.', 'Faux.'], ['Seulement le lundi.', 'Faux.']], 'Les évaluations sont différées.'),
+
+  MT('d05-g2', 'guided', 'comprendre', c2, 'Deux modèles', 'Associez chaque caractéristique au modèle.', [['Recalcul toutes les 8 heures environ', 'Niveau classique'], ['Pondération par criticité de l’actif', 'Niveau fondé sur le risque'], ['Disponible seulement dans le portail Defender', 'Niveau fondé sur le risque']], 'Les caractéristiques se rattachent à l’un ou l’autre modèle.'),
+  IN('d05-a2', 'autonomous', 'verifier', c2, 'Relire un rapport de score', 'Rapport fictif : repérez les affirmations à corriger.', 'text', [['« Le score est passé de 66 % à 72 % : la sécurité a progressé de 6 points. »', 'Vérifier changement de calcul, ressources évaluées et recommandations en préversion', 'Garder tel quel'], ['« Le score est de 90 %, donc le risque est de 10 %. »', 'Le score mesure la conformité aux règles évaluées, pas le risque', 'Garder tel quel'], ['« Le score du portail Azure égale celui du portail Defender. »', 'Les deux modèles diffèrent et se citent avec leur portail', 'Garder tel quel']], 'Chaque chiffre doit nommer son modèle et être expliqué.'),
+  Q('d05-q2a', 'quiz', 'comprendre', c2, 'Préversion et score', 'Les recommandations en préversion comptent-elles dans le niveau classique ?', ['Non, elles en sont exclues.', 'Corriger une reco en préversion ne bouge pas le score.'], [['Oui.', 'Faux.'], ['Seulement pour AWS.', 'Faux.'], ['Seulement le week-end.', 'Faux.']], 'Les préversions sont exclues du calcul classique.'),
+  Q('d05-q2b', 'quiz', 'maintenir', c2, 'Score qui change seul', 'Pourquoi un score peut-il changer sans action de l’équipe ?', ['De nouvelles recommandations peuvent entrer dans le calcul.', 'Par exemple AWS et GCP depuis 2026-06-30.'], [['Bogue du navigateur.', 'Non.'], ['Virus.', 'Non.'], ['Changement de fuseau.', 'Non.']], 'Les évolutions du calcul peuvent modifier le score.'),
+  Q('d05-q2c', 'quiz', 'securiser', c2, 'Score et sécurité', 'Un score de 90 % prouve-t-il une faible probabilité d’attaque ?', ['Non, il mesure la conformité aux règles évaluées.', 'Une ressource non évaluée ne pèse rien.'], [['Oui.', 'Faux.'], ['Oui si le plan est payant.', 'Faux.'], ['Oui le jour.', 'Faux.']], 'Le score est un indicateur de tendance.'),
+
+  IN('d05-g3', 'guided', 'fonctionner', c3, 'Lire une requête personnalisée', 'Requête fictive : repérez les erreurs de schéma.', 'kql', [['RawEntityMetadata'], ['| where Identifiers.Type == "Microsoft.Web/sites"', '| where Environment == "Azure" and Identifiers.Type =~ "Microsoft.Web/sites"', '| where Identifiers.Type == "Microsoft.Web/sites"'], ['| where Record.properties.httpsOnly != true', '| extend condition = (Record.properties.httpsOnly != true)', '| where Record.properties.httpsOnly != true'], ['| project Id, Name', '| project Id, Name, Environment, Identifiers, AdditionalData, Record, HealthStatus', '| project Id, Name']], 'Le type se compare sans casse, la condition devient un extend et la projection comprend les sept colonnes.'),
+  WF('d05-a3', 'autonomous', 'fonctionner', c3, 'Créer une recommandation personnalisée', 'Ordonnez la création d’une recommandation personnalisée.', ['Vérifier le plan Defender CSPM et les rôles', 'Écrire et tester la requête dans l’éditeur', 'Renseigner nom, sévérité et remédiation', 'Créer ou choisir un standard personnalisé', 'Assigner la recommandation et la valider sur plusieurs abonnements'], [['Filtrer les ressources saines', 'Elles seraient traitées comme sans donnée.']], 'On vérifie, on teste, on décrit, on regroupe en standard et on valide.'),
+  Q('d05-q3a', 'quiz', 'securiser', c3, 'Rôles', 'Quel rôle crée un nouveau standard personnalisé ?', ['Owner sur l’abonnement.', 'Security Admin crée les recommandations.'], [['Security Reader.', 'Lecture seule.'], ['Reader.', 'Lecture seule.'], ['Billing Reader.', 'Sans rapport.']], 'Owner pour un standard, Security Admin pour les recommandations.'),
+  Q('d05-q3b', 'quiz', 'fonctionner', c3, 'Ressource omise', 'Que devient une ressource absente du résultat de la requête ?', ['Elle est traitée comme sans donnée, pas comme saine.', 'Retourner toutes les ressources.'], [['Saine.', 'Faux.'], ['Non saine.', 'Faux.'], ['Supprimée.', 'Faux.']], 'Une ressource omise n’est pas évaluée.'),
+  Q('d05-q3c', 'quiz', 'cout', c3, 'Plan requis', 'Quel plan exige la création de recommandations par KQL ?', ['Defender CSPM.', 'Payant.'], [['CSPM de base.', 'Insuffisant.'], ['Defender for Storage.', 'Sans rapport.'], ['Aucun.', 'Faux.']], 'Le KQL personnalisé suppose Defender CSPM.'),
+
+  Q('d05-ev1', 'eval', 'comprendre', c1, 'Initiative', 'Qu’est-ce qu’une initiative Azure Policy ?', ['Un regroupement de définitions qui porte un standard.', 'Base d’un standard côté Azure.'], [['Un plan payant.', 'Faux.'], ['Une alerte.', 'Faux.'], ['Un rôle.', 'Faux.']], 'Une initiative regroupe des définitions de politiques.'),
+  M('d05-ev2', 'eval', 'verifier', c2, 'Causes d’une baisse de score', 'Cochez les causes possibles d’une baisse de score sans dégradation réelle.', [['Nouvelles recommandations entrées dans le calcul.', 'Possible.'], ['Nouvelles ressources évaluées.', 'Possible.'], ['Recommandation sortie de préversion.', 'Possible.']], [['Le score est toujours exact.', 'Faux.'], ['L’heure du serveur.', 'Non.']], 'Plusieurs causes non sécuritaires peuvent baisser le score.'),
+  CF('d05-ev3', 'eval', 'fonctionner', c3, 'Schéma de sortie', 'Paramétrez le respect du schéma d’une recommandation personnalisée.', [['Projeter les sept colonnes obligatoires', 'on', 'Sans quoi la requête échoue.'], ['Retourner seulement les ressources non saines', 'off', 'Les saines doivent être retournées.'], ['Écrire HealthStatus en majuscules', 'on', 'Valeurs sensibles à la casse.']], 'Le schéma impose sept colonnes et des valeurs précises.'),
+  OR('d05-ev4', 'eval', 'verifier', c2, 'Expliquer un score', 'Ordonnez l’explication d’un changement de score.', ['Noter la date et le portail', 'Comparer ressources évaluées avant et après', 'Relire les notes de publication', 'Vérifier les états préversion', 'Conclure avec la preuve'], 'On date, on compare, on relit les annonces, on vérifie les états et on conclut.'),
+  WF('d05-ev5', 'eval', 'maintenir', c3, 'Cycle de vie d’une règle', 'Ordonnez le cycle de vie d’une recommandation personnalisée.', ['Justifier la règle avec un propriétaire', 'Tester', 'Publier', 'Mesurer le bruit généré', 'Revoir à date fixe'], [['Publier sans remédiation', 'Non actionnable.']], 'Une règle se justifie, se teste, se publie, se mesure et se revoit.'),
+  SH('d05-ev6', 'eval', 'verifier', c2, 'Fréquence de recalcul', 'Toutes les combien d’heures le niveau classique est-il recalculé (ordre de grandeur indiqué dans la leçon) ? (nombre)', ['8'], 'Le recalcul a lieu environ toutes les huit heures.', 8),
+  FX('d05-ev7', 'eval', 'fonctionner', c3, 'Corriger la définition d’une recommandation', 'Corrigez la définition fictive.', { nom: 'Stockage HTTPS', colonnes: 2, casseHealthStatus: 'minuscules', ressourcesRetournees: 'non saines seulement' }, { nom: 'Stockage HTTPS', colonnes: 7, casseHealthStatus: 'majuscules', ressourcesRetournees: 'toutes' }, [['colonnes', 7, 'Projeter les sept colonnes.', 'fonctionner'], ['casseHealthStatus', 'majuscules', 'HEALTHY et UNHEALTHY en majuscules.', 'fonctionner'], ['ressourcesRetournees', 'toutes', 'Retourner toutes les ressources du périmètre.', 'verifier']], 'La définition respecte le schéma et le périmètre complet.'),
+  Q('d05-ev8', 'eval', 'cout', c3, 'Voie sans coût', 'Quelle voie de personnalisation reste ouverte sans Defender CSPM ?', ['Les recommandations fondées sur Azure Policy.', 'Documenté.'], [['Le KQL personnalisé.', 'Exige Defender CSPM.'], ['Aucune.', 'Faux.'], ['L’API seule.', 'Faux.']], 'Azure Policy reste ouvert à tous.'),
+
+  IN('d05-cs1', 'case', 'verifier', c2, 'Cas : revue mensuelle chez Nordlys', 'Compte rendu fictif : repérez les affirmations insuffisantes.', 'text', [['« Le score est monté de 68 à 74 : excellent travail. »', 'Expliquer la hausse et vérifier un changement de calcul', 'Garder tel quel'], ['« Nous sommes à 74, donc peu risqués. »', 'Le score n’est pas une mesure de risque', 'Garder tel quel'], ['« Le portail Defender affiche 71, une erreur. »', 'Deux modèles : citer portail et modèle', 'Garder tel quel']], 'Chaque affirmation est corrigée ou expliquée.'),
+  MT('d05-cs2', 'case', 'fonctionner', c1, 'Cas : lire une recommandation', 'Associez chaque élément de la recommandation à son usage.', [['Étapes de remédiation', 'Dire quoi faire'], ['Ressources affectées', 'Mesurer la portée'], ['Facteurs de risque', 'Prioriser']], 'Chaque élément remplit un rôle précis.'),
+  WF('d05-cs3', 'case', 'securiser', c3, 'Cas : règle de balises', 'Ordonnez la mise en place d’une règle de balises obligatoires.', ['Définir la règle avec les équipes', 'Écrire la requête avec les sept colonnes', 'Tester sur trois abonnements variés', 'Assigner au standard personnalisé', 'Mesurer le bruit et réajuster'], [['Appliquer en refus sans préavis', 'Bloque la production.']], 'On définit, on écrit, on teste, on assigne et on ajuste.'),
+  OP('d05-cs-open', 'case', 'maintenir', c3, 'Cas : programme de posture de Nordlys', 'Rédigez le programme de posture d’une organisation fictive.', 'Une page : standards retenus, niveau de sécurité suivi (modèle et portail), deux recommandations personnalisées, fenêtres de mesure, propriétaires et revue.', [['Les standards correspondent aux besoins.', 'comprendre'], ['Les deux modèles de score sont distingués.', 'verifier'], ['Les recommandations personnalisées respectent le schéma.', 'fonctionner'], ['Les propriétaires et la revue sont définis.', 'maintenir']], 'Le programme relie standards, score, règles et gouvernance.'),
+
+  Q('d05-rm1', 'remediation', 'comprendre', c1, 'Remédiation : MCSB', 'Quelle initiative est affectée par défaut ?', ['Le MCSB.', 'Par défaut.'], [['PCI DSS.', 'Additionnel.'], ['HIPAA.', 'Additionnel.'], ['Aucune.', 'Faux.']], 'Le MCSB.'),
+  Q('d05-rm2', 'remediation', 'verifier', c2, 'Remédiation : score', 'Le score classique mesure-t-il le risque réel ?', ['Non, il mesure la conformité aux règles évaluées.', 'Indicateur de tendance.'], [['Oui.', 'Faux.'], ['Seulement en production.', 'Faux.'], ['Seulement le matin.', 'Faux.']], 'Il ne mesure pas le risque.'),
+  Q('d05-rm3', 'remediation', 'fonctionner', c3, 'Remédiation : HealthStatus', 'Quelles valeurs de HealthStatus sont valides ?', ['UNHEALTHY et HEALTHY en majuscules.', 'Sensibles à la casse.'], [['Healthy et Unhealthy.', 'Casse incorrecte.'], ['OK et KO.', 'Invalides.'], ['0 et 1.', 'Invalides.']], 'Seules deux valeurs en majuscules sont valides.'),
+];
+
+const competencies = comps([
+  ['Lire la chaîne de posture', 'Standards, initiatives, évaluations et recommandations.', ['J’explique la chaîne standard à recommandation.', 'Je distingue sévérité et risque.', 'Je mesure après la fenêtre de réévaluation.']],
+  ['Interpréter le niveau de sécurité', 'Calcul, deux modèles et extraction par requête.', ['J’explique le calcul classique.', 'Je ne compare pas les deux modèles.', 'J’extrais le niveau avec Resource Graph.']],
+  ['Personnaliser la posture', 'Recommandations et standards personnalisés en KQL.', ['Je respecte le schéma à sept colonnes.', 'Je retourne toutes les ressources du périmètre.', 'Je gouverne mes règles (propriétaire, revue).']],
+]);
+
+const projects = [
+  P(1, 'débutant', 'Fiches de lecture de recommandations', 'Lire dix recommandations fictives et les prioriser par risque.', 'Tableau reco, sévérité, risque, action.', ['Lire les recommandations.', 'Distinguer sévérité et risque.', 'Prioriser.'], ['La priorisation est justifiée.'], ['Prioriser par sévérité seule.'], ['Ajouter une fenêtre de mesure.']),
+  P(2, 'intermédiaire', 'Tableau de bord du niveau de sécurité', 'Concevoir un suivi mensuel du niveau de sécurité qui nomme portail, modèle et date.', 'Tableau mensuel avec journal des changements de calcul.', ['Extraire les valeurs.', 'Noter les changements de calcul.', 'Expliquer les écarts.'], ['Chaque valeur nomme son modèle et sa date.'], ['Mélanger les modèles.'], ['Ajouter une requête Resource Graph.'],
+    { connected: { accounts: 'Un abonnement Azure de test avec Defender for Cloud (CSPM de base).', permissions: 'Reader ou Security Reader ; aucune écriture.', costs: 'Aucun frais attendu : lecture seule, aucun plan payant.', secrets: 'Aucun secret.', cleanup: 'Aucune ressource créée.', limits: 'La requête Resource Graph du cours est indicative et en lecture seule. Statut : non réalisée dans un laboratoire Microsoft réel.' } }),
+  P(3, 'avancé', 'Standard personnalisé de l’organisation', 'Concevoir un standard personnalisé de cinq recommandations KQL avec propriétaires et revue.', 'Dépôt de requêtes et fiche de gouvernance.', ['Choisir cinq règles.', 'Écrire les requêtes à sept colonnes.', 'Tester sur des abonnements variés.', 'Prévoir la revue.'], ['Chaque requête respecte le schéma et retourne toutes les ressources.'], ['Règles non actionnables.'], ['Ajouter AWS et GCP.']),
+];
+
+export const d05 = assemble({ id: 'd05', level: 2, n: 5, title: 'Posture de sécurité du cloud',
+  summary: 'Standards, initiatives et recommandations, niveau de sécurité classique et fondé sur le risque, extraction par requête et recommandations personnalisées en KQL.',
+  lessons: [l1, l2, l3], exercises, competencies, projects,
+  caseTitle: 'Piloter la posture de Nordlys Technologies',
+  caseScenario: 'Vous lisez des recommandations, expliquez un score et concevez une règle personnalisée. Données simulées.', caseMinutes: 50 });

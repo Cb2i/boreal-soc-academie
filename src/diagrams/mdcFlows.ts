@@ -2,5 +2,7 @@ import { H01 } from './mdc/h01.ts';
 import { H02 } from './mdc/h02.ts';
 import { H03 } from './mdc/h03.ts';
 import { H04 } from './mdc/h04.ts';
+import { H05 } from './mdc/h05.ts';
+import { H06 } from './mdc/h06.ts';
 import type { Flow } from './types.ts';
-export const FLOWS_MDC: Flow[] = [...H01, ...H02, ...H03, ...H04];
+export const FLOWS_MDC: Flow[] = [...H01, ...H02, ...H03, ...H04, ...H05, ...H06];

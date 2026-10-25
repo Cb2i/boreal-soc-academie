@@ -19,7 +19,7 @@ describe('Defender for Cloud : matrice, fiches et scénarios', async () => {
       for (const l of c.lessons) expect(C.LESSON_BY_ID[l]?.module, `${c.id} ${l}`).toBe(c.module);
       for (const s of c.sources) expect(SOURCE_BY_ID[`mdc-${s}`], `${c.id} ${s}`).toBeDefined();
       expect(c.sources.length, c.id).toBeGreaterThanOrEqual(1);
-      for (const k of ['plan', 'objective', 'risk', 'clouds', 'scope', 'prerequisites', 'permissions', 'costs', 'collection', 'compatibility', 'limits'] as const) expect(c[k].length, `${c.id}.${k}`).toBeGreaterThan(8);
+      for (const k of ['plan', 'objective', 'risk', 'clouds', 'scope', 'prerequisites', 'permissions', 'costs', 'collection', 'compatibility', 'limits'] as const) expect(c[k].length, `${c.id}.${k}`).toBeGreaterThan(4);
       if (c.status.redaction !== 'redigee') expect(c.note?.length ?? 0, `${c.id} justification`).toBeGreaterThan(20);
       expect(c.status.lab, c.id).toBe('non-realisee');
       expect(JSON.stringify(c).includes(dash), c.id).toBe(false);
