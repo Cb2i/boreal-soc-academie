@@ -1,3 +1,5 @@
+import { registerTrackI18n } from '../../i18n/trackLang.ts';
+import { loadDict } from '../../i18n/dicts.ts';
 import { buildContent } from '../../agentic/content/build.ts';
 import type { ModuleContent, ResourceDef } from '../../agentic/types.ts';
 import { XDR_LEVELS } from './levels.ts';
@@ -29,3 +31,5 @@ const XDR_LABS = [...XDR_LABS_1, ...XDR_LABS_2, ...XDR_LABS_3, ...XDR_LABS_4];
 export const XDR_MODULES: ModuleContent[] = withLabs([x01, x02, x03, x04, x05, x06, x07, x08, x09, x10, x11, x12, x13, x14, x15, x16], XDR_LABS);
 const resources: ResourceDef[] = XDR_RESOURCES;
 export const CONTENT = buildContent(XDR_LEVELS, XDR_MODULES, XDR_FINAL_LABS, resources);
+
+await registerTrackI18n(CONTENT, () => loadDict('xdr'));

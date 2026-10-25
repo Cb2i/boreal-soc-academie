@@ -1,3 +1,5 @@
+import { registerTrackI18n } from '../../i18n/trackLang.ts';
+import { loadDict } from '../../i18n/dicts.ts';
 import { buildContent } from '../../agentic/content/build.ts';
 import type { ModuleContent, ResourceDef } from '../../agentic/types.ts';
 import { buildScenario } from './build.ts';
@@ -21,3 +23,5 @@ export const SCENARIOS: ScenarioDef[] = [S01, S02, S03, S04, S05, S06, S07, S08]
 export const SCENARIO_MODULES: ModuleContent[] = withLabs(SCENARIOS.map(buildScenario), SCENARIO_LABS);
 const resources: ResourceDef[] = SCENARIO_RESOURCES;
 export const CONTENT = buildContent(SCENARIO_LEVELS, SCENARIO_MODULES, SCENARIO_FINAL_LABS, resources);
+
+await registerTrackI18n(CONTENT, () => loadDict('scenarios'));

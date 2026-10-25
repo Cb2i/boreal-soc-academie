@@ -1,3 +1,5 @@
+import { registerTrackI18n } from '../../i18n/trackLang.ts';
+import { loadDict } from '../../i18n/dicts.ts';
 import type { ModuleContent } from '../types.ts';
 import { buildContent } from './build.ts';
 import { AI_LEVELS } from './levels.ts';
@@ -32,3 +34,5 @@ export const MODULE_CONTENT: ModuleContent[] = withLabs([m01, m02, m03, m04, m05
 export const CONTENT = buildContent(AI_LEVELS, MODULE_CONTENT, IA_FINAL_LABS, RESOURCES);
 export const { LEVELS, MODULES, LESSONS, EXERCISES, COMPETENCIES, CASES, PROJECTS, MODULE_BY_ID, LESSON_BY_ID, EX_BY_ID, COMP_BY_ID, CASE_BY_MODULE, PROJECT_BY_ID } = CONTENT;
 export { RESOURCES };
+
+await registerTrackI18n(CONTENT, () => loadDict('ia'));

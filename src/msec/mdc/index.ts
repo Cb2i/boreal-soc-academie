@@ -1,3 +1,5 @@
+import { registerTrackI18n } from '../../i18n/trackLang.ts';
+import { loadDict } from '../../i18n/dicts.ts';
 import { buildContent } from '../../agentic/content/build.ts';
 import type { AiProject, ModuleContent, ResourceDef } from '../../agentic/types.ts';
 import { MDC_LEVELS } from './levels.ts';
@@ -45,3 +47,5 @@ const resources: ResourceDef[] = [
   { id: 'r-rapport-direction', title: 'Modèle de rapport de direction', file: 'rapports/rapport-direction.md', kind: 'rapport', module: 'd26', status: 'a-verifier', description: 'Structure d’un rapport avec date, portée, limites et quatre catégories.', how: 'Modèle non éprouvé en laboratoire réel.', lessons: ['d26-l3'] },
 ];
 export const CONTENT = buildContent(MDC_LEVELS, MDC_MODULES, finalProjects, resources);
+
+await registerTrackI18n(CONTENT, () => loadDict('mdc'));
