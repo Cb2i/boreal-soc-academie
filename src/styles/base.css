@@ -604,24 +604,29 @@ main:focus { outline: none; }
 .flow-svg.narrow .flow-lab { font-size: 19px; } .flow-svg.narrow .flow-sub { font-size: 15px; } .flow-svg.narrow .flow-badge text { font-size: 14px; }
 @media (prefers-reduced-motion: reduce) { .flow-node rect, .flow-edge { transition: none; } }
 
-/* Mouvement : flux continu, impulsions, comète */
-.flow-grid { fill: color-mix(in srgb, var(--pc, var(--accent)) 22%, transparent); }
-.flow-halo { fill: color-mix(in srgb, var(--accent-2) 35%, transparent); animation: flow-halo 1.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-.flow-trail { fill: var(--accent-2); }
-.flow-chip { fill: var(--accent-2); }
-.flow-chip-t { font: 700 11.5px var(--font-ui); fill: #1b1200; }
-.flow-edge.on { stroke-dasharray: 12 9; animation: flow-march .7s linear infinite; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--pc, var(--accent)) 70%, transparent)); }
-.flow-edge.done { stroke-dasharray: 10 10; animation: flow-march 2.4s linear infinite; }
-.flow-node.on { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--pc, var(--accent)) 55%, transparent)); }
-.flow-node.on .flow-ico { animation: flow-ico 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-.flow-ring { fill: none; stroke: var(--pc, var(--accent)); stroke-width: 3; transform-box: fill-box; transform-origin: center; opacity: 0; }
-.flow-ring.dest { animation: flow-ring 1.3s ease-out 1.6s 1 both; }
-.flow-ring.src { animation: flow-ring .9s ease-out 0s 1 both; }
-.flow-bar { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--pc, var(--accent)) 14%, transparent); overflow: hidden; }
-.flow-bar i { display: block; height: 100%; background: var(--pc, var(--accent)); animation: flow-bar 3.4s linear 1 both; }
-@keyframes flow-march { to { stroke-dashoffset: -21; } }
-@keyframes flow-halo { 0%, 100% { transform: scale(.8); opacity: .9; } 50% { transform: scale(1.35); opacity: .35; } }
-@keyframes flow-ico { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
-@keyframes flow-ring { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.22, 1.5); } }
-@keyframes flow-bar { from { width: 0; } to { width: 100%; } }
-@media (prefers-reduced-motion: reduce) { .flow-edge.on, .flow-edge.done, .flow-halo, .flow-node.on .flow-ico, .flow-ring, .flow-bar i { animation: none; } }
+/* Mouvement : flux continu, fluide, qui part et revient */
+.flow-grid { fill: color-mix(in srgb, var(--pc, var(--accent)) 20%, transparent); }
+.flow-edge { stroke: color-mix(in srgb, var(--pc, var(--accent)) 30%, #8a9bb3); stroke-width: 2; stroke-dasharray: none; transition: stroke .5s, stroke-width .5s, opacity .5s; opacity: .55; }
+.flow-link.done .flow-edge { opacity: .8; stroke: color-mix(in srgb, var(--pc, var(--accent)) 60%, #8a9bb3); }
+.flow-link.on .flow-edge { opacity: 1; stroke: var(--pc, var(--accent)); stroke-width: 3; }
+.flow-ah { stroke: var(--pc, var(--accent)); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.flow-streak, .flow-back { stroke-linecap: round; stroke-width: 5; stroke-dasharray: 12 88; stroke-dashoffset: 12; opacity: 0; }
+.flow-streak { stroke: var(--accent-2); animation: flow-go 2.6s cubic-bezier(.45, .05, .25, 1) infinite; }
+.flow-link.done .flow-streak { stroke: var(--pc, var(--accent)); animation-duration: 1.9s; }
+.flow-link.on .flow-streak { stroke-width: 6; animation-duration: .95s; filter: drop-shadow(0 0 6px var(--accent-2)); }
+.flow-back { stroke: var(--pc, var(--accent)); stroke-width: 4; stroke-dasharray: 9 91; stroke-dashoffset: -88; animation: flow-return .95s cubic-bezier(.45, .05, .25, 1) .55s infinite; filter: drop-shadow(0 0 5px var(--pc, var(--accent))); }
+@keyframes flow-go { 0% { stroke-dashoffset: 12; opacity: 0; } 12% { opacity: .9; } 85% { opacity: .9; } 100% { stroke-dashoffset: -88; opacity: 0; } }
+@keyframes flow-return { 0% { stroke-dashoffset: -88; opacity: 0; } 15% { opacity: .55; } 85% { opacity: .55; } 100% { stroke-dashoffset: 12; opacity: 0; } }
+.flow-link.idle .flow-streak { opacity: 0; }
+.flow-badge circle { fill: var(--surface); stroke: color-mix(in srgb, var(--pc, var(--accent)) 35%, #8a9bb3); stroke-width: 1.5; transition: fill .4s, stroke .4s; }
+.flow-badge text { font: 700 12px var(--font-ui); fill: var(--text); transition: fill .4s; }
+.flow-link.on .flow-badge circle { fill: var(--pc, var(--accent)); stroke: var(--pc, var(--accent)); } .flow-link.on .flow-badge text { fill: var(--accent-ink); }
+.flow-node { transform-box: fill-box; transform-origin: center; transition: transform .55s cubic-bezier(.2, 1.2, .3, 1), filter .5s; }
+.flow-node rect { transition: stroke .5s, fill .5s, stroke-width .5s; }
+.flow-node.on { transform: scale(1.045); filter: drop-shadow(0 6px 16px color-mix(in srgb, var(--pc, var(--accent)) 38%, transparent)); }
+.flow-node.dest rect { animation: flow-land .9s cubic-bezier(.2, .8, .3, 1) .8s 1 both; }
+@keyframes flow-land { 0% { stroke-width: 3; } 40% { stroke-width: 6; } 100% { stroke-width: 3; } }
+.flow-ico { transform-box: fill-box; transform-origin: center; }
+.flow-panel { animation: flow-fade .45s ease both; }
+@keyframes flow-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .flow-streak, .flow-back, .flow-panel, .flow-node.dest rect { animation: none; } .flow-node, .flow-node rect, .flow-edge { transition: none; } }

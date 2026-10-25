@@ -92,61 +92,50 @@ export function FlowDiagram({ flow }: { flow: Flow }) {
   }, []);
   useEffect(() => {
     if (!playing || !visible) return;
-    const t = window.setTimeout(() => setStep((s) => (s + 1) % N), 3400);
+    const t = window.setTimeout(() => setStep((s) => (s + 1) % N), 2600);
     return () => window.clearTimeout(t);
   }, [playing, visible, step, N]);
 
   const cur = flow.steps[step];
   const curIdx = new Set([idx[cur[0]], idx[cur[1]]]);
-  const e = edges[step];
   return (
     <figure className="flow" ref={host} aria-label={flow.title}>
       <figcaption><strong>{flow.title}</strong><span className="muted small">{flow.caption}</span></figcaption>
-      <svg viewBox={`0 0 ${L.W} ${L.H}`} role="img" aria-label={`${flow.title}. ${flow.steps.map((s, i) => `${i + 1}. ${s[2]}`).join(' ')}`} className={`flow-svg${narrow ? ' narrow' : ''}`}>
+      <svg viewBox={`0 0 ${L.W} ${L.H}`} role="img" aria-label={`${flow.title}. ${flow.steps.map((s, i) => `${i + 1}. ${s[2]}`).join(' ')}`} className={`flow-svg${narrow ? ' narrow' : ''}${reduce ? ' still' : ''}`}>
         <defs>
           <pattern id={`grid-${flow.lesson}`} width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="1.1" className="flow-grid" /></pattern>
-          <marker id={`ah-${flow.lesson}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" className="flow-ah" /></marker>
-          <marker id={`ahon-${flow.lesson}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" className="flow-ah on" /></marker>
+          <marker id={`ah-${flow.lesson}`} viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1,1 L9,5 L1,9" className="flow-ah" fill="none" /></marker>
         </defs>
         <rect width={L.W} height={L.H} fill={`url(#grid-${flow.lesson})`} />
-        {edges.map((ed, i) => (
-          <g key={i}>
-            <path d={ed.d} className={`flow-edge${i < step ? ' done' : ''}${i === step ? ' on' : ''}`} markerEnd={`url(#${i <= step ? 'ahon' : 'ah'}-${flow.lesson})`} fill="none" />
-            <g transform={`translate(${ed.mid.x},${ed.mid.y})`} className={`flow-badge${i === step ? ' on' : ''}`}><circle r="11" /><text textAnchor="middle" dy="4">{i + 1}</text></g>
-          </g>
-        ))}
+        {edges.map((ed, i) => {
+          const st = i === step ? 'on' : i < step ? 'done' : 'idle';
+          return (
+            <g key={i} className={`flow-link ${st}`}>
+              <path d={ed.d} className="flow-edge" fill="none" markerEnd={`url(#ah-${flow.lesson})`} />
+              {!reduce && [0, 1, 2].slice(0, st === 'on' ? 3 : st === 'done' ? 2 : 1).map((k) => (
+                <path key={`${step}-${k}`} d={ed.d} pathLength={100} className="flow-streak" fill="none" style={{ animationDelay: `${k * (st === 'on' ? 0.3 : 0.9)}s` }} />
+              ))}
+              {!reduce && st === 'on' && <path key={`back-${step}`} d={ed.d} pathLength={100} className="flow-back" fill="none" />}
+              <g transform={`translate(${ed.mid.x},${ed.mid.y})`} className="flow-badge"><circle r="11" /><text textAnchor="middle" dy="4">{i + 1}</text></g>
+            </g>
+          );
+        })}
         {flow.nodes.map((n, i) => {
           const p = L.pos(i);
           const on = curIdx.has(i);
           return (
-            <g key={n[0]} transform={`translate(${p.x - NW / 2},${p.y - NH / 2})`} className={`flow-node${on ? ' on' : ''}`}>
-              {on && !reduce && <rect key={`ring-${step}`} width={NW} height={NH} rx="14" className={`flow-ring${idx[cur[1]] === i ? ' dest' : ' src'}`} />}
-              <rect width={NW} height={NH} rx="14" />
-              <g transform="translate(14,16) scale(1.5)"><g className="flow-ico"><path d={GLYPH[n[3]]} /></g></g>
-              <text x="62" y="36" className="flow-lab">{n[1].length > (narrow ? 19 : 18) ? n[1].slice(0, narrow ? 18 : 17) + '…' : n[1]}</text>
-              <text x="62" y="56" className="flow-sub">{n[2].length > (narrow ? 24 : 22) ? n[2].slice(0, narrow ? 23 : 21) + '…' : n[2]}</text>
+            <g key={n[0]} transform={`translate(${p.x - NW / 2},${p.y - NH / 2})`}>
+              <g className={`flow-node${on ? ' on' : ''}${on && idx[cur[1]] === i ? ' dest' : ''}`}>
+                <rect width={NW} height={NH} rx="16" />
+                <g transform="translate(14,16) scale(1.5)"><g className="flow-ico"><path d={GLYPH[n[3]]} /></g></g>
+                <text x="62" y="36" className="flow-lab">{n[1].length > (narrow ? 19 : 18) ? n[1].slice(0, narrow ? 18 : 17) + '…' : n[1]}</text>
+                <text x="62" y="56" className="flow-sub">{n[2].length > (narrow ? 24 : 22) ? n[2].slice(0, narrow ? 23 : 21) + '…' : n[2]}</text>
+              </g>
             </g>
           );
         })}
-        {!reduce && playing && (
-          <g key={`${step}-${flow.lesson}`}>
-            {[0.36, 0.24, 0.12].map((lag, k) => (
-              <circle key={k} r={6 - k * 1.3} className="flow-trail" opacity={0.55 - k * 0.14}>
-                <animateMotion dur="1.8s" begin={`${lag}s`} path={e.d} fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1" keyTimes="0;1" />
-              </circle>
-            ))}
-            <g>
-              <animateMotion dur="1.8s" path={e.d} fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1" keyTimes="0;1" />
-              <circle r="11" className="flow-halo" />
-              <circle r="7" className="flow-dot" />
-              <g transform="translate(0,-26)"><rect x={-(cur[2].length * 3.4 + 10)} y="-11" width={cur[2].length * 6.8 + 20} height="22" rx="11" className="flow-chip" /><text textAnchor="middle" dy="4" className="flow-chip-t">{cur[2]}</text></g>
-            </g>
-          </g>
-        )}
-        {(!playing || reduce) && <circle r="7" className="flow-dot" cx={e.e.x} cy={e.e.y} />}
       </svg>
-      {playing && !reduce && visible && <div className="flow-bar" aria-hidden="true"><i key={step} /></div>}
-      <div className="flow-panel" aria-live="polite">
+      <div className="flow-panel" aria-live="polite" key={step}>
         <span className="pill">{tr('Étape', 'Step')} {step + 1}/{N}</span>
         <p><strong>{cur[2]}</strong> : {cur[3]}</p>
       </div>
