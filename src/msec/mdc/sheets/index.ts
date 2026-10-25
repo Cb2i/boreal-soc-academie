@@ -9,5 +9,6 @@ import { SHEETS_D08 } from './d08.ts';
 import { SHEETS_D09 } from './d09.ts';
 import { SHEETS_D10 } from './d10.ts';
 import { SHEETS_D11 } from './d11.ts';
+import { SHEETS_D12 } from './d12.ts';
 
-export const SHEETS: MdcSheet[] = [...SHEETS_D02, ...SHEETS_D03, ...SHEETS_D04, ...SHEETS_D05, ...SHEETS_D06, ...SHEETS_D07, ...SHEETS_D08, ...SHEETS_D09, ...SHEETS_D10, ...SHEETS_D11];
+export const SHEETS: MdcSheet[] = [...SHEETS_D02, ...SHEETS_D03, ...SHEETS_D04, ...SHEETS_D05, ...SHEETS_D06, ...SHEETS_D07, ...SHEETS_D08, ...SHEETS_D09, ...SHEETS_D10, ...SHEETS_D11, ...SHEETS_D12];

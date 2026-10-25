@@ -141,5 +141,9 @@ export const MDC_SOURCES: SourceDef[] = [
   S('containers-gated', 'Configure gated deployment rules', 'enablement-guide-runtime-gated', 'Déploiement contrôlé par contrôleur d’admission'),
   S('containers-gated-trouble', 'Troubleshoot gated deployment', 'troubleshooting-runtime-gated', 'Dépannage du déploiement contrôlé'),
   S('k8s-workload', 'Kubernetes workload protection', 'kubernetes-workload-protections', 'Protection des charges Kubernetes et Azure Policy'),
+  S('storage-onupload', 'On-upload malware scanning', 'on-upload-malware-scanning', 'Analyse de maliciels au dépôt : plafond et débit'),
+  S('storage-ondemand', 'On-demand malware scanning', 'on-demand-malware-scanning', 'Analyse de maliciels à la demande'),
+  S('storage-malware-intro', 'Introduction to malware scanning', 'introduction-malware-scanning', 'Résultats, limites et coûts de l’analyse de maliciels'),
+  S('storage-response', 'Set up a response to malware scanning results', 'defender-for-storage-configure-malware-scan', 'Réponse automatisée aux résultats d’analyse'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
