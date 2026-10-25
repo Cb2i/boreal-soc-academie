@@ -210,6 +210,18 @@ export const SOURCES: SourceDef[] = [
   { id: 'intune-licensing', title: 'Microsoft Learn : Microsoft Intune licensing', url: L + 'intune/fundamentals/licensing', product: 'Intune', topic: 'Licences', status: 'ga' },
   { id: 'intune-addons', title: 'Microsoft Learn : Use Microsoft Intune Suite add-on capabilities', url: L + 'intune/fundamentals/add-ons', product: 'Intune', topic: 'Modules complémentaires', status: 'ga' },
   { id: 'intune-planning', title: 'Microsoft Learn : Microsoft Intune planning guide', url: L + 'intune/fundamentals/planning-guide', product: 'Intune', topic: 'Planification', status: 'ga' },
+  { id: 'intune-assign', title: 'Microsoft Learn : Assign policies in Microsoft Intune', url: L + 'intune/device-configuration/assign-device-profile', product: 'Intune', topic: 'Affectation des politiques', status: 'ga' },
+  { id: 'intune-filters', title: 'Microsoft Learn : Use assignment filters to assign your apps, policies, and profiles in Microsoft Intune', url: L + 'intune/fundamentals/filters/overview', product: 'Intune', topic: 'Filtres d’affectation', status: 'ga' },
+  { id: 'intune-filters-perf', title: 'Microsoft Learn : Performance recommendations for grouping, targeting, and filtering in large Microsoft Intune environments', url: L + 'intune/fundamentals/filters/performance-recommendations', product: 'Intune', topic: 'Performance du ciblage', status: 'ga' },
+  { id: 'intune-targeting', title: 'Microsoft Learn : Choose the right targeting method in Microsoft Intune', url: L + 'intune/fundamentals/choose-targeting-method', product: 'Intune', topic: 'Méthodes de ciblage', status: 'ga' },
+  { id: 'intune-troubleshoot-profiles', title: 'Microsoft Learn : Common questions, answers, and scenarios with policies and profiles in Microsoft Intune', url: L + 'intune/device-configuration/troubleshoot-device-profiles', product: 'Intune', topic: 'Conflits, retrait et rafraîchissement', status: 'ga' },
+  { id: 'intune-baselines', title: 'Microsoft Learn : Use security baselines to help secure Windows devices you manage with Microsoft Intune', url: L + 'intune/device-security/security-baselines/overview', product: 'Intune', topic: 'Bases de référence', status: 'ga' },
+  { id: 'intune-baselines-manage', title: 'Microsoft Learn : Manage security baseline profiles in Microsoft Intune', url: L + 'intune/device-security/security-baselines/configure-baselines', product: 'Intune', topic: 'Gestion des bases de référence', status: 'ga' },
+  { id: 'intune-settings-catalog', title: 'Microsoft Learn : Use the Intune settings catalog to configure settings', url: L + 'intune/device-configuration/settings-catalog/', product: 'Intune', topic: 'Catalogue de paramètres', status: 'ga' },
+  { id: 'win-mdmwinsovergp', title: 'Microsoft Learn : Policy CSP - ControlPolicyConflict', url: L + 'windows/client-management/mdm/policy-csp-controlpolicyconflict', product: 'Windows', topic: 'MDMWinsOverGP', status: 'ga' },
+  { id: 'comanage-workloads', title: 'Microsoft Learn : Co-management workloads', url: L + 'intune/configmgr/comanage/workloads', product: 'Configuration Manager', topic: 'Charges de travail de cogestion', status: 'ga' },
+  { id: 'intune-sync-action', title: 'Microsoft Learn : Device action: sync', url: L + 'intune/device-management/actions/sync', product: 'Intune', topic: 'Synchronisation d’un appareil', status: 'ga' },
+  { id: 'intune-compliance-create', title: 'Microsoft Learn : Create a compliance policy in Microsoft Intune', url: L + 'intune/device-security/compliance/create-policy', product: 'Intune', topic: 'Création de politique de conformité', status: 'ga' },
 ];
 
 export const SOURCE_BY_ID: Record<string, SourceDef> = Object.fromEntries(SOURCES.map((s) => [s.id, s]));
