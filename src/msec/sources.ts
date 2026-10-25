@@ -156,6 +156,15 @@ export const SOURCES: SourceDef[] = [
   { id: 'xdr-autoir-actions', title: 'Microsoft Learn : View and manage actions in the Action center', url: L + 'defender-xdr/m365d-autoir-actions', product: 'Defender XDR', topic: 'Approbation des actions', status: 'ga' },
   { id: 'xdr-alert-tuning', title: 'Microsoft Learn : Investigate alerts in Microsoft Defender XDR', url: L + 'defender-xdr/investigate-alerts', product: 'Defender XDR', topic: 'Réglage des alertes', status: 'ga' },
   { id: 'mdo-sec-ops-incidents', title: 'Microsoft Learn : Manage incidents and alerts from Microsoft Defender for Office 365 in Microsoft Defender XDR', url: L + 'defender-office-365/mdo-sec-ops-manage-incidents-and-alerts', product: 'Defender for Office 365', topic: 'Incidents Defender for Office 365', status: 'ga' },
+  { id: 'xdr-ah-limits', title: 'Microsoft Learn : Use the advanced hunting query resource report and quotas', url: L + 'defender-xdr/advanced-hunting-limits', product: 'Defender XDR', topic: 'Quotas et rapport de ressources', status: 'ga' },
+  { id: 'xdr-ah-schema', title: 'Microsoft Learn : Understand the advanced hunting schema', url: L + 'defender-xdr/advanced-hunting-schema-tables', product: 'Defender XDR', topic: 'Schéma de la chasse avancée', status: 'ga' },
+  { id: 'xdr-ah-best-practices', title: 'Microsoft Learn : Advanced hunting query best practices', url: L + 'defender-xdr/advanced-hunting-best-practices', product: 'Defender XDR', topic: 'Bonnes pratiques de requêtes', status: 'ga' },
+  { id: 'xdr-ah-query-language', title: 'Microsoft Learn : Learn the advanced hunting query language', url: L + 'defender-xdr/advanced-hunting-query-language', product: 'Defender XDR', topic: 'Langage de requête', status: 'ga' },
+  { id: 'xdr-ah-sentinel', title: 'Microsoft Learn : Advanced hunting with Microsoft Sentinel data in Microsoft Defender portal', url: L + 'defender-xdr/advanced-hunting-microsoft-defender', product: 'Defender XDR', topic: 'Données Sentinel dans la chasse', status: 'ga' },
+  { id: 'xdr-ah-api', title: 'Microsoft Learn : Microsoft Defender XDR Advanced hunting API', url: L + 'defender-xdr/api-advanced-hunting', product: 'Defender XDR', topic: 'API de chasse avancée', status: 'ga', uncertainty: 'Anciens points de terminaison de l’API retirés le 2027-02-01 selon la documentation Graph : revérifier.' },
+  { id: 'graph-security-api', title: 'Microsoft Learn : Use the Microsoft Graph security API', url: L + 'graph/api/resources/security-api-overview?view=graph-rest-1.0', product: 'Defender XDR', topic: 'API Graph de sécurité', status: 'ga' },
+  { id: 'sentinel-data-tiers', title: 'Microsoft Learn : Manage data tiers and retention in Microsoft Sentinel', url: L + 'azure/sentinel/manage-data-overview', product: 'Microsoft Sentinel', topic: 'Niveaux de données et rétention', status: 'ga' },
+  { id: 'xdr-hunting-overview', title: 'Microsoft Learn : Hunting in the Microsoft Defender portal', url: L + 'defender-xdr/hunting-overview', product: 'Defender XDR', topic: 'Outils de chasse', status: 'ga' },
 ];
 
 export const SOURCE_BY_ID: Record<string, SourceDef> = Object.fromEntries(SOURCES.map((s) => [s.id, s]));
