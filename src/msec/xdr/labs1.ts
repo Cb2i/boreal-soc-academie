@@ -282,7 +282,7 @@ export const XDR_LABS_1: AiProject[] = [
    "Mesurer le temps moyen de décision."
   ],
   "lab": {
-   "client": "Mardi, 10 h 05. Un document Word ouvert sur le poste **PC-017** a lancé un processus PowerShell. La règle de réduction de la surface d'attaque était en mode **audit** : elle a donc journalisé sans bloquer. L'analyste de niveau 1 vous appelle : « Je fais quoi ? J'isole le poste ? »\n\nVotre mandat : investiguer, décider, **justifier** et documenter la réponse, puis proposer un modèle de groupes d'appareils pour que ce type de décision soit plus rapide la prochaine fois.",
+   "client": "Mercredi 11 mars, 10 h 05. Un document Word ouvert sur le poste **PC-017** a lancé un processus PowerShell. La règle de réduction de la surface d'attaque était en mode **audit** : elle a donc journalisé sans bloquer. L'analyste de niveau 1 vous appelle : « Je fais quoi ? J'isole le poste ? »\n\nVotre mandat : investiguer, décider, **justifier** et documenter la réponse, puis proposer un modèle de groupes d'appareils pour que ce type de décision soit plus rapide la prochaine fois.",
    "mission": "Produire une note d'investigation de PC-017 avec la chronologie, la décision de réponse justifiée et un modèle de groupes d'appareils.",
    "duration": "75 min",
    "mode": "tenant",
