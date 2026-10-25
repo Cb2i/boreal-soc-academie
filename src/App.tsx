@@ -134,9 +134,9 @@ export function App() {
     case 'azure': page = <HomePage />; break;
     case 'catalogue': page = <CatalogPage />; break;
     case 'parcours': page = route.params[0] ? <PathPage id={route.params[0]} /> : <CatalogPage />; break;
-    case 'cours': page = <LessonPage id={route.params[0] ?? ''} />; break;
-    case 'exercice': page = <ExercisePage id={route.params[0] ?? ''} />; break;
-    case 'revision': page = route.params[0] ? <ExercisePage id={route.params[0]} review /> : <ReviewPage />; break;
+    case 'cours': page = <LessonPage key={route.params[0]} id={route.params[0] ?? ''} />; break;
+    case 'exercice': page = <ExercisePage key={route.params[0]} id={route.params[0] ?? ''} />; break;
+    case 'revision': page = route.params[0] ? <ExercisePage key={route.params[0]} id={route.params[0]} review /> : <ReviewPage />; break;
     case 'niveau': page = route.params[0] ? <PlacementPage id={route.params[0]} /> : <CatalogPage />; break;
     case 'certificat': page = <CertificatePage id={route.params[0] ?? ''} />; break;
     case 'tableau': page = <DashboardPage />; break;

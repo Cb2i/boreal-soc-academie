@@ -30,19 +30,19 @@ function Inner({ route }: { route: Route }) {
     case undefined:
       return <TrackHome />;
     case 'module':
-      return <ModulePage id={id ?? ''} />;
+      return <ModulePage key={id} id={id ?? ''} />;
     case 'cours':
-      return <LessonPage id={id ?? ''} />;
+      return <LessonPage key={id} id={id ?? ''} />;
     case 'exercice':
-      return <AiExercisePage id={id ?? ''} />;
+      return <AiExercisePage key={id} id={id ?? ''} />;
     case 'evaluation':
-      return <EvalPage moduleId={id ?? ''} />;
+      return <EvalPage key={id} moduleId={id ?? ''} />;
     case 'cas':
-      return <CasePage moduleId={id ?? ''} />;
+      return <CasePage key={id} moduleId={id ?? ''} />;
     case 'projets':
       return <ProjectsPage />;
     case 'projet':
-      return <ProjectPage id={id ?? ''} />;
+      return <ProjectPage key={id} id={id ?? ''} />;
     case 'suivi':
       return <TrackingPage />;
     case 'couverture':

@@ -114,7 +114,7 @@ export function FlowDiagram({ flow }: { flow: Flow }) {
     return () => window.clearTimeout(t);
   }, [playing, visible, step, N]);
 
-  const cur = flow.steps[step];
+  const cur = flow.steps[Math.min(step, N - 1)];
   const curIdx = new Set([idx[cur[0]], idx[cur[1]]]);
   return (
     <figure className="flow" ref={host} aria-label={flow.title}>

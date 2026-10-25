@@ -49,7 +49,7 @@ export function LessonPage({ id }: { id: string }) {
         <div className="prose"><Markdown source={l.body} /></div>
       </section>
 
-      {FLOW_BY_LESSON[l.id] && <section id="schema" className="stack" aria-label={tr('Schéma animé', 'Animated diagram')}><FlowDiagram flow={FLOW_BY_LESSON[l.id]} /></section>}
+      {FLOW_BY_LESSON[l.id] && <section id="schema" className="stack" aria-label={tr('Schéma animé', 'Animated diagram')}><FlowDiagram key={l.id} flow={FLOW_BY_LESSON[l.id]} /></section>}
 
       <section id="demo" className="card stack demo" aria-labelledby="h-demo">
         <h2 id="h-demo" style={{ margin: 0 }}>{tr('Démonstration commentée', 'Annotated demonstration')} : {l.demo.title}</h2>
