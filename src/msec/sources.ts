@@ -165,6 +165,11 @@ export const SOURCES: SourceDef[] = [
   { id: 'graph-security-api', title: 'Microsoft Learn : Use the Microsoft Graph security API', url: L + 'graph/api/resources/security-api-overview?view=graph-rest-1.0', product: 'Defender XDR', topic: 'API Graph de sécurité', status: 'ga' },
   { id: 'sentinel-data-tiers', title: 'Microsoft Learn : Manage data tiers and retention in Microsoft Sentinel', url: L + 'azure/sentinel/manage-data-overview', product: 'Microsoft Sentinel', topic: 'Niveaux de données et rétention', status: 'ga' },
   { id: 'xdr-hunting-overview', title: 'Microsoft Learn : Hunting in the Microsoft Defender portal', url: L + 'defender-xdr/hunting-overview', product: 'Defender XDR', topic: 'Outils de chasse', status: 'ga' },
+  { id: 'xdr-cd-overview', title: 'Microsoft Learn : Custom detections overview', url: L + 'defender-xdr/custom-detections-overview', product: 'Defender XDR', topic: 'Détections personnalisées : vue d’ensemble', status: 'ga' },
+  { id: 'xdr-cd-create', title: 'Microsoft Learn : Create custom detection rules in Microsoft Defender XDR', url: L + 'defender-xdr/custom-detection-rules', product: 'Defender XDR', topic: 'Création de règles de détection', status: 'ga', uncertainty: 'Plusieurs volets en préversion (NRT sur données Sentinel, gestion en code) : revérifier.' },
+  { id: 'xdr-cd-manage', title: 'Microsoft Learn : Manage existing custom detection rules', url: L + 'defender-xdr/custom-detection-manage', product: 'Defender XDR', topic: 'Gestion des règles', status: 'ga' },
+  { id: 'xdr-cd-vs-analytics', title: 'Microsoft Learn : Feature comparison: Microsoft Sentinel analytics rules and Microsoft Defender custom detections', url: L + 'azure/sentinel/compare-analytics-rules-custom-detections', product: 'Microsoft Sentinel', topic: 'Règles d’analyse et détections personnalisées', status: 'ga', uncertainty: 'Écarts de fonctions annoncés comme prévus : revérifier.' },
+  { id: 'xdr-ah-custom-rules', title: 'Microsoft Learn : Use Microsoft Sentinel functions, saved queries, and custom rules in the Defender portal', url: L + 'defender-xdr/advanced-hunting-defender-use-custom-rules', product: 'Defender XDR', topic: 'Règles personnalisées dans le portail unifié', status: 'ga' },
 ];
 
 export const SOURCE_BY_ID: Record<string, SourceDef> = Object.fromEntries(SOURCES.map((s) => [s.id, s]));
