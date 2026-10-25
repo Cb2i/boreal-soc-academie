@@ -191,5 +191,9 @@ export const MDC_SOURCES: SourceDef[] = [
   S('sentinel-defender-portal', 'Connect Microsoft Sentinel to the Defender portal', 'https://learn.microsoft.com/azure/sentinel/microsoft-sentinel-onboard', 'Sentinel dans le portail Defender', 'reference'),
   S('sentinel-xdr-connector', 'Stream data from Defender XDR to Sentinel in the Azure portal', 'https://learn.microsoft.com/azure/sentinel/connect-microsoft-365-defender', 'Connecteur Defender XDR et calendrier de retrait du portail Azure', 'reference', 'Date de fin de prise en charge de Sentinel dans le portail Azure annoncée au 2027-03-31; revérifier.'),
   S('sentinel-mdc-incidents', 'Ingest Defender for Cloud incidents with Defender XDR integration', 'https://learn.microsoft.com/azure/sentinel/ingest-defender-for-cloud-incidents', 'Incidents Defender for Cloud dans Sentinel', 'reference'),
+  S('ah-schema', 'Understand the advanced hunting schema', 'https://learn.microsoft.com/defender-xdr/advanced-hunting-schema-tables', 'Schéma de la chasse avancée', 'reference'),
+  S('ah-cloudaudit', 'CloudAuditEvents (advanced hunting)', 'https://learn.microsoft.com/defender-xdr/advanced-hunting-cloudauditevents-table', 'Table CloudAuditEvents', 'reference'),
+  S('ah-cloudprocess', 'CloudProcessEvents (advanced hunting)', 'https://learn.microsoft.com/defender-xdr/advanced-hunting-cloudprocessevents-table', 'Table CloudProcessEvents', 'preview', 'Table présentée en préversion dans le schéma consulté.'),
+  S('powerbi', 'Add Defender for Cloud data to Power BI', 'add-data-power-bi', 'Données Defender for Cloud dans Power BI'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
