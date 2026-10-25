@@ -578,3 +578,28 @@ main:focus { outline: none; }
   .site-header .nav a { padding: 0.35rem 0.65rem; }
   .site-header .search-btn, .site-header .lang-btn { min-height: 2.5rem; }
 }
+
+/* Schémas animés des leçons */
+.flow { margin: 0; padding: 14px; border: 1px solid var(--border); border-radius: 16px; background: color-mix(in srgb, var(--pc, var(--accent)) 5%, var(--bg-2)); display: grid; gap: 10px; }
+.flow figcaption { display: grid; gap: 2px; }
+.flow-svg { width: 100%; height: auto; display: block; }
+.flow-node rect { fill: var(--surface); stroke: color-mix(in srgb, var(--pc, var(--accent)) 28%, #9aa7b8); stroke-width: 1.5; transition: stroke .3s, fill .3s; }
+.flow-node.on rect { stroke: var(--pc, var(--accent)); stroke-width: 3; fill: color-mix(in srgb, var(--pc, var(--accent)) 12%, var(--surface)); }
+.flow-ico path { fill: none; stroke: var(--pc, var(--accent)); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.flow-lab { font: 700 14.5px var(--font-ui); fill: var(--text); }
+.flow-sub { font: 12.5px var(--font-ui); fill: var(--muted); }
+.flow-edge { stroke: #9aa7b8; stroke-width: 2; stroke-dasharray: 5 5; }
+.flow-edge.done { stroke: color-mix(in srgb, var(--pc, var(--accent)) 55%, #9aa7b8); stroke-dasharray: none; }
+.flow-edge.on { stroke: var(--pc, var(--accent)); stroke-width: 3.5; stroke-dasharray: none; }
+.flow-ah { fill: #9aa7b8; } .flow-ah.on { fill: var(--pc, var(--accent)); }
+.flow-badge circle { fill: var(--surface); stroke: #9aa7b8; stroke-width: 1.5; }
+.flow-badge text { font: 700 12px system-ui, sans-serif; fill: var(--text); }
+.flow-badge.on circle { fill: var(--pc, var(--accent)); stroke: var(--pc, var(--accent)); } .flow-badge.on text { fill: var(--accent-ink); }
+.flow-dot { fill: var(--accent-2); stroke: var(--bg); stroke-width: 2; }
+.flow-panel { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; min-height: 3.2em; }
+.flow-panel p { margin: 0; flex: 1 1 260px; }
+.flow-ctl { gap: 8px; }
+.flow-list summary { cursor: pointer; font-size: .9rem; color: var(--muted); }
+@media (max-width: 640px) { .flow { padding: 10px; } }
+.flow-svg.narrow .flow-lab { font-size: 19px; } .flow-svg.narrow .flow-sub { font-size: 15px; } .flow-svg.narrow .flow-badge text { font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .flow-node rect, .flow-edge { transition: none; } }

@@ -423,6 +423,11 @@ const ok = (name, cond, extra = '') => {
   await ap.goto(base + '#/ia/projets');
   await ap.waitForSelector('h1');
   ok('IA : page des projets', /lab/i.test(await ap.textContent('h1')));
+  await ap.goto(base + '#/ia/cours/m08-l1');
+  await ap.waitForSelector('#schema svg');
+  ok('schéma animé : présent dans une leçon', (await ap.locator('#schema .flow-node').count()) >= 4 && (await ap.locator('#schema .flow-ctl button').count()) === 4);
+  await ap.click('#schema button[aria-label="Étape suivante"]');
+  ok('schéma animé : l’étape suivante est annoncée', /Étape \d\/\d/.test(await ap.textContent('#schema .flow-panel')));
   await ap.goto(base + '#/ia/projet/f01');
   await ap.waitForSelector('h1');
   ok('IA : un projet de synthèse s’ouvre', /triage/i.test(await ap.textContent('h1')));
