@@ -103,7 +103,7 @@ DeviceInfo
 ```
 
 3. Un appareil à exposition « inconnue » : qu'est-ce que ça signifie pour la fiabilité du score ?""",
- """Vous devriez voir surtout une exposition faible ou moyenne sur les postes, et un **serveur à exposition élevée**. Un appareil dont l'exposition est inconnue est souvent un appareil qui ne remonte pas encore de données (capteur, évaluation pas faite) : le score global est donc **calculé sur ce qui est visible**, ce qui est une limite. Le score est utile pour suivre la tendance, mais il ne remplace pas la priorisation par contexte métier.""",
+ """Vous devriez voir surtout une exposition faible ou moyenne sur les postes, et un **serveur à exposition élevée** (le contrôleur de domaine SRV-DC01, un actif critique). Un appareil dont l'exposition est inconnue est souvent un appareil qui ne remonte pas encore de données (capteur, évaluation pas faite) : le score global est donc **calculé sur ce qui est visible**, ce qui est une limite. Le score est utile pour suivre la tendance, mais il ne remplace pas la priorisation par contexte métier.""",
  'Vous pouvez expliquer pourquoi un score « moyen » n\'est pas rassurant.'),
  P('Prioriser les recommandations','Classer avec des critères explicites plutôt qu\'au jugé.',
  """À partir du tableau « Recommandations » (voir données fournies), classez les six lignes. Pour chacune, notez quatre critères : **criticité de l'actif**, **exposition** (Internet, interne), **exploit connu**, **effort de correction**. Puis donnez un rang et une échéance (immédiat, 30 jours, planifié, exception).""",

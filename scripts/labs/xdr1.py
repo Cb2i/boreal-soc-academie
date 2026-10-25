@@ -168,7 +168,7 @@ DeviceInfo
 ```
 
 3. Pour chaque ligne, proposez la première vérification : réseau, service, alimentation, doublon ou appareil retiré ?""",
- """Vous devriez voir une majorité d'appareils actifs et quelques cas à traiter : des capteurs **inactifs** (appareil intégré mais silencieux), un état « communication altérée » sur un serveur et un appareil **non intégré**. Lecture : « intégré » ne veut pas dire « protège » ; il faut mesurer l'état du capteur. Le serveur de fichiers avec communication altérée mérite une vérification réseau avant toute autre action. L'appareil non intégré est un trou de couverture, pas un bruit statistique.""",
+ """Vous devriez voir une majorité d'appareils actifs et quelques cas à traiter : des capteurs **inactifs** (appareil intégré mais silencieux), un état « communication altérée » sur le contrôleur de domaine et un appareil **non intégré**. Lecture : « intégré » ne veut pas dire « protège » ; il faut mesurer l'état du capteur. Le contrôleur de domaine SRV-DC01, dont la communication est altérée, mérite une vérification réseau en priorité, car c'est un actif critique. L'appareil non intégré est un trou de couverture, pas un bruit statistique.""",
  'Vous avez une liste d\'appareils à traiter avec une première vérification pour chacun.'),
  ],
  ['Le plan de déploiement en trois vagues.','La note de connectivité avec son test.','Les deux requêtes et l\'interprétation de leurs résultats.'],

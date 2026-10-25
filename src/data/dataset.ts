@@ -585,11 +585,11 @@ function buildXdr(seed: number): Record<string, Table> {
   const silent = new Set([PEOPLE[3].pc, PEOPLE[9].pc, PEOPLE[12 + (seed % 5)].pc]);
   for (const p of PEOPLE) {
     const mute = silent.has(p.pc);
-    devices.push({ Timestamp: mute ? at(1, 9 + (p.pc.length % 3), 14, 5) : at(7, 10, int(rng, 0, 59), int(rng, 0, 59)), DeviceId: `dev-${p.pc.toLowerCase()}`, DeviceName: `${p.pc}.nordlys.example`, OSPlatform: p.os.startsWith('Win') ? p.os : 'Windows11', OnboardingStatus: 'Onboarded', SensorHealthState: mute ? 'Inactive' : 'Active', ExposureLevel: pick(rng, ['Low', 'Low', 'Medium']), MachineGroup: 'Postes' });
+    devices.push({ Timestamp: mute ? at(1, 9 + (p.pc.length % 3), 14, 5) : at(7, 10, int(rng, 0, 59), int(rng, 0, 59)), DeviceId: `dev-${p.pc.toLowerCase()}`, DeviceName: `${p.pc}.nordlys.example`, OSPlatform: p.os.startsWith('Win') ? p.os : 'Windows 11', OnboardingStatus: 'Onboarded', SensorHealthState: mute ? 'Inactive' : 'Active', ExposureLevel: pick(rng, ['Low', 'Low', 'Medium']), MachineGroup: 'Postes' });
   }
-  devices.push({ Timestamp: at(7, 11, 20, 0), DeviceId: 'dev-srv-file01', DeviceName: 'SRV-FILE01.nordlys.example', OSPlatform: 'WindowsServer2022', OnboardingStatus: 'Onboarded', SensorHealthState: 'Active', ExposureLevel: 'Medium', MachineGroup: 'Serveurs' });
-  devices.push({ Timestamp: at(6, 22, 40, 0), DeviceId: 'dev-srv-dc01', DeviceName: 'SRV-DC01.nordlys.example', OSPlatform: 'WindowsServer2022', OnboardingStatus: 'Onboarded', SensorHealthState: 'Impaired communications', ExposureLevel: 'High', MachineGroup: 'Serveurs' });
-  devices.push({ Timestamp: at(3, 8, 0, 0), DeviceId: 'dev-pc-091', DeviceName: 'PC-091.nordlys.example', OSPlatform: 'Windows11', OnboardingStatus: 'Can be onboarded', SensorHealthState: 'No sensor data', ExposureLevel: 'Unknown', MachineGroup: 'Postes' });
+  devices.push({ Timestamp: at(7, 11, 20, 0), DeviceId: 'dev-srv-file01', DeviceName: 'SRV-FILE01.nordlys.example', OSPlatform: 'Windows Server 2022', OnboardingStatus: 'Onboarded', SensorHealthState: 'Active', ExposureLevel: 'Medium', MachineGroup: 'Serveurs' });
+  devices.push({ Timestamp: at(6, 22, 40, 0), DeviceId: 'dev-srv-dc01', DeviceName: 'SRV-DC01.nordlys.example', OSPlatform: 'Windows Server 2022', OnboardingStatus: 'Onboarded', SensorHealthState: 'Impaired communications', ExposureLevel: 'High', MachineGroup: 'Serveurs' });
+  devices.push({ Timestamp: at(3, 8, 0, 0), DeviceId: 'dev-pc-091', DeviceName: 'PC-091.nordlys.example', OSPlatform: 'Windows 11', OnboardingStatus: 'Can be onboarded', SensorHealthState: 'No sensor data', ExposureLevel: 'Unknown', MachineGroup: 'Postes' });
 
   // Événements d’appareil (DeviceEvents) : règles ASR en audit ou en blocage et supports amovibles.
   const dev: Partial<Record<string, Value>>[] = [];
