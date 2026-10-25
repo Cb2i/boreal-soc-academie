@@ -113,5 +113,7 @@ export const MDC_SOURCES: SourceDef[] = [
   S('internet-exposure', 'Internet exposure analysis', 'internet-exposure-analysis', 'Analyse de l’exposition à Internet'),
   S('attack-path-defender', 'Work with attack paths (Exposure Management)', 'https://learn.microsoft.com/security-exposure-management/work-attack-paths-overview', 'Chemins d’attaque dans le portail Defender : points d’étranglement et rayon d’impact', 'reference'),
   S('secrets-vm', 'Remediate machine secrets', 'remediate-server-secrets', 'Secrets en clair sur les machines'),
+  S('compliance-assign', 'Assign regulatory compliance standards', 'assign-regulatory-compliance-standards', 'Affectation des standards réglementaires'),
+  S('compliance-manager', 'Configure cloud settings for Compliance Manager', 'https://learn.microsoft.com/purview/compliance-manager-cloud-settings', 'Purview Compliance Manager et Defender for Cloud', 'reference'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];

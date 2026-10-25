@@ -7,8 +7,9 @@ import { d03 } from './d03.ts';
 import { d04 } from './d04.ts';
 import { d05 } from './d05.ts';
 import { d06 } from './d06.ts';
+import { d07 } from './d07.ts';
 
-export const MDC_MODULES: ModuleContent[] = [d01, d02, d03, d04, d05, d06];
+export const MDC_MODULES: ModuleContent[] = [d01, d02, d03, d04, d05, d06, d07];
 const finalProjects: AiProject[] = [];
 const resources: ResourceDef[] = [];
 export const CONTENT = buildContent(MDC_LEVELS, MDC_MODULES, finalProjects, resources);
