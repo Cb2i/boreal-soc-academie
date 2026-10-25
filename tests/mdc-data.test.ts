@@ -48,6 +48,9 @@ describe('Defender for Cloud : matrice, fiches et scénarios', async () => {
       expect(JSON.stringify(s).includes(dash), s.id).toBe(false);
     }
   });
+  it('scénarios : chaque famille transversale compte au moins un scénario', () => {
+    for (const f of SCENARIO_FAMILIES) expect(SCENARIOS_MDC.filter((s) => s.family === f).length, f).toBeGreaterThanOrEqual(1);
+  });
   it('limites : identifiants uniques et sans tiret cadratin', () => {
     expect(new Set(LIMITS.map((l) => l.id)).size).toBe(LIMITS.length);
     expect(JSON.stringify(LIMITS).includes(dash)).toBe(false);
