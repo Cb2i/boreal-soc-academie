@@ -553,3 +553,21 @@ main:focus { outline: none; }
 .landing .section-card .small { font-size: 0.78rem; }
 .landing .section-card .btn { align-self: end; margin-top: 0.35rem; padding: 0.4rem 0.9rem; font-size: 0.88rem; }
 .landing .section-card .ring-num { font-size: 0.66rem; }
+
+/* en-tête v3 : deux rangées nettes, non fixe, sous-navigation défilante */
+.site-header { position: static; backdrop-filter: none; background: var(--bg); }
+.site-header .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; min-height: 0; padding-block: 0.6rem 0; }
+.site-header .brand { order: 1; }
+.site-header .sections { order: 2; flex: 0 1 auto; min-width: 0; }
+.site-header .search-btn { order: 3; margin-left: auto; }
+.site-header .lang-btn { order: 4; }
+.site-header .streak, .site-header [class*="streak"], .site-header .xp-chip { order: 5; }
+.site-header .nav { order: 10; flex: 0 0 100%; flex-wrap: nowrap; overflow-x: auto; gap: 0.15rem; margin: 0; padding: 0.35rem 0 0.5rem; border-top: 1px solid var(--border); scrollbar-width: thin; }
+.site-header .nav a { white-space: nowrap; flex: 0 0 auto; padding: 0.45rem 0.8rem; }
+@media (max-width: 900px) {
+  .site-header .sections { order: 9; flex: 0 0 100%; }
+  .site-header .search-btn { margin-left: auto; }
+}
+.pathbar { position: static !important; }
+.site-header .search-btn .search-label, .site-header .search-btn kbd { display: none; }
+.site-header .search-btn { padding: 0.3rem 0.7rem; }
