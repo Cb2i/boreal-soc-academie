@@ -145,5 +145,9 @@ export const MDC_SOURCES: SourceDef[] = [
   S('storage-ondemand', 'On-demand malware scanning', 'on-demand-malware-scanning', 'Analyse de maliciels à la demande'),
   S('storage-malware-intro', 'Introduction to malware scanning', 'introduction-malware-scanning', 'Résultats, limites et coûts de l’analyse de maliciels'),
   S('storage-response', 'Set up a response to malware scanning results', 'defender-for-storage-configure-malware-scan', 'Réponse automatisée aux résultats d’analyse'),
+  S('sql-va', 'Review and remediate SQL vulnerability assessment findings', 'sql-azure-vulnerability-assessment-find', 'Constats de vulnérabilités SQL : express, classique, référence'),
+  S('sql-atp', 'SQL Advanced Threat Protection', 'https://learn.microsoft.com/azure/azure-sql/database/threat-detection-overview', 'Détection de menaces SQL et audit', 'reference', 'URL non vérifiée par récupération : confirmer avant de s’y fier.'),
+  S('cosmos-alerts', 'Alerts for Azure Cosmos DB', 'alerts-reference', 'Alertes Cosmos DB (section de la référence des alertes)', 'reference', 'Page de référence des alertes : chercher la section Cosmos DB.'),
+  S('osrdb', 'Defender for open-source relational databases', 'defender-for-databases-introduction', 'Bases relationnelles libres'),
   S('workbooks', 'Workbooks in Defender for Cloud', 'custom-dashboards-azure-workbooks', 'Classeurs et couverture'),
 ];
