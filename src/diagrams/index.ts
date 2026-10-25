@@ -1,6 +1,6 @@
 import type { Flow } from './types.ts';
 import { FLOWS_XDR } from './xdrFlows.ts';
-import { FLOWS_INTUNE } from './intune.ts';
+import { FLOWS_INTUNE } from './intuneFlows.ts';
 import { FLOWS_SCEN } from './scenarios.ts';
 import { FLOWS_AZURE } from './azure.ts';
 import { FLOWS_IA } from './iaFlows.ts';

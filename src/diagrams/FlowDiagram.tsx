@@ -135,8 +135,31 @@ export function FlowDiagram({ flow }: { flow: Flow }) {
               <g className={`flow-node${n[4] ? ` t-${n[4]}` : ''}${on ? ' on' : ''}${on && idx[cur[1]] === i ? ' dest' : ''}`}>
                 <rect width={NW} height={NH} rx="16" />
                 <g transform="translate(14,16) scale(1.5)"><g className="flow-ico"><path d={GLYPH[n[3]]} /></g></g>
-                <text x="62" y="36" className="flow-lab">{n[1].length > (narrow ? 19 : 18) ? n[1].slice(0, narrow ? 18 : 17) + '…' : n[1]}</text>
-                <text x="62" y="56" className="flow-sub">{n[2].length > (narrow ? 24 : 22) ? n[2].slice(0, narrow ? 23 : 21) + '…' : n[2]}</text>
+                {(() => {
+                  const lim = narrow ? 19 : 18;
+                  const subLim = narrow ? 24 : 22;
+                  const lab = n[1];
+                  let l1 = lab, l2 = '';
+                  if (lab.length > lim) {
+                    const cut = lab.lastIndexOf(' ', lim);
+                    if (cut > 4) { l1 = lab.slice(0, cut); l2 = lab.slice(cut + 1); } else { l1 = lab.slice(0, lim - 1) + '…'; }
+                    if (l2.length > lim + 2) l2 = l2.slice(0, lim + 1) + '…';
+                  }
+                  const sub = n[2].length > subLim + 4 ? n[2].slice(0, subLim + 3) + '…' : n[2];
+                  const small = sub.length > subLim;
+                  return l2 ? (
+                    <>
+                      <text x="62" y="30" className="flow-lab two">{l1}</text>
+                      <text x="62" y="46" className="flow-lab two">{l2}</text>
+                      <text x="62" y="65" className={`flow-sub${small ? ' sm' : ''}`}>{sub}</text>
+                    </>
+                  ) : (
+                    <>
+                      <text x="62" y="36" className="flow-lab">{l1}</text>
+                      <text x="62" y="56" className={`flow-sub${small ? ' sm' : ''}`}>{sub}</text>
+                    </>
+                  );
+                })()}
               </g>
             </g>
           );

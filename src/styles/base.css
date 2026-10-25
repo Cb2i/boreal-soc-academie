@@ -650,3 +650,9 @@ main:focus { outline: none; }
 .flow-panel.k-atk .flow-pdu code { border-color: var(--bad); } .flow-panel.k-ctl .flow-pdu code { border-color: var(--ok); }
 .flow-in { font-size: .92rem; }
 @media (prefers-reduced-motion: reduce) { .flow-pk-halo { animation: none; } }
+
+/* Libellés longs : deux lignes au lieu d'une coupure */
+.flow-lab.two { font-size: 13.5px; }
+.flow-sub.sm { font-size: 11.5px; }
+.flow-svg.narrow .flow-lab.two { font-size: 16px; }
+.flow-svg.narrow .flow-sub.sm { font-size: 13px; }

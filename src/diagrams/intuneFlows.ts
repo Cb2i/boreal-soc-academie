@@ -1,0 +1,17 @@
+import { H1 } from './intune/h1.ts';
+import { H2 } from './intune/h2.ts';
+import { H3 } from './intune/h3.ts';
+import { H4 } from './intune/h4.ts';
+import { H5 } from './intune/h5.ts';
+import { H6 } from './intune/h6.ts';
+import { H7 } from './intune/h7.ts';
+import { H8 } from './intune/h8.ts';
+import { H9 } from './intune/h9.ts';
+import { H10 } from './intune/h10.ts';
+import { H11 } from './intune/h11.ts';
+import { H12 } from './intune/h12.ts';
+import { H13 } from './intune/h13.ts';
+import { H14 } from './intune/h14.ts';
+import { H15 } from './intune/h15.ts';
+import type { Flow } from './types.ts';
+export const FLOWS_INTUNE: Flow[] = [...H1,...H2,...H3,...H4,...H5,...H6,...H7,...H8,...H9,...H10,...H11,...H12,...H13,...H14,...H15];
