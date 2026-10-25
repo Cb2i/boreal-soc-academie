@@ -630,3 +630,23 @@ main:focus { outline: none; }
 .flow-panel { animation: flow-fade .45s ease both; }
 @keyframes flow-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .flow-streak, .flow-back, .flow-panel, .flow-node.dest rect { animation: none; } .flow-node, .flow-node rect, .flow-edge { transition: none; } }
+
+/* Paquet tracer : nature des flux, paquet, inspecteur */
+.flow-link.k-atk .flow-streak, .flow-link.k-atk .flow-back { stroke: var(--bad); filter: drop-shadow(0 0 6px var(--bad)); }
+.flow-link.k-ctl .flow-streak, .flow-link.k-ctl .flow-back { stroke: var(--ok); filter: drop-shadow(0 0 6px var(--ok)); }
+.flow-link.k-atk.on .flow-edge { stroke: var(--bad); } .flow-link.k-ctl.on .flow-edge { stroke: var(--ok); }
+.flow-link.k-atk.on .flow-badge circle { fill: var(--bad); stroke: var(--bad); } .flow-link.k-ctl.on .flow-badge circle { fill: var(--ok); stroke: var(--ok); }
+.flow-pk-dot { fill: var(--accent-2); stroke: var(--bg); stroke-width: 2; } .flow-pk-halo { fill: var(--accent-2); opacity: .28; animation: flow-pulse 1.1s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+.flow-pk.k-atk .flow-pk-dot, .flow-pk.k-atk .flow-pk-halo { fill: var(--bad); } .flow-pk.k-ctl .flow-pk-dot, .flow-pk.k-ctl .flow-pk-halo { fill: var(--ok); }
+@keyframes flow-pulse { 0% { transform: scale(.7); opacity: .45; } 100% { transform: scale(1.9); opacity: 0; } }
+.flow-node.t-atk rect { stroke: var(--bad); fill: color-mix(in srgb, var(--bad) 9%, var(--surface)); }
+.flow-node.t-ctl rect { stroke: var(--ok); fill: color-mix(in srgb, var(--ok) 9%, var(--surface)); }
+.flow-node.t-atk .flow-ico path { stroke: var(--bad); } .flow-node.t-ctl .flow-ico path { stroke: var(--ok); }
+.flow-panel { display: grid; gap: .5rem; min-height: 11rem; align-content: start; }
+.flow-panel p { margin: 0; }
+.flow-panel.k-atk { border-left: 4px solid var(--bad); } .flow-panel.k-ctl { border-left: 4px solid var(--ok); }
+.flow-k { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .02em; color: var(--muted); margin-bottom: .1rem; }
+.flow-pdu code { display: block; white-space: pre-wrap; word-break: break-word; padding: .5rem .7rem; border-radius: 10px; background: var(--bg-2); border: 1px dashed color-mix(in srgb, var(--pc, var(--accent)) 50%, var(--border)); font-size: .86rem; }
+.flow-panel.k-atk .flow-pdu code { border-color: var(--bad); } .flow-panel.k-ctl .flow-pdu code { border-color: var(--ok); }
+.flow-in { font-size: .92rem; }
+@media (prefers-reduced-motion: reduce) { .flow-pk-halo { animation: none; } }

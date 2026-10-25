@@ -110,7 +110,7 @@ export function FlowDiagram({ flow }: { flow: Flow }) {
         {edges.map((ed, i) => {
           const st = i === step ? 'on' : i < step ? 'done' : 'idle';
           return (
-            <g key={i} className={`flow-link ${st}`}>
+            <g key={i} className={`flow-link ${st} k-${flow.steps[i][6] ?? 'n'}`}>
               <path d={ed.d} className="flow-edge" fill="none" markerEnd={`url(#ah-${flow.lesson})`} />
               {!reduce && [0, 1, 2].slice(0, st === 'on' ? 3 : st === 'done' ? 2 : 1).map((k) => (
                 <path key={`${step}-${k}`} d={ed.d} pathLength={100} className="flow-streak" fill="none" style={{ animationDelay: `${k * (st === 'on' ? 0.3 : 0.9)}s` }} />
@@ -120,12 +120,19 @@ export function FlowDiagram({ flow }: { flow: Flow }) {
             </g>
           );
         })}
+        {!reduce && (
+          <g key={`pk-${step}`} className={`flow-pk k-${cur[6] ?? 'n'}`}>
+            <circle r="9" className="flow-pk-halo" />
+            <circle r="5.5" className="flow-pk-dot" />
+            <animateMotion path={edges[step].d} dur="1.05s" begin="0s" fill="freeze" calcMode="spline" keyTimes="0;1" keyPoints="0;1" keySplines=".45 .05 .2 1" />
+          </g>
+        )}
         {flow.nodes.map((n, i) => {
           const p = L.pos(i);
           const on = curIdx.has(i);
           return (
             <g key={n[0]} transform={`translate(${p.x - NW / 2},${p.y - NH / 2})`}>
-              <g className={`flow-node${on ? ' on' : ''}${on && idx[cur[1]] === i ? ' dest' : ''}`}>
+              <g className={`flow-node${n[4] ? ` t-${n[4]}` : ''}${on ? ' on' : ''}${on && idx[cur[1]] === i ? ' dest' : ''}`}>
                 <rect width={NW} height={NH} rx="16" />
                 <g transform="translate(14,16) scale(1.5)"><g className="flow-ico"><path d={GLYPH[n[3]]} /></g></g>
                 <text x="62" y="36" className="flow-lab">{n[1].length > (narrow ? 19 : 18) ? n[1].slice(0, narrow ? 18 : 17) + '…' : n[1]}</text>
@@ -135,9 +142,11 @@ export function FlowDiagram({ flow }: { flow: Flow }) {
           );
         })}
       </svg>
-      <div className="flow-panel" aria-live="polite" key={step}>
+      <div className={`flow-panel k-${cur[6] ?? 'n'}`} aria-live="polite" key={step}>
         <span className="pill">{tr('Étape', 'Step')} {step + 1}/{N}</span>
         <p><strong>{cur[2]}</strong> : {cur[3]}</p>
+        {cur[4] && <p className="flow-pdu"><span className="flow-k">{tr('Paquet', 'Packet')}</span><code>{cur[4]}</code></p>}
+        {cur[5] && <p className="flow-in"><span className="flow-k">{tr('Dans', 'Inside')} {flow.nodes[idx[cur[1]]][1]}</span>{cur[5]}</p>}
       </div>
       <div className="row flow-ctl">
         <button type="button" className="btn small" onClick={() => setStep((s) => (s + N - 1) % N)} aria-label={tr('Étape précédente', 'Previous step')}>◀</button>
@@ -146,7 +155,7 @@ export function FlowDiagram({ flow }: { flow: Flow }) {
         <button type="button" className="btn small" onClick={() => { setStep(0); setPlaying(!reduce); }}>{tr('Rejouer', 'Replay')}</button>
       </div>
       <details className="flow-list"><summary>{tr('Version texte du schéma', 'Text version')}</summary>
-        <ol>{flow.steps.map((s, i) => <li key={i}><strong>{s[2]}</strong> : {s[3]}</li>)}</ol>
+        <ol>{flow.steps.map((s, i) => <li key={i}><strong>{s[2]}</strong> : {s[3]}{s[4] ? <> <code>{s[4]}</code></> : null}{s[5] ? <> {s[5]}</> : null}</li>)}</ol>
       </details>
     </figure>
   );

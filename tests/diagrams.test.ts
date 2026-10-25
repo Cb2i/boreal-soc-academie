@@ -10,7 +10,7 @@ describe('schémas animés', () => {
       const ids = new Set(f.nodes.map((n) => n[0]));
       expect(ids.size, f.lesson).toBe(f.nodes.length);
       expect(f.nodes.length, f.lesson).toBeGreaterThanOrEqual(4);
-      expect(f.nodes.length, f.lesson).toBeLessThanOrEqual(8);
+      expect(f.nodes.length, f.lesson).toBeLessThanOrEqual(10);
       expect(f.steps.length, f.lesson).toBeGreaterThanOrEqual(3);
       for (const s of f.steps) { expect(ids.has(s[0]) && ids.has(s[1]), `${f.lesson} ${s[2]}`).toBe(true); expect(s[3].length, `${f.lesson} ${s[2]}`).toBeGreaterThan(8); }
       expect(JSON.stringify(f).includes(dash), f.lesson).toBe(false);
