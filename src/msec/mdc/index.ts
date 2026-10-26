@@ -1,5 +1,6 @@
 import { registerTrackI18n } from '../../i18n/trackLang.ts';
 import { loadDict } from '../../i18n/dicts.ts';
+import { loadDictFr } from '../../i18n/dictsFr.ts';
 import { buildContent } from '../../agentic/content/build.ts';
 import type { AiProject, ModuleContent, ResourceDef } from '../../agentic/types.ts';
 import { MDC_LEVELS } from './levels.ts';
@@ -48,4 +49,4 @@ const resources: ResourceDef[] = [
 ];
 export const CONTENT = buildContent(MDC_LEVELS, MDC_MODULES, finalProjects, resources);
 
-await registerTrackI18n(CONTENT, () => loadDict('mdc'));
+await registerTrackI18n(CONTENT, () => loadDict('mdc'), () => loadDictFr('mdc'));

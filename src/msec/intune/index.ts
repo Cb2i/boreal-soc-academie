@@ -1,5 +1,6 @@
 import { registerTrackI18n } from '../../i18n/trackLang.ts';
 import { loadDict } from '../../i18n/dicts.ts';
+import { loadDictFr } from '../../i18n/dictsFr.ts';
 import { buildContent } from '../../agentic/content/build.ts';
 import type { ModuleContent, ResourceDef } from '../../agentic/types.ts';
 import { INTUNE_LEVELS } from './levels.ts';
@@ -31,4 +32,4 @@ export const INTUNE_MODULES: ModuleContent[] = withLabs([i01, i02, i03, i04, i05
 const resources: ResourceDef[] = INTUNE_RESOURCES;
 export const CONTENT = buildContent(INTUNE_LEVELS, INTUNE_MODULES, INTUNE_FINAL_LABS, resources);
 
-await registerTrackI18n(CONTENT, () => loadDict('intune'));
+await registerTrackI18n(CONTENT, () => loadDict('intune'), () => loadDictFr('intune'));

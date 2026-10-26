@@ -48,16 +48,16 @@ export function units(s: string): { line: string; tr: boolean }[] {
 }
 
 /** Copie l'arbre en remplaçant les lignes de prose présentes dans le dictionnaire. */
-export function translateTree<T>(v: T, dict: Record<string, string>, key = ''): T {
+export function translateTree<T>(v: T, dict: Record<string, string>, key = '', post: (s: string) => string = (s) => s): T {
   if (typeof v === 'string') {
     if (!PROSE.has(key)) return v;
-    if (!v.includes('\n')) return (translatable(v) ? dict[h(v)] ?? v : v) as T;
-    return units(v).map((u) => (u.tr ? dict[h(u.line)] ?? u.line : u.line)).join('\n') as T;
+    if (!v.includes('\n')) return (translatable(v) ? post(dict[h(v)] ?? v) : v) as T;
+    return units(v).map((u) => (u.tr ? post(dict[h(u.line)] ?? u.line) : u.line)).join('\n') as T;
   }
-  if (Array.isArray(v)) return v.map((x) => translateTree(x, dict, key)) as T;
+  if (Array.isArray(v)) return v.map((x) => translateTree(x, dict, key, post)) as T;
   if (v && typeof v === 'object') {
     const out: Record<string, unknown> = {};
-    for (const [k, x] of Object.entries(v)) out[k] = translateTree(x, dict, k);
+    for (const [k, x] of Object.entries(v)) out[k] = translateTree(x, dict, k, post);
     return out as T;
   }
   return v;
@@ -70,4 +70,22 @@ export function collectProse(v: unknown, out: string[], key = ''): void {
     for (const u of units(v)) if (u.tr) out.push(u.line);
   } else if (Array.isArray(v)) for (const x of v) collectProse(x, out, key);
   else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) collectProse(x, out, k);
+}
+
+const NB = '\u00a0';
+/** Typographie française soignée : espace insécable avant « : ; ? ! % » et dans les guillemets, entre groupes de milliers; le code (`...`) reste intact. */
+export function frTypo(line: string): string {
+  return line
+    .split(/(`[^`]*`)/)
+    .map((part, i) => {
+      if (i % 2 === 1) return part;
+      return part
+        .replace(/(\p{L})'(\p{L})/gu, '$1’$2')
+        .replace(/(\S) ([:;?!])(?=$|[\s)»"”’.,])/g, `$1${NB}$2`)
+        .replace(/« /g, `«${NB}`)
+        .replace(/ »/g, `${NB}»`)
+        .replace(/(\d) %/g, `$1${NB}%`)
+        .replace(/(\d) (\d{3})(?!\d)/g, `$1${NB}$2`);
+    })
+    .join('');
 }
