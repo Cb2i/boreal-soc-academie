@@ -4,7 +4,7 @@ type Dict = Record<string, string>;
 const LOADERS: Record<string, (() => Promise<{ default: Dict }>)[]> = {
   ia: [() => import('./dict/ia/000.json')],
   intune: [() => import('./dict/intune/000.json')],
-  mdc: [() => import('./dict/mdc/000.json')],
+  mdc: [() => import('./dict/mdc/000.json'), () => import('./dict/mdc/001.json'), () => import('./dict/mdc/002.json'), () => import('./dict/mdc/003.json'), () => import('./dict/mdc/004.json'), () => import('./dict/mdc/005.json'), () => import('./dict/mdc/006.json'), () => import('./dict/mdc/007.json'), () => import('./dict/mdc/008.json'), () => import('./dict/mdc/009.json'), () => import('./dict/mdc/010.json'), () => import('./dict/mdc/011.json')],
   scenarios: [() => import('./dict/scenarios/000.json'), () => import('./dict/scenarios/001.json'), () => import('./dict/scenarios/002.json'), () => import('./dict/scenarios/003.json'), () => import('./dict/scenarios/004.json'), () => import('./dict/scenarios/005.json'), () => import('./dict/scenarios/006.json'), () => import('./dict/scenarios/007.json')],
   xdr: [() => import('./dict/xdr/000.json')],
 };
