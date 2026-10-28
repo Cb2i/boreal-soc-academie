@@ -22,15 +22,15 @@ export function TrackHome() {
         <div>
           <span className="kicker">{meta.kickerFr}</span>
           <h1>{tr(meta.titleFr, meta.titleEn)}</h1>
-          <p className="lead muted">{track.home?.lead ?? tr(meta.descFr, meta.descEn)}</p>
+          <p className="lead muted">{track.home ? tr(track.home.lead, track.home.leadEn ?? track.home.lead) : tr(meta.descFr, meta.descEn)}</p>
           <div className="stats-row">
             <span><strong>{MODULES.length}</strong> {tr('modules', 'modules')}</span>
             <span><strong>{totalLessons}</strong> {tr('leçons', 'lessons')}</span>
             <span><strong>{EXERCISES.length}</strong> {tr('exercices et questions', 'exercises and questions')}</span>
             <span><strong>{PROJECTS.length}</strong> {tr('labs', 'labs')}</span>
           </div>
-          <p className="muted small">{tr('Le contenu de cette section est rédigé en français uniquement.', 'The content of this section is written in French only.')}</p>
-          {(track.home?.notes ?? []).map((n, i) => <p key={i} className="muted small"><Inline text={n} /></p>)}
+          {meta.id === 'mdc' && <p className="muted small">{tr('Le contenu de cette section est rédigé en français uniquement.', 'The content of this section is written in French only.')}</p>}
+          {(track.home?.notes ?? []).map((n, i) => <p key={i} className="muted small"><Inline text={tr(n, track.home?.notesEn?.[i] ?? n)} /></p>)}
         </div>
         <aside className="next-card" aria-label={tr('Votre prochaine étape', 'Your next step')}>
           <span className="kicker">{tr('Votre prochaine étape', 'Your next step')}</span>

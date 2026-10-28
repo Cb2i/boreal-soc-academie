@@ -15,6 +15,8 @@ export const mdcTrack: Track = {
   home: {
     lead: 'Microsoft Defender for Cloud, la plateforme CNAPP de Microsoft : architecture, plans, licences et coûts, gouvernance, posture, chemins d’attaque, conformité, protection des charges de travail, AWS, GCP, Azure Arc, DevSecOps, alertes, intégration XDR et Sentinel, automatisation et exploitation. Le parcours principal fonctionne sans abonnement cloud : données fictives, résultats de requêtes identifiés, aucune interface ne prétend administrer Azure. Les laboratoires réels sont séparés, avec prérequis, coûts, tests inoffensifs et nettoyage.',
     notes: ['Chaque fait Microsoft cite une source du registre avec sa date de consultation (2026-10-25). Les plans payants ne sont jamais activés automatiquement, et rien n’a été validé dans un laboratoire Microsoft réel : les statuts de la matrice de capacités le disent explicitement.'],
+    leadEn: 'Microsoft Defender for Cloud, Microsoft\'s CNAPP platform: architecture, plans, licensing and costs, governance, posture, attack paths, compliance, workload protection, AWS, GCP, Azure Arc, DevSecOps, alerts, XDR and Sentinel integration, automation and operations. The main path works without a cloud subscription: fictitious data, labelled query results, and no interface claims to administer Azure. The real labs are separate, with prerequisites, costs, harmless tests and cleanup.',
+    notesEn: ['Every Microsoft fact cites a registry source with its consultation date (2026-10-25). Paid plans are never enabled automatically, and nothing has been validated in a real Microsoft lab: the capability matrix statuses say so explicitly.'],
   },
 };
 

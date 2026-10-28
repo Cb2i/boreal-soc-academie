@@ -14,6 +14,8 @@ export const xdrTrack: Track = {
   home: {
     lead: 'Microsoft Defender XDR de l’architecture à l’exploitation : points de terminaison, courriel, identités, applications infonuagiques, incidents, chasse en KQL et détections. Le parcours principal fonctionne sans locataire, avec des données fictives et des simulations identifiées. Les laboratoires réels sont séparés, avec leurs prérequis, leurs coûts et leur nettoyage.',
     notes: ['Chaque fait Microsoft cite une source du registre, avec sa date de consultation. Rien n’a été validé dans un laboratoire Microsoft réel.'],
+    leadEn: 'Microsoft Defender XDR from architecture to operations: endpoints, email, identities, cloud apps, incidents, KQL hunting and detections. The main path works without a tenant, using fictitious data and clearly labelled simulations. The real labs are separate, with their prerequisites, costs and cleanup.',
+    notesEn: ['Every Microsoft fact cites a registry source with its consultation date. Nothing has been validated in a real Microsoft lab.'],
   },
 };
 

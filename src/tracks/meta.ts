@@ -53,7 +53,7 @@ export const TRACKS: TrackMeta[] = [
     exportFile: 'boube-agentic-progression.json',
     label: 'Agentic AI',
     descFr: 'Du débutant à l’expert : fondations de l’IA, automatisation et n8n, applications LLM, agents, cybersécurité, sécurité et production, projets.',
-    descEn: 'From beginner to expert. Written in French.',
+    descEn: 'From beginner to expert: AI foundations, automation and n8n, LLM applications, agents, cybersecurity, security and production, projects.',
     nav: COMMON_NAV,
   },
   {
@@ -70,7 +70,7 @@ export const TRACKS: TrackMeta[] = [
     exportFile: 'boube-defender-xdr-progression.json',
     label: 'Defender XDR',
     descFr: 'Architecture, déploiement, Endpoint, Office 365, Identity, Cloud Apps, Vulnerability Management, incidents, Advanced Hunting, détections personnalisées et automatisation.',
-    descEn: 'Architecture, deployment, Endpoint, Office 365, Identity, Cloud Apps, Vulnerability Management, incidents, Advanced Hunting, custom detections and automation. Written in French.',
+    descEn: 'Architecture, deployment, Endpoint, Office 365, Identity, Cloud Apps, Vulnerability Management, incidents, Advanced Hunting, custom detections and automation.',
     nav: [...COMMON_NAV, { sub: 'sources', fr: 'Sources', en: 'Sources' }],
   },
   {
@@ -87,7 +87,7 @@ export const TRACKS: TrackMeta[] = [
     exportFile: 'boube-intune-securite-progression.json',
     label: 'Intune Sécurité',
     descFr: 'Politiques de sécurité, baselines, Defender Antivirus, ASR, EDR, pare-feu, chiffrement, comptes, conformité, protection des applications, correctifs et durcissement par plateforme.',
-    descEn: 'Security policies, baselines, Defender Antivirus, ASR, EDR, firewall, encryption, accounts, compliance, app protection, patching and per-platform hardening. Written in French.',
+    descEn: 'Security policies, baselines, Defender Antivirus, ASR, EDR, firewall, encryption, accounts, compliance, app protection, patching and per-platform hardening.',
     nav: [...COMMON_NAV, { sub: 'sources', fr: 'Sources', en: 'Sources' }],
   },
   {
@@ -104,7 +104,7 @@ export const TRACKS: TrackMeta[] = [
     exportFile: 'boube-scenarios-progression.json',
     label: 'Scénarios Defender + Intune',
     descFr: 'Scénarios croisés : hameçonnage, protection web et réseau, WSL, ASR, supports amovibles, risque appareil et accès conditionnel, perte de télémétrie, confinement et restauration.',
-    descEn: 'Cross scenarios: phishing, web and network protection, WSL, ASR, removable media, device risk and Conditional Access, telemetry loss, containment and restoration. Written in French.',
+    descEn: 'Cross scenarios: phishing, web and network protection, WSL, ASR, removable media, device risk and Conditional Access, telemetry loss, containment and restoration.',
     nav: [
       { fr: 'Scénarios', en: 'Scenarios', also: ['module', 'cours', 'exercice', 'evaluation', 'cas'] },
       { sub: 'catalogue', fr: 'Catalogue', en: 'Catalog', also: ['fiche'] },
@@ -127,7 +127,7 @@ export const TRACKS: TrackMeta[] = [
     exportFile: 'boube-defender-for-cloud-progression.json',
     label: 'Defender for Cloud',
     descFr: 'CNAPP de Microsoft du débutant à l’expert : architecture, plans et coûts, gouvernance, CSPM, chemins d’attaque, conformité, charges de travail, AWS, GCP, Arc, DevSecOps, alertes, intégration XDR et Sentinel, automatisation et exploitation.',
-    descEn: 'Microsoft CNAPP from beginner to expert: architecture, plans and costs, governance, CSPM, attack paths, compliance, workloads, AWS, GCP, Arc, DevSecOps, alerts, XDR and Sentinel integration, automation and operations. Written in French.',
+    descEn: 'Microsoft CNAPP from beginner to expert: architecture, plans and costs, governance, CSPM, attack paths, compliance, workloads, AWS, GCP, Arc, DevSecOps, alerts, XDR and Sentinel integration, automation and operations.',
     nav: [
       ...COMMON_NAV,
       { sub: 'capacites', fr: 'Capacités', en: 'Capabilities' },

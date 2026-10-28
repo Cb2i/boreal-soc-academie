@@ -15,7 +15,7 @@ export interface Track {
   /** Pages propres au parcours (sources, catalogue, couverture enrichie…), indexées par sous-route. */
   pages?: Record<string, ComponentType>;
   /** Texte d'introduction de l'accueil du parcours (mini-markdown) et mentions d'honnêteté propres au parcours. */
-  home?: { lead: string; notes: string[] };
+  home?: { lead: string; notes: string[]; leadEn?: string; notesEn?: string[] };
 }
 
 export interface TrackCtx {
