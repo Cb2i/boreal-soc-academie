@@ -15,7 +15,7 @@ export const H22: Flow[] = [
     [['xd', 'xc', 'Diffuser', 'Les incidents de Defender for Cloud passent par le connecteur XDR.', 'incident', ''],
      ['xc', 'iv', 'Afficher', 'Sans le second connecteur, l’incident arrive vide.', 'sans alertes', 'Ce n’est pas un bogue.', 'atk'],
      ['dc', 'ic', 'Compléter', 'Le connecteur Defender for Cloud apporte alertes et entités.', 'synchronisation', '', 'ok'],
-     ['xc', 'tv', 'Limiter', 'Les tables TVM ne sont pas ingérées dans Sentinel.', 'DeviceTvm…', 'Utiliser la chasse avancée de XDR.', 'atk'],
+     ['xc', 'tv', 'Limiter', 'Les tables TVM ne sont pas ingérées dans Sentinel.', 'DeviceTvm…', 'Utiliser Advanced Hunting de XDR.', 'atk'],
      ['pw', 'xd', 'Corréler', 'Seul l’espace principal est corrélé avec Defender.', 'primaire', ''],
      ['rt', 'pw', 'Planifier', 'Inventorier règles et playbooks avant la date annoncée.', 'transition', 'Revérifier la date.'],
      ['iv', 'dc', 'Corriger', 'Activer le connecteur Defender for Cloud.', 'abonnements', '', 'ok']]),

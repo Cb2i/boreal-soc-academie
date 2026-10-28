@@ -103,7 +103,7 @@ export const TRACKS: TrackMeta[] = [
     resourceDir: 'ressources-scenarios',
     exportFile: 'boube-scenarios-progression.json',
     label: 'Scénarios Defender + Intune',
-    descFr: 'Scénarios croisés : phishing, protection web et réseau, WSL, ASR, supports amovibles, risque appareil et accès conditionnel, perte de télémétrie, confinement et restauration.',
+    descFr: 'Scénarios croisés : hameçonnage, protection web et réseau, WSL, ASR, supports amovibles, risque appareil et accès conditionnel, perte de télémétrie, confinement et restauration.',
     descEn: 'Cross scenarios: phishing, web and network protection, WSL, ASR, removable media, device risk and Conditional Access, telemetry loss, containment and restoration. Written in French.',
     nav: [
       { fr: 'Scénarios', en: 'Scenarios', also: ['module', 'cours', 'exercice', 'evaluation', 'cas'] },

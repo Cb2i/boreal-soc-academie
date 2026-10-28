@@ -2,7 +2,7 @@ import { F, type Flow } from '../types.ts';
 
 export const M10: Flow[] = [
   F('m10-l1', 'Un routeur avec budget et escalade : la structure avant le modèle', 'Type connu : chaîne fixe. Type inconnu : un humain.',
-    [['al', 'Alerte entrante', 'Type à classer', 'alert'], ['rt', 'Routeur', 'Classe l’entrée', 'gear'], ['ph', 'Chaîne phishing', 'Étapes prédéfinies', 'mail'], ['idn', 'Chaîne identité', 'Étapes prédéfinies', 'key'], ['vf', 'Vérification', 'Entre les étapes', 'shield', 'ctl'], ['bd', 'Budget d’étapes', 'Plafond', 'chart', 'ctl'], ['hum', 'Analyste', 'Reçoit l’inconnu', 'user', 'ctl']],
+    [['al', 'Alerte entrante', 'Type à classer', 'alert'], ['rt', 'Routeur', 'Classe l’entrée', 'gear'], ['ph', 'Chaîne d’hameçonnage', 'Étapes prédéfinies', 'mail'], ['idn', 'Chaîne identité', 'Étapes prédéfinies', 'key'], ['vf', 'Vérification', 'Entre les étapes', 'shield', 'ctl'], ['bd', 'Budget d’étapes', 'Plafond', 'chart', 'ctl'], ['hum', 'Analyste', 'Reçoit l’inconnu', 'user', 'ctl']],
     [['al', 'rt', 'Type connu', 'Le routeur classe l’entrée avant tout traitement.', 'type : "phishing"', 'Classer puis envoyer vers un traitement spécialisé : chaque type a sa chaîne et sa consigne.'],
      ['rt', 'ph', 'Chaîne fixe', 'Le chemin est écrit par le code : prévisible et testable.', 'phishing → terminé | etape_phishing : indicateurs extraits ; etape_resume : résumé produit', 'Workflow : le code orchestre, le modèle exécute des étapes. Niveaux 0 à 2 suffisent pour la plupart des tâches.'],
      ['ph', 'vf', 'Contrôle entre étapes', 'Chaque sortie est vérifiée avant d’alimenter l’étape suivante.', 'indicateurs extraits : 1 ; format valide : oui', 'Erreurs composées : cinq étapes à 95 % donnent environ 77 %.', 'ctl'],
