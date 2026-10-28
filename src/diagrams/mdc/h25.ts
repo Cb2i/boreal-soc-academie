@@ -4,7 +4,7 @@ export const H25: Flow[] = [
   F('d25-l1', 'Rendre le silence visible', 'Un rythme de revue transforme l’absence d’alerte en vérification.',
     [['si', 'Silence', 'Aucune alerte', 'alert', 'atk'], ['cs', 'Statut de connectivité', 'Par environnement', 'cloud', 'ctl'], ['sa', 'Santé Defender for Endpoint', 'Mise à jour aux 4 h', 'shield', 'ctl'], ['cv', 'Classeur de couverture', 'Plans par abonnement', 'chart', 'ctl'], ['rv', 'Revue hebdomadaire', 'Preuve datée', 'doc', 'ok'], ['ec', 'Écart trouvé', 'Permission ou agent', 'gear', 'ctl'], ['rg', 'Registre', 'Propriétaire et suivi', 'db', 'ok']],
     [['si', 'cs', 'Vérifier', 'On lit le statut de chaque connecteur.', 'hebdomadaire', ''],
-     ['si', 'sa', 'Vérifier', 'On liste les machines en mauvaise santé.', 'installation, coeur', ''],
+     ['si', 'sa', 'Vérifier', 'On liste les machines en mauvaise santé.', 'installation, cœur', ''],
      ['si', 'cv', 'Croiser', 'La couverture se compare au périmètre attendu.', 'mensuel', ''],
      ['cs', 'rv', 'Consigner', 'Chaque lecture laisse une trace datée.', 'preuve', '', 'ok'],
      ['rv', 'ec', 'Détecter', 'Les écarts sont qualifiés.', 'constat', ''],
