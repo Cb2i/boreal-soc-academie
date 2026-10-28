@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { tr } from '../i18n/lang.ts';
+import { tr, useLang } from '../i18n/lang.ts';
+import { localizeFlow } from '../i18n/flowLang.ts';
 import type { Flow, Icon } from './types.ts';
 
 const NH = 84;
@@ -174,7 +175,9 @@ function routeEdges(flow: Flow, idx: Record<string, number>, L: ReturnType<typeo
   });
 }
 
-export function FlowDiagram({ flow }: { flow: Flow }) {
+export function FlowDiagram({ flow: rawFlow }: { flow: Flow }) {
+  const lang = useLang();
+  const flow = useMemo(() => localizeFlow(rawFlow), [rawFlow, lang]);
   const reduce = useMemo(() => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches, []);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(!reduce);
