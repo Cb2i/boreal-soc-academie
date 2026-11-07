@@ -8,5 +8,6 @@ export const TRACK_ENTRIES: Record<string, LazyExoticComponent<ComponentType<{ r
   xdr: lazy(() => import('./xdr.tsx')),
   intune: lazy(() => import('./intune.tsx')),
   'defender-cloud': lazy(() => import('./mdc.tsx')),
+  purview: lazy(() => import('./purview.tsx')),
   scenarios: lazy(() => import('./scenarios.tsx')),
 };

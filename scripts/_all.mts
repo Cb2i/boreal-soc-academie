@@ -2,7 +2,7 @@ import { CONTENT_LOADERS } from '../src/tracks/loaders.ts';
 import { collectProse, h } from '../src/i18n/prose.ts';
 import { writeFileSync } from 'node:fs';
 const out: Record<string, { k: string; s: string }[]> = {};
-for (const t of ['ia', 'xdr', 'intune', 'scenarios', 'mdc']) {
+for (const t of ['ia', 'xdr', 'intune', 'scenarios', 'mdc', 'purview']) {
   const C = await CONTENT_LOADERS[t]();
   const list: string[] = [];
   const add = (v: unknown) => collectProse(v, list);

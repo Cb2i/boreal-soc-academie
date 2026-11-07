@@ -29,7 +29,7 @@ export function TrackHome() {
             <span><strong>{EXERCISES.length}</strong> {tr('exercices et questions', 'exercises and questions')}</span>
             <span><strong>{PROJECTS.length}</strong> {tr('labs', 'labs')}</span>
           </div>
-          {meta.id === 'mdc' && <p className="muted small">{tr('Le contenu de cette section est rédigé en français uniquement.', 'The content of this section is written in French only.')}</p>}
+          {(meta.id === 'mdc' || meta.id === 'purview') && <p className="muted small">{tr('Le contenu de cette section est rédigé en français uniquement.', 'The content of this section is written in French only.')}</p>}
           {(track.home?.notes ?? []).map((n, i) => <p key={i} className="muted small"><Inline text={tr(n, track.home?.notesEn?.[i] ?? n)} /></p>)}
         </div>
         <aside className="next-card" aria-label={tr('Votre prochaine étape', 'Your next step')}>

@@ -10,6 +10,7 @@ const LOADERS: Record<string, () => Promise<Flow[]>> = {
   xdr: () => import('./xdrFlows.ts').then((m) => m.FLOWS_XDR),
   intune: () => import('./intuneFlows.ts').then((m) => m.FLOWS_INTUNE),
   mdc: () => import('./mdcFlows.ts').then((m) => m.FLOWS_MDC),
+  purview: () => import('./purviewFlows.ts').then((m) => m.FLOWS_PURVIEW),
   scenarios: () => import('./scenarios.ts').then((m) => m.FLOWS_SCEN),
 };
 

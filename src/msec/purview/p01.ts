@@ -1,0 +1,187 @@
+// Module 1 : Portail, rôles et licences Purview (niveau 1).
+import type { AiProject } from '../../agentic/types.ts';
+import { assemble } from '../assemble.ts';
+import { kit } from '../kit.ts';
+import { comp, lesson, project } from './dsl.ts';
+
+const { a, Q, M } = kit('p01');
+const c1 = { comp: 'p01-c1', lesson: 'p01-l1', tags: ['portail-purview', 'solutions', 'capacites-partagees'] };
+const c2 = { comp: 'p01-c2', lesson: 'p01-l2', tags: ['role-groups', 'pim-groupes', 'licences-purview'] };
+
+const l1 = lesson('p01', {
+  n: 1, title: 'Le portail Purview : solutions, capacités partagées et visibilité', minutes: 45,
+  summary: 'Situer les solutions Purview dans un seul portail, distinguer les capacités partagées des solutions et comprendre pourquoi deux personnes ne voient pas les mêmes cartes.',
+  objectives: ['Nommer les solutions de conformité et de gouvernance et la question à laquelle chacune répond.', 'Distinguer une solution d’une capacité partagée (classifiers, connecteurs, explorateurs, étiquettes).', 'Expliquer pourquoi le contenu du portail dépend des permissions et de l’abonnement.'],
+  prerequisites: ['Notions de base sur Microsoft 365 et sur la sécurité des données'],
+  body: [
+    '## Un ensemble de solutions, un seul portail',
+    'Microsoft Purview est un ensemble de solutions qui aide à **gouverner, protéger et gérer** les données d’une organisation, où qu’elles se trouvent. Le **portail Microsoft Purview** (purview.microsoft.com) est le point d’entrée unifié : il regroupe la navigation vers toutes les solutions et offre un seul endroit pour les **paramètres, la recherche et la gestion des rôles et des permissions**. Pour un SOC, retenez d’abord ceci : Purview n’est pas un produit unique avec une seule console de détection, c’est une famille de solutions qui partagent des briques communes.',
+    '## Les solutions et la question qu’elles posent',
+    'La page de présentation liste notamment l’**Audit**, la **Communication Compliance**, le **Compliance Manager**, le **Data Lifecycle Management**, l’**eDiscovery** et le **Records Management**. S’y ajoutent, selon les sections du portail, la **protection des informations** (étiquettes de sensibilité), la **prévention des pertes de données** (DLP) et la gestion des **risques internes** (Insider Risk Management). Une manière utile de les retenir est de les relier à une question de terrain.',
+    '| Solution | Question à laquelle elle répond | Module du parcours |',
+    '| --- | --- | --- |',
+    '| Information Protection | Quelle est la sensibilité de cette donnée et comment la protéger ? | 2 |',
+    '| Data Loss Prevention | Cette donnée sensible quitte-t-elle son périmètre ? | 3 |',
+    '| Insider Risk Management | Un utilisateur a-t-il un comportement à risque pour les données ? | 4 |',
+    '| Communication Compliance | Des communications enfreignent-elles une politique ou une règle ? | 4 |',
+    '| Audit | Qui a fait quoi, quand et où ? | 5 |',
+    '| eDiscovery | Quel contenu faut-il préserver et livrer pour un dossier ? | 5 |',
+    '| Data Lifecycle Management | Combien de temps garder ou quand supprimer ? | 6 |',
+    '| Compliance Manager | Où en est notre posture par rapport à une réglementation ? | 6 |',
+    '## Les capacités partagées',
+    'Plusieurs capacités servent **plusieurs solutions à la fois**. La documentation cite les **classifiers** (types d’informations sensibles, classificateurs entraînables), les **connecteurs** (archivage de données de tiers), l’**explorateur de données** et l’**explorateur d’activités**, et les **étiquettes de sensibilité**. Cette distinction compte en exploitation : régler un type d’information sensible mal calibré dégrade en même temps la DLP, l’étiquetage automatique et d’autres solutions. On corrige donc une capacité partagée avec un test et une étendue, jamais à l’aveugle.',
+    '## Ce que vous voyez dépend de vous',
+    'Selon vos **permissions** et votre **abonnement**, vous voyez des solutions, des cartes d’accueil et des fonctions différentes. Si vous n’avez ni le droit ni l’abonnement requis pour Data Loss Prevention ou Insider Risk Management, la carte n’apparaît pas. Une carte absente ne prouve donc pas que la solution n’existe pas : il faut d’abord vérifier le rôle, puis la licence. Les cartes de l’accueil ne sont pas personnalisables, mais la page **Solutions** (« View all solutions ») liste tout ce à quoi vous avez accès, avec des sections **Core**, **Risk & Compliance**, **Data Governance** et **Data Security**.',
+    '## Portails reliés et paramètres',
+    'Depuis **Solutions > Related portals**, on atteint Microsoft Defender, Microsoft Entra, Microsoft Fabric, Microsoft Priva et Service Trust. Les **paramètres** sont centralisés : l’icône Paramètres donne les réglages du portail (thème, langue, fuseau, mot de passe, préférences de contact) et ceux de chaque solution. Les **notes de version** se consultent depuis la barre de commandes, mais exigent l’autorisation `microsoft.office365.messageCenter/messages/read`, incluse dans les rôles Message Center Reader, Global Reader et Global Administrator.',
+    '## Pourquoi le SOC s’en soucie',
+    'Les alertes de DLP et de Insider Risk Management peuvent aussi être traitées dans le **portail Defender** (module 6). L’analyste du SOC doit donc savoir où se trouve la configuration (Purview) et où se trouve le traitement (Defender), sans confondre les deux.',
+    '## Vérifier avant d’affirmer',
+    'Trois contrôles évitent les erreurs : l’**inventaire** des solutions réellement disponibles dans le locataire, la **liste des rôles** de la personne qui regarde et la **date** de la page de documentation consultée. Le portail évolue vite : ce parcours cite chaque fait avec sa source et sa date de consultation (2026-11-06).',
+  ],
+  demo: { title: 'Lire la page Solutions', lines: [
+    'Cas **fictif** : Mélanie, analyste SOC chez Nordlys Technologies, ouvre le portail Purview et ne voit pas la carte Insider Risk Management.',
+    '```text',
+    'Constat       : carte Insider Risk Management absente de l’accueil',
+    'Hypothèse 1   : rôle manquant (groupe de rôles Insider Risk Management)',
+    'Hypothèse 2   : abonnement sans cette solution',
+    'Contrôle      : Solutions > View all solutions, puis demander la liste des rôles',
+    '```',
+    '**Lecture commentée.** On vérifie d’abord le rôle (rapide, gratuit), puis la licence. La carte absente n’est pas un verdict sur le produit.',
+    '**Ce que la démo ne prouve pas.** Aucun locataire réel n’a été consulté.'] },
+  revision: ['## Fiche : portail Purview', '- Un portail, plusieurs solutions : accès unifié aux paramètres, à la recherche et aux rôles.', '- Capacités partagées : classifiers, connecteurs, explorateurs de données et d’activités, étiquettes.', '- Les cartes visibles dépendent des permissions et de l’abonnement.', '- Related portals : Defender, Entra, Fabric, Priva, Service Trust.', '- Notes de version : permission Message Center requise.'],
+  links: ['overview', 'portal', 'service-desc'], teaches: ['portail-purview', 'solutions', 'capacites-partagees'],
+});
+
+const l2 = lesson('p01', {
+  n: 2, title: 'Rôles, groupes de rôles, unités administratives et licences', minutes: 50,
+  summary: 'Donner à chaque personne les permissions minimales avec les groupes de rôles, comprendre la priorité des rôles Entra et situer les licences et la facturation à l’usage.',
+  objectives: ['Distinguer un rôle, un groupe de rôles et un membre.', 'Appliquer le moindre privilège avec des groupes de rôles, des expirations et des unités administratives.', 'Expliquer la priorité des rôles Entra, le délai de PIM et les trois niveaux de licence.'],
+  prerequisites: ['Leçon 1'],
+  body: [
+    '## Rôle, groupe de rôles, membre',
+    'Un **rôle** accorde les permissions pour effectuer un ensemble de tâches (par exemple, le rôle *Case Management* permet de travailler avec les cas eDiscovery). Un **groupe de rôles** est un ensemble de rôles qui permet à des personnes de faire leur travail dans les solutions de conformité et de gouvernance (par exemple, le groupe *Insider Risk Management* donne aux administrateurs, analystes, enquêteurs et auditeurs les permissions nécessaires). Les **membres** sont ajoutés aux groupes de rôles. En règle générale, on ajoute les personnes aux groupes de rôles par défaut selon le besoin.',
+    '## Où et comment',
+    'La gestion se fait dans le portail, sous **Paramètres > Roles and scopes > Role groups**. Pour voir les groupes de rôles, il faut être administrateur général ou détenir le rôle **Role Management**. Les deux pages de documentation consultées ne disent pas exactement la même chose sur les groupes qui contiennent ce rôle par défaut (l’une mentionne seulement *Organization Management*, l’autre ajoute *Purview Administrators*) : **vérifiez dans votre locataire** avant d’écrire une procédure interne.',
+    '## Le moindre privilège, concrètement',
+    'Microsoft recommande d’utiliser les rôles ayant le moins de permissions et de **réduire le nombre d’administrateurs généraux**. En pratique : un groupe de rôles par fonction, des membres via des **groupes de sécurité** (pris en charge seulement dans le nuage commercial de Microsoft 365), une **expiration** pour l’accès temporaire et, si le besoin est régional ou départemental, des **unités administratives**. Pour un groupe de rôles personnalisé, le nom ne peut plus être modifié après la création : choisissez-le avec soin.',
+    '## PIM et priorité des rôles Entra',
+    'Deux pièges reviennent souvent en audit. Premier piège : avec **Microsoft Entra PIM pour les groupes**, l’accès juste-à-temps passe par un **groupe de sécurité** assigné au groupe de rôles Purview. Les activations peuvent prendre **jusqu’à deux heures** avant que les permissions soient effectives dans Purview, et on ne peut pas gérer l’activation juste-à-temps avec des affectations directes d’utilisateurs aux groupes de rôles. Second piège : si une personne reçoit à la fois un **rôle Entra** et une affectation Purview **limitée à une unité administrative**, le rôle Entra l’emporte à l’exécution et les permissions deviennent **non limitées** pour les fonctions qui se recoupent.',
+    '| Situation | Étendue effective |',
+    '| --- | --- |',
+    '| Rôle Purview limité à une unité administrative seulement | Limitée à l’unité |',
+    '| Même rôle limité, plus rôle Entra Compliance Administrator | Non limitée |',
+    '| Rôle limité DLP, plus Global Reader (fonctions qui se recoupent) | Non limitée pour ces fonctions |',
+    '## Les unités administratives changent ce qu’on voit',
+    'Un administrateur **restreint** ne voit que les éléments de son unité : par exemple, il ne verra que les alertes DLP de son unité et ne pourra rechercher dans l’audit que les journaux d’utilisateurs de son unité. Un administrateur non restreint voit tout, y compris les journaux de comptes système. Prévoyez donc au moins un compte non restreint pour les vérifications transversales.',
+    '## Licences : trois niveaux de question',
+    '1. **L’abonnement donne-t-il accès à la solution ?** (E3, E5 ou équivalent, selon la description de service). 2. **La licence par utilisateur couvre-t-elle la fonction ?** Exemple : les « intelligent insights » d’Audit (Premium) exigent une licence E5 et l’activation du plan de service *Advanced Auditing* pour l’utilisateur. 3. **La fonction est-elle facturée à l’usage ?** Exemples : l’application d’étiquettes aux sources hors Microsoft 365 dans la Data Map, ou la protection en ligne vers des applications infonuagiques non gérées avec Edge for Business, relèvent de la facturation à l’utilisation (*pay-as-you-go*). Le **Centre d’utilisation** aide à suivre cet usage.',
+    '## Exemples de nuances',
+    'L’analytique de classification (explorateurs de contenu et d’activités) exige une licence E5/A5/G5, alors que l’agrégation des données sous-jacentes se poursuit pour E3/A3/G3. Les **collection policies** n’ont pas de licence propre : il faut la licence de la charge de travail visée (par exemple, la DLP des terminaux pour inclure des appareils). La rétention de 10 ans de l’audit exige un complément de licence.',
+    '## Vérifier',
+    'Exportez la liste des membres par groupe de rôles, repérez les comptes avec un rôle Entra large, notez les expirations et datez la page de licences consultée : elle change.',
+  ],
+  demo: { title: 'Lire une affectation de rôles', lines: [
+    'Affectation **fictive** chez Nordlys Technologies :',
+    '```text',
+    'Groupe de rôles : Insider Risk Management',
+    'Membres         : groupe de sécurité Entra SecOps-Purview (PIM)',
+    'Étendue         : unité administrative Québec',
+    'Autre rôle      : Entra Global Reader (compte de Hugo)',
+    '```',
+    '**Lecture commentée.** Le groupe PIM évite un accès permanent, mais Hugo a un rôle Entra large : pour les fonctions qui se recoupent, son étendue est non limitée, malgré l’unité Québec.',
+    '**Ce que la démo ne prouve pas.** Aucune affectation réelle n’existe.'] },
+  revision: ['## Fiche : rôles et licences', '- Rôle (permissions), groupe de rôles (ensemble de rôles), membres.', '- Settings > Roles and scopes > Role groups ; rôle Role Management requis.', '- PIM pour groupes : jusqu’à 2 h avant effet ; pas d’activation JIT par affectation directe.', '- Un rôle Entra l’emporte sur une affectation Purview limitée à une unité.', '- Licences : abonnement, licence par utilisateur, facturation à l’usage.'],
+  links: ['permissions', 'role-groups', 'service-desc', 'audit-start', 'audit-search'], teaches: ['role-groups', 'pim-groupes', 'licences-purview'],
+});
+
+const exercises = [
+  a.match({ id: 'p01-l1-g', title: 'Solution et question', comp: c1.comp, tags: c1.tags, role: 'guided', dim: 'comprendre', lesson: 'p01-l1',
+    st: 'Associez chaque solution à la question à laquelle elle répond.', items: [['p1', 'Audit'], ['p2', 'eDiscovery'], ['p3', 'Data Lifecycle Management']],
+    options: [['s1', 'Qui a fait quoi, quand et où ?'], ['s2', 'Quel contenu préserver et livrer pour un dossier ?'], ['s3', 'Combien de temps garder ou quand supprimer ?']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'L’audit retrace les activités, l’eDiscovery préserve et livre le contenu d’un dossier, la gestion du cycle de vie règle la conservation et la suppression.' }),
+  a.inspect({ id: 'p01-l1-a', title: 'Relire un constat de visibilité', comp: c1.comp, tags: c1.tags, role: 'autonomous', dim: 'verifier', lesson: 'p01-l1', language: 'text',
+    st: 'Constat fictif d’un nouvel analyste. Repérez les raisonnements fautifs.',
+    lines: [['p1', 'La carte Insider Risk Management est absente : la solution n’existe donc pas dans notre abonnement.', { ok: 'a1', fixes: [['a1', 'Vérifier d’abord le rôle, puis la licence, avant de conclure'], ['a2', 'Accepter la conclusion']] }], ['p2', 'Le portail regroupe les rôles et les paramètres de toutes les solutions.'], ['p3', 'Corriger un type d’information sensible ne touche que la DLP.', { ok: 'b1', fixes: [['b1', 'C’est une capacité partagée : l’impact touche aussi d’autres solutions'], ['b2', 'Accepter']] }]],
+    exp: 'Une carte absente peut venir d’un rôle ou d’une licence manquants, et une capacité partagée touche plusieurs solutions.' }),
+  Q('p01-l1-qa', 'quiz', 'comprendre', c1, 'Capacité partagée', 'Lequel est une capacité partagée de Purview ?', ['Les étiquettes de sensibilité.', 'Elles servent plusieurs solutions.'], [['L’eDiscovery.', 'C’est une solution.'], ['Le Compliance Manager.', 'C’est une solution.'], ['L’Audit.', 'C’est une solution.']], 'Les étiquettes de sensibilité, les classifiers, les connecteurs et les explorateurs sont des capacités partagées.'),
+  Q('p01-l1-qb', 'quiz', 'fonctionner', c1, 'Carte absente', 'Une carte de solution n’apparaît pas à l’accueil. Que contrôler en premier ?', ['Les permissions de la personne, puis l’abonnement.', 'Les deux conditionnent l’affichage.'], [['Rien : la solution est retirée.', 'Conclusion prématurée.'], ['La langue du navigateur.', 'Sans rapport.'], ['Le thème du portail.', 'Sans rapport.']], 'Les solutions affichées dépendent des permissions et de l’abonnement.'),
+  Q('p01-l1-qc', 'quiz', 'maintenir', c1, 'Notes de version', 'Quelle autorisation faut-il pour voir les notes de version dans le portail ?', ['Lire les messages du Message Center.', 'Incluse dans Message Center Reader, Global Reader et Global Administrator.'], [['Aucune.', 'Une autorisation est requise.'], ['Le rôle eDiscovery Manager.', 'Sans rapport.'], ['Une licence Audit Premium.', 'Sans rapport.']], 'La permission de lecture du Message Center est requise.'),
+
+  a.match({ id: 'p01-l2-g', title: 'Rôle et tâche', comp: c2.comp, tags: c2.tags, role: 'guided', dim: 'comprendre', lesson: 'p01-l2',
+    st: 'Associez chaque notion à sa définition.', items: [['p1', 'Rôle'], ['p2', 'Groupe de rôles'], ['p3', 'Unité administrative']],
+    options: [['s1', 'Permissions pour un ensemble de tâches'], ['s2', 'Ensemble de rôles auquel on ajoute des membres'], ['s3', 'Étendue qui limite ce qu’un administrateur voit et gère']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Le rôle donne des permissions, le groupe de rôles les regroupe pour des membres et l’unité administrative limite l’étendue.' }),
+  a.config({ id: 'p01-l2-a', title: 'Accès d’un analyste régional', comp: c2.comp, tags: c2.tags, role: 'autonomous', dim: 'securiser', lesson: 'p01-l2',
+    st: 'Paramétrez l’accès d’un analyste DLP du bureau de Québec.',
+    fields: [
+      { id: 'ga', label: 'Rôle d’administrateur général', kind: 'toggle', accept: ['off'], why: 'Trop large : le moindre privilège l’exclut.' },
+      { id: 'pim', label: 'Groupe de sécurité Entra avec PIM', kind: 'toggle', accept: ['on'], why: 'Accès juste-à-temps, avec un délai d’effet possible jusqu’à deux heures.' },
+      { id: 'au', label: 'Limiter à l’unité administrative Québec', kind: 'toggle', accept: ['on'], why: 'Réduit ce que l’analyste voit et gère.' },
+      { id: 'entra', label: 'Ajouter un rôle Entra large (Global Reader)', kind: 'toggle', accept: ['off'], why: 'Un rôle Entra l’emporte et rend l’étendue non limitée pour les fonctions qui se recoupent.' },
+    ], solution: { ga: 'off', pim: 'on', au: 'on', entra: 'off' }, exp: 'Pas d’administrateur général, un groupe PIM, une unité administrative et aucun rôle Entra large qui annulerait l’étendue.' }),
+  Q('p01-l2-qa', 'quiz', 'comprendre', c2, 'Rôle Entra et étendue', 'Une personne a un rôle Purview limité à une unité et un rôle Entra Compliance Administrator. Quelle est son étendue effective ?', ['Non limitée, car le rôle Entra l’emporte.', 'Précédence du rôle Entra à l’exécution.'], [['Limitée à l’unité.', 'Le rôle Entra annule la limite.'], ['Aucun accès.', 'Faux.'], ['La plus restrictive des deux.', 'Ce n’est pas la règle documentée.']], 'Le rôle Entra prend le dessus et rend l’étendue non limitée.'),
+  Q('p01-l2-qb', 'quiz', 'securiser', c2, 'Délai PIM', 'Après activation d’un groupe PIM assigné à un groupe de rôles Purview, quel délai peut s’écouler avant l’effet des permissions ?', ['Jusqu’à deux heures.', 'Délai documenté.'], [['Immédiat, toujours.', 'Faux.'], ['Jusqu’à une semaine.', 'Faux.'], ['Aucun délai, jamais.', 'Faux.']], 'Les permissions peuvent mettre jusqu’à deux heures à s’appliquer.'),
+  Q('p01-l2-qc', 'quiz', 'cout', c2, 'Niveaux de licence', 'Laquelle de ces fonctions relève de la facturation à l’usage ?', ['La protection en ligne vers des applications infonuagiques non gérées avec Edge for Business.', 'Capacité décrite comme pay-as-you-go.'], [['L’audit de base (Standard).', 'Activé par défaut avec l’abonnement.'], ['Les rôles de portail.', 'Sans facturation à l’usage.'], ['La lecture des notes de version.', 'Sans rapport.']], 'Certaines capacités, dont la protection en ligne vers les applications non gérées, sont facturées à l’usage.'),
+
+  Q('p01-ev1', 'eval', 'comprendre', c1, 'Gérer les rôles', 'Où gère-t-on les groupes de rôles Purview ?', ['Paramètres, puis Roles and scopes, puis Role groups.', 'Entrée centralisée du portail.'], [['Dans chaque solution séparément.', 'Les rôles sont gérés de façon centralisée.'], ['Seulement dans PowerShell.', 'Le portail le permet.'], ['Dans le Centre d’utilisation.', 'Il sert à suivre l’usage.']], 'La gestion des rôles se fait dans Paramètres, Roles and scopes.'),
+  M('p01-ev2', 'eval', 'comprendre', c1, 'Capacités partagées', 'Cochez les capacités partagées entre plusieurs solutions.', [['Classifiers (types d’informations sensibles, classificateurs).', 'Partagés.'], ['Étiquettes de sensibilité.', 'Partagées.'], ['Explorateurs de données et d’activités.', 'Partagés.']], [['Calcul du score de conformité.', 'Propre au Compliance Manager.'], ['Cas eDiscovery.', 'Propres à l’eDiscovery.']], 'Classifiers, étiquettes, explorateurs et connecteurs sont partagés.'),
+  a.order({ id: 'p01-ev3', title: 'Accès temporaire pour un analyste', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'fonctionner', lesson: 'p01-l2',
+    st: 'Ordonnez les étapes pour ajouter un analyste avec un accès temporaire à un groupe de rôles.',
+    items: [['s1', 'Se connecter avec un compte qui détient Role Management'], ['s2', 'Ouvrir Paramètres, Roles and scopes, Role groups'], ['s3', 'Choisir le groupe de rôles et modifier ses membres'], ['s4', 'Choisir l’utilisateur ou le groupe'], ['s5', 'Définir l’expiration'], ['s6', 'Enregistrer']], correct: ['s1', 's2', 's3', 's4', 's5', 's6'],
+    exp: 'On se connecte avec le bon rôle, on ouvre les groupes de rôles, on choisit le groupe et les membres, on fixe l’expiration puis on enregistre.' }),
+  Q('p01-ev4', 'eval', 'securiser', c2, 'Précédence', 'Un utilisateur a Global Reader (Entra) et un rôle DLP limité à une unité. Que dire des fonctions qui se recoupent ?', ['L’accès est non limité pour ces fonctions.', 'Le rôle Entra l’emporte.'], [['L’accès reste limité à l’unité.', 'Le rôle Entra l’emporte.'], ['L’accès est refusé.', 'Faux.'], ['Seul le rôle DLP s’applique.', 'Faux.']], 'Les rôles Entra l’emportent sur les affectations limitées pour les fonctions qui se recoupent.'),
+  Q('p01-ev5', 'eval', 'securiser', c2, 'PIM et groupes', 'Comment obtenir un accès juste-à-temps aux groupes de rôles Purview ?', ['Par un groupe de sécurité Entra avec PIM pour les groupes.', 'Les affectations directes ne gèrent pas l’activation JIT.'], [['Par une affectation directe d’utilisateur avec activation JIT.', 'Non pris en charge ainsi.'], ['En donnant Global Administrator.', 'Contraire au moindre privilège.'], ['Par un script PowerShell uniquement.', 'Ce n’est pas la voie documentée.']], 'On passe par un groupe de sécurité assigné au groupe de rôles et géré par PIM.'),
+  a.config({ id: 'p01-ev6', title: 'Plan d’accès pour l’eDiscovery', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'securiser', lesson: 'p01-l2',
+    st: 'Paramétrez l’accès d’une juriste qui mène des cas eDiscovery.',
+    fields: [
+      { id: 'cm', label: 'Groupe de rôles dédié aux cas eDiscovery', kind: 'toggle', accept: ['on'], why: 'Le rôle Case Management permet de travailler avec les cas.' },
+      { id: 'ga', label: 'Administrateur général', kind: 'toggle', accept: ['off'], why: 'Excessif pour cette tâche.' },
+      { id: 'exp', label: 'Expiration d’accès à la fin du dossier', kind: 'toggle', accept: ['on'], why: 'Limite la durée de l’accès.' },
+    ], solution: { cm: 'on', ga: 'off', exp: 'on' }, exp: 'Un groupe dédié, aucun administrateur général et une expiration limitent l’exposition.' }),
+  a.match({ id: 'p01-ev7', title: 'Licences par fonction', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'cout', lesson: 'p01-l2',
+    st: 'Associez chaque fonction à sa particularité de licence.', items: [['p1', 'Interfaces d’analytique de classification'], ['p2', 'Collection policies'], ['p3', 'Protection en ligne vers applications non gérées (Edge for Business)'], ['p4', 'Rétention de 10 ans du journal d’audit']],
+    options: [['s1', 'E5 requis pour les interfaces, agrégation maintenue en E3'], ['s2', 'Aucune licence propre, mais licence de la charge de travail'], ['s3', 'Facturation à l’utilisation'], ['s4', 'Licence complémentaire de 10 ans']], answer: { p1: 's1', p2: 's2', p3: 's3', p4: 's4' },
+    exp: 'Chaque fonction a sa règle : E5 pour les interfaces d’analyse, licence de la charge de travail pour les collection policies, usage pour la protection en ligne et complément pour les 10 ans.' }),
+  a.short({ id: 'p01-ev8', title: 'Délai maximal PIM', comp: c2.comp, tags: c2.tags, role: 'eval', dim: 'verifier', lesson: 'p01-l2',
+    st: 'Au plus combien d’heures l’effet d’une activation PIM peut-il prendre dans Purview ? (nombre)', accepted: ['2', 'deux'], numeric: { value: 2 }, ph: 'un nombre',
+    exp: 'La documentation indique que l’application des permissions peut prendre jusqu’à deux heures après l’activation.' }),
+
+  a.match({ id: 'p01-cs1', title: 'Cas : équipes et groupes de rôles', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'fonctionner', lesson: 'p01-l2',
+    st: 'Associez chaque besoin de Nordlys Technologies au groupe ou rôle qui le couvre.', items: [['p1', 'Rechercher et exporter le journal d’audit'], ['p2', 'Travailler avec les cas eDiscovery'], ['p3', 'Analyser et enquêter sur les risques internes']],
+    options: [['s1', 'Groupe de rôles Audit Manager'], ['s2', 'Rôle Case Management'], ['s3', 'Groupe de rôles Insider Risk Management']], answer: { p1: 's1', p2: 's2', p3: 's3' },
+    exp: 'Audit Manager gère l’audit, Case Management ouvre les cas eDiscovery et le groupe Insider Risk Management couvre les risques internes.' }),
+  a.inspect({ id: 'p01-cs2', title: 'Cas : plan d’accès à relire', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'securiser', lesson: 'p01-l2', language: 'text',
+    st: 'Plan fictif. Repérez les failles.',
+    lines: [['p1', 'Les cinq analystes sont administrateurs généraux pour simplifier.', { ok: 'a1', fixes: [['a1', 'Utiliser les groupes de rôles minimaux'], ['a2', 'Accepter']] }], ['p2', 'Les accès temporaires passent par un groupe PIM.'], ['p3', 'Hugo garde Global Reader en plus de son rôle limité à l’unité Québec.', { ok: 'b1', fixes: [['b1', 'Retirer ou réévaluer le rôle Entra qui annule l’étendue'], ['b2', 'Accepter']] }]],
+    exp: 'Les administrateurs généraux en trop et le rôle Entra qui annule l’étendue sont deux défauts.' }),
+  a.workflow({ id: 'p01-cs3', title: 'Cas : déléguer à un bureau régional', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'securiser', lesson: 'p01-l2',
+    st: 'Ordonnez la délégation d’un rôle Purview à un bureau régional.',
+    blocks: [['t1', 'Créer l’unité administrative du bureau'], ['t2', 'Créer le groupe de sécurité du bureau'], ['t3', 'Affecter le groupe de rôles avec l’unité'], ['t4', 'Vérifier l’absence de rôle Entra qui annulerait l’étendue'], ['t5', 'Tester avec un compte du groupe'], ['t6', 'Donner Global Administrator pour aller plus vite']],
+    required: ['t1', 't2', 't3', 't4', 't5'], forbidden: ['t6'], before: [['t1', 't3'], ['t2', 't3'], ['t3', 't4'], ['t4', 't5']], notes: { t6: 'Contraire au moindre privilège.' }, solution: ['t1', 't2', 't3', 't4', 't5'],
+    exp: 'On crée l’unité et le groupe, on affecte, on vérifie les rôles Entra puis on teste.' }),
+  a.open({ id: 'p01-cs-open', title: 'Cas : plan de rôles et de licences', comp: c2.comp, tags: c2.tags, role: 'case', dim: 'maintenir', lesson: 'p01-l2',
+    st: 'Rédigez le plan de rôles et de licences Purview d’une organisation fictive.',
+    deliverable: 'Un document : groupes de rôles par fonction, membres via groupes, expirations, unités administratives, rôles Entra à surveiller et licences requises par solution.',
+    rubric: [['r1', 'Chaque fonction a un groupe de rôles minimal.', 'securiser'], ['r2', 'Les accès temporaires passent par un groupe PIM et un délai est prévu.', 'securiser'], ['r3', 'La précédence des rôles Entra est vérifiée.', 'verifier'], ['r4', 'Les licences sont reliées aux fonctions, avec la date des sources.', 'cout'], ['r5', 'Une revue périodique est prévue.', 'maintenir']],
+    exp: 'Pas de note automatique : on juge la cohérence du plan.' }),
+
+  Q('p01-rm1', 'remediation', 'comprendre', c1, 'Remédiation : portail', 'Que regroupe le portail Purview ?', ['La navigation vers les solutions, les paramètres, la recherche et les rôles.', 'Point d’entrée unifié.'], [['Seulement la DLP.', 'Faux.'], ['Seulement l’audit.', 'Faux.'], ['Seulement les licences.', 'Faux.']], 'Le portail unifie l’accès aux solutions, aux paramètres, à la recherche et aux rôles.'),
+  Q('p01-rm2', 'remediation', 'securiser', c2, 'Remédiation : moindre privilège', 'Quelle pratique réduit le plus le risque lié aux administrateurs généraux ?', ['En avoir le moins possible et utiliser des groupes de rôles minimaux.', 'Recommandation de Microsoft.'], [['En donner à toute l’équipe.', 'Excessif.'], ['Les partager.', 'Non.'], ['Les rendre permanents.', 'Préférer le juste-à-temps.']], 'On minimise les administrateurs généraux et on utilise des rôles minimaux.'),
+  Q('p01-rm3', 'remediation', 'cout', c2, 'Remédiation : licences', 'Quelle est la bonne démarche avant d’affirmer qu’une fonction est disponible ?', ['Vérifier abonnement, licence par utilisateur et facturation à l’usage, avec la date de la source.', 'Trois niveaux de question.'], [['Se fier au nom du produit.', 'Insuffisant.'], ['Supposer que E3 suffit.', 'Non.'], ['Se fier à un forum.', 'Source non officielle.']], 'On contrôle les trois niveaux de licence dans une source datée.'),
+];
+
+const competencies = [
+  comp('p01', 1, 'Situer les solutions Purview', 'Portail, solutions, capacités partagées et visibilité.', ['Je nomme les solutions et leur question.', 'Je distingue solution et capacité partagée.', 'Je sais pourquoi une carte peut manquer.']),
+  comp('p01', 2, 'Gérer rôles et licences', 'Groupes de rôles, PIM, unités administratives et licences.', ['Je choisis des groupes de rôles minimaux.', 'Je connais la précédence des rôles Entra et le délai PIM.', 'Je relie chaque fonction à sa licence.']),
+];
+
+const projects: AiProject[] = [
+  project('p01', 1, 'débutant', 'Matrice solutions, rôles et licences', 'Dresser pour une organisation fictive la matrice solution, question, groupe de rôles, licence et source datée.', 'Tableau d’une page.', ['Lister les solutions visées.', 'Associer chaque solution à un groupe de rôles.', 'Noter licence et date de la source.', 'Relire les rôles Entra qui annulent l’étendue.'], ['Chaque solution a un groupe de rôles et une licence.', 'Les sources sont datées.', 'Les rôles Entra problématiques sont listés.'], ['Prendre un tableau de licences pour définitif.', 'Donner Global Administrator par commodité.'], ['Ajouter les unités administratives par bureau.']),
+];
+
+export const p01 = assemble({ id: 'p01', level: 1, n: 1, title: 'Portail, rôles et licences',
+  summary: 'Le portail Purview et ses solutions, les capacités partagées, les groupes de rôles, PIM, les unités administratives et les niveaux de licence.',
+  lessons: [l1, l2], exercises, competencies, projects,
+  caseTitle: 'Cadrer l’accès Purview chez Nordlys Technologies',
+  caseScenario: 'Vous répartissez les groupes de rôles, vérifiez les rôles Entra qui annulent l’étendue et déléguez un bureau régional. Actions simulées.', caseMinutes: 40 });

@@ -9,7 +9,7 @@ export interface TrackNavItem {
 }
 
 export interface TrackMeta {
-  id: 'ia' | 'xdr' | 'intune' | 'scenarios' | 'mdc';
+  id: 'ia' | 'xdr' | 'intune' | 'scenarios' | 'mdc' | 'purview';
   route: string;
   /** Libellé court dans le menu des sections. */
   navFr: string;
@@ -135,6 +135,26 @@ export const TRACKS: TrackMeta[] = [
       { sub: 'catalogue', fr: 'Scénarios', en: 'Scenarios' },
       { sub: 'sources', fr: 'Sources', en: 'Sources' },
       { sub: 'limites', fr: 'Limites', en: 'Limits' },
+    ],
+  },
+  {
+    id: 'purview',
+    route: 'purview',
+    navFr: 'Purview',
+    navEn: 'Purview',
+    titleFr: 'Microsoft Purview',
+    titleEn: 'Microsoft Purview',
+    kickerFr: 'Section 6',
+    accent: '#c58af9',
+    storageKey: 'boube.purview.v1',
+    resourceDir: 'ressources-purview',
+    exportFile: 'boube-purview-progression.json',
+    label: 'Purview',
+    descFr: 'Protection et gouvernance des données avec Microsoft Purview : portail et rôles, classification, étiquettes de sensibilité, DLP, risques internes, Communication Compliance, audit, eDiscovery, rétention et exploitation par le SOC.',
+    descEn: 'Data protection and governance with Microsoft Purview: portal and roles, classification, sensitivity labels, DLP, insider risk, Communication Compliance, audit, eDiscovery, retention and SOC operations.',
+    nav: [
+      ...COMMON_NAV,
+      { sub: 'sources', fr: 'Sources', en: 'Sources' },
     ],
   },
 ];

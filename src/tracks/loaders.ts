@@ -6,5 +6,6 @@ export const CONTENT_LOADERS: Record<string, () => Promise<TrackContent>> = {
   xdr: () => import('../msec/xdr/index.ts').then((m) => m.CONTENT),
   intune: () => import('../msec/intune/index.ts').then((m) => m.CONTENT),
   mdc: () => import('../msec/mdc/index.ts').then((m) => m.CONTENT),
+  purview: () => import('../msec/purview/index.ts').then((m) => m.CONTENT),
   scenarios: () => import('../msec/scenarios/index.ts').then((m) => m.CONTENT),
 };
