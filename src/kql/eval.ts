@@ -1,5 +1,5 @@
 import type { Expr, LetDef, Pipeline } from './ast.ts';
-import { AGGREGATES, FUNCTIONS, LAZY_FUNCTIONS, UNSUPPORTED_FUNCTIONS } from './functions.ts';
+import { AGGREGATES, FUNCTIONS, LAZY_FUNCTIONS, UNSUPPORTED_FUNCTIONS, WINDOW_FUNCTIONS } from './functions.ts';
 import { KqlError, Timespan } from './types.ts';
 import type { Dyn, Row, Table, Value } from './types.ts';
 import { escapeRegex, isDate, isObj, isSpan, looseEquals, compareValues, suggest, toNumber, toStr } from './values.ts';
@@ -18,10 +18,19 @@ export interface Ctx {
   notes: string[];
 }
 
+/** Contexte de fenêtre : les lignes du jeu sérialisé, la position de la ligne courante et un cache par appel (row_number, row_cumsum). */
+export interface WinCtx {
+  rows: Row[];
+  index: number;
+  memo: Map<Expr, Value[]>;
+}
+
 export interface Env {
   ctx: Ctx;
   row: Row | null;
   params: Record<string, Value> | null;
+  /** Présent seulement quand la ligne courante appartient à un jeu de lignes sérialisé. */
+  win?: WinCtx | null;
 }
 
 const semantic = (msg: string, e?: { pos: { line: number; col: number } }, hint?: string) =>
@@ -434,6 +443,8 @@ function evalCall(e: Extract<Expr, { k: 'call' }>, env: Env): Value {
     }
   }
 
+  if (WINDOW_FUNCTIONS.has(name)) return evalWindow(e, env);
+
   const def = env.ctx.lets.get(name);
   if (def && def.params !== null) {
     if (args.length !== def.params.length) {
@@ -476,6 +487,91 @@ function evalCall(e: Extract<Expr, { k: 'call' }>, env: Env): Value {
     return evalExpr(a, env);
   });
   return fd.fn(vals, { now: env.ctx.now });
+}
+
+// ----------------------------------------------------------- fonctions de fenêtre
+
+const WINDOW_ARITY: Record<string, [number, number]> = { row_number: [0, 2], prev: [1, 3], next: [1, 3], row_cumsum: [1, 2] };
+
+/** Calcule une seule fois, pour toutes les lignes, la colonne d'un appel row_number() ou row_cumsum() (état cumulatif). */
+function windowColumn(e: Expr, win: WinCtx, compute: () => Value[]): Value[] {
+  let col = win.memo.get(e);
+  if (!col) {
+    col = compute();
+    win.memo.set(e, col);
+  }
+  return col;
+}
+
+function evalWindow(e: Extract<Expr, { k: 'call' }>, env: Env): Value {
+  const { name, args } = e;
+  const [lo, hi] = WINDOW_ARITY[name];
+  if (args.length < lo || args.length > hi) {
+    const exp = lo === hi ? `${lo}` : tr(`entre ${lo} et ${hi}`, `between ${lo} and ${hi}`);
+    throw semantic(tr(`${name}() attend ${exp} argument(s), ${args.length} fourni(s).`, `${name}() expects ${exp} argument(s), ${args.length} provided.`), e);
+  }
+  const win = env.win;
+  if (!win) {
+    throw semantic(
+      tr(`${name}() exige un jeu de lignes sérialisé (ordonné).`, `${name}() requires a serialized (ordered) row set.`),
+      e,
+      tr('Ajoutez « | serialize » (ou « | sort by ... », « | top ... ») juste avant l’opérateur qui utilise cette fonction.', 'Add “| serialize” (or “| sort by ...”, “| top ...”) right before the operator that uses this function.'),
+    );
+  }
+  const at = (i: number): Env => ({ ...env, row: win.rows[i], win: { ...win, index: i } });
+
+  switch (name) {
+    case 'row_number': {
+      const col = windowColumn(e, win, () => {
+        const out: Value[] = [];
+        let cur = 1;
+        for (let k = 0; k < win.rows.length; k++) {
+          tick(env.ctx);
+          const ek = at(k);
+          let start = 1;
+          if (args[0]) {
+            const s = toNumber(evalExpr(args[0], ek));
+            if (s === null) throw semantic(tr('row_number() : l’index de départ doit être un nombre.', 'row_number(): the starting index must be a number.'), e);
+            start = s;
+          }
+          const restart = args[1] ? toBoolValue(evalExpr(args[1], ek)) === true : false;
+          cur = k === 0 || restart ? start : cur + 1;
+          out.push(cur);
+        }
+        return out;
+      });
+      return col[win.index] ?? null;
+    }
+    case 'prev':
+    case 'next': {
+      let off = 1;
+      if (args[1]) {
+        const o = toNumber(evalExpr(args[1], env));
+        if (o === null || !Number.isInteger(o) || o < 0) throw semantic(tr(`${name}() : le décalage doit être un entier positif ou nul.`, `${name}(): the offset must be a non-negative integer.`), e);
+        off = o;
+      }
+      const target = win.index + (name === 'prev' ? -off : off);
+      if (target < 0 || target >= win.rows.length) return args[2] ? evalExpr(args[2], env) : null;
+      return evalExpr(args[0], at(target));
+    }
+    default: {
+      // row_cumsum(terme [, redémarrage]) : somme cumulative ; un redémarrage vrai repart de zéro sur la ligne courante.
+      const col = windowColumn(e, win, () => {
+        const out: Value[] = [];
+        let sum = 0;
+        for (let k = 0; k < win.rows.length; k++) {
+          tick(env.ctx);
+          const ek = at(k);
+          if (k > 0 && args[1] && toBoolValue(evalExpr(args[1], ek)) === true) sum = 0;
+          const v = toNumber(evalExpr(args[0], ek));
+          if (v !== null) sum += v;
+          out.push(sum);
+        }
+        return out;
+      });
+      return col[win.index] ?? null;
+    }
+  }
 }
 
 export type { Dyn, Ty };

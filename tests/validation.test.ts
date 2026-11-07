@@ -17,7 +17,7 @@ describe('KQL : les quatre issues et les erreurs', () => {
     expect(v.correct).toBe(false);
   });
   it('syntaxe non prise en charge par le moteur local', () => {
-    const v = q('kql-003', 'SigninLogs | make-series n=count() on TimeGenerated step 1h');
+    const v = q('kql-003', 'SigninLogs | scan with (step s1: true => n = 1;)');
     expect(v.status).toBe('unsupported');
     expect(v.correct).toBe(false);
   });

@@ -1,6 +1,6 @@
 // Tests de bout en bout dans un vrai navigateur (Playwright + Chromium).
 // Usage : npm run build && node e2e/smoke.cjs
-// Playwright n'est pas une dépendance du projet : installez-le globalement (npm i -g playwright) ou localement.
+// Playwright est une devDependency : npm ci puis npx playwright install chromium (ou E2E_CHROME=/chemin/vers/chrome).
 // Variante sous-répertoire : VITE_BASE=/soc-academy/ npx vite build --outDir dist-sub && E2E_SUBPATH=1 node e2e/smoke.cjs
 const http = require('node:http');
 const fs = require('node:fs');
@@ -9,7 +9,7 @@ let chromium;
 try {
   ({ chromium } = require('playwright'));
 } catch {
-  console.error('Playwright est introuvable. Installez-le (npm i -g playwright) puis relancez.');
+  console.error('Playwright est introuvable. Lancez npm ci puis npx playwright install chromium.');
   process.exit(2);
 }
 
@@ -45,25 +45,42 @@ const ok = (name, cond, extra = '') => {
   console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}${cond ? '' : '  ' + extra}`);
 };
 
+// Attend qu'une page soit réellement affichée : un h1 dans <main>, plus de message « Chargement… » (sections chargées à la demande),
+// et, si `titre` est fourni, un h1 qui correspond. Le hash change AVANT le rendu de la nouvelle route : sans `titre`, on peut lire
+// la page précédente. Remplace waitForSelector('h1'), que satisfaisait aussitôt le h1 de la page précédente.
+const ready = async (p, titre) => {
+  await p.waitForFunction((src) => {
+    const h = document.querySelector('#main h1');
+    if (!h) return false;
+    const st = document.querySelector('#main [role=status]');
+    if (st && /Chargement|Loading/i.test(st.textContent || '')) return false;
+    return !src || new RegExp(src, 'i').test(h.textContent || '');
+  }, titre ? titre.source : null);
+};
+// Attend que le routeur ait pris en compte une adresse (le hash change avant le rendu).
+const routedTo = (p, hash) => p.waitForFunction((h) => decodeURIComponent(location.hash) === '#/' + h, hash);
+const routed = (p, re) => p.waitForFunction((src) => new RegExp(src).test(decodeURIComponent(location.hash)), re.source);
+
 (async () => {
   const srv = await serve();
   const base = `http://127.0.0.1:${srv.address().port}${PREFIX}`;
-  const browser = await chromium.launch();
+  // E2E_CHROME=/chemin/vers/chrome : utiliser un Chrome déjà installé au lieu du Chromium de Playwright.
+  const browser = await chromium.launch(process.env.E2E_CHROME ? { executablePath: process.env.E2E_CHROME } : {});
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   const progress = () => page.evaluate(() => JSON.parse(localStorage.getItem('boreal.progress.v1') || 'null'));
-  const go = async (hash) => { await page.goto(base + '#/' + hash); await page.waitForLoadState('domcontentloaded'); };
+  const go = async (hash) => { await page.goto(base + '#/' + hash); await page.waitForLoadState('domcontentloaded'); await routedTo(page, hash); };
 
   // 1. Accueil et navigation
   await page.goto(base);
-  await page.waitForSelector('h1');
+  await ready(page);
   ok('accueil : titre affiché', (await page.textContent('h1')).length > 3);
   for (const r of ['catalogue', 'tableau', 'terrain', 'revision', 'couverture', 'limites', 'labos', 'parcours/kql', 'cours/cours-kql-bases']) {
     await go(r);
-    await page.waitForSelector('h1');
+    await ready(page);
     ok(`navigation : #/${r}`, (await page.textContent('h1')).length > 1);
   }
 
@@ -90,7 +107,7 @@ const ok = (name, cond, extra = '') => {
   let pr = await progress();
   ok('progression : enregistrée dans localStorage', pr && pr.done && pr.done['kql-003'] && pr.done['kql-003'].xp > 0);
   await page.reload();
-  await page.waitForSelector('h1');
+  await ready(page);
   pr = await progress();
   ok('progression : survit au rechargement', pr && pr.done['kql-003']);
 
@@ -174,7 +191,7 @@ const ok = (name, cond, extra = '') => {
 
   // 9. Export / import de la progression
   await go('tableau');
-  await page.waitForSelector('h1');
+  await ready(page);
   const exported = await page.evaluate(() => localStorage.getItem('boreal.progress.v1'));
   ok('export : JSON valide avec des exercices réussis', JSON.parse(exported).done['kql-003']);
 
@@ -182,7 +199,7 @@ const ok = (name, cond, extra = '') => {
   for (const theme of ['light', 'dark']) {
     await page.evaluate((t) => { const p = JSON.parse(localStorage.getItem('boreal.progress.v1')); p.settings.theme = t; localStorage.setItem('boreal.progress.v1', JSON.stringify(p)); }, theme);
     await page.reload();
-    await page.waitForSelector('h1');
+    await ready(page);
     const attr = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
     ok(`thème ${theme} appliqué`, attr === theme, String(attr));
   }
@@ -191,7 +208,7 @@ const ok = (name, cond, extra = '') => {
   const mobile = await browser.newContext({ viewport: { width: 375, height: 740 }, hasTouch: true });
   const mp = await mobile.newPage();
   await mp.goto(base);
-  await mp.waitForSelector('h1');
+  await ready(mp);
   for (const r of ['', 'azure', 'ia', 'ia/module/m01', 'ia/cours/m01-l1', 'catalogue', 'exercice/kql-001', 'exercice/az-022', 'parcours/kql']) {
     await mp.goto(base + '#/' + r);
     await mp.waitForSelector('h1, h2');
@@ -217,7 +234,7 @@ const ok = (name, cond, extra = '') => {
   lp.on('pageerror', (e) => lerrors.push('pageerror: ' + e.message));
   lp.on('console', (m) => { if (m.type() === 'error') lerrors.push('console: ' + m.text()); });
   await lp.goto(base + '#/azure');
-  await lp.waitForSelector('h1');
+  await ready(lp);
   const frH1 = await lp.textContent('h1');
   ok('langue : français par défaut', (await lp.evaluate(() => document.documentElement.lang)) === 'fr-CA');
   await lp.click('button.lang-btn');
@@ -226,13 +243,13 @@ const ok = (name, cond, extra = '') => {
   ok('langue : le titre change en anglais', enH1 !== frH1, frH1 + ' / ' + enH1);
   ok('langue : mémorisée dans localStorage', (await lp.evaluate(() => localStorage.getItem('boreal.lang'))) === 'en');
   await lp.goto(base + '#/exercice/kql-001');
-  await lp.waitForSelector('h1');
+  await ready(lp);
   const enTitle = await lp.textContent('h1');
   ok('langue : titre d’exercice en anglais', !/[éèêàç]/.test(enTitle) && enTitle.length > 3, enTitle);
   const enBody = await lp.textContent('body');
   ok('langue : énoncé en anglais (pas de « Retournez »)', !/Retournez|Écrivez|Valider/.test(enBody), enBody.slice(0, 200));
   await lp.reload();
-  await lp.waitForSelector('h1');
+  await ready(lp);
   ok('langue : survit au rechargement', (await lp.evaluate(() => document.documentElement.lang)) === 'en' && (await lp.textContent('h1')) === enTitle);
   await lp.goto(base + '#/exercice/kql-003');
   await lp.evaluate(() => localStorage.setItem('boreal.progress.v1', JSON.stringify({ v: 1, settings: { unlockAll: true } })));
@@ -250,7 +267,7 @@ const ok = (name, cond, extra = '') => {
   await lmp.goto(base + '#/azure');
   await lmp.evaluate(() => localStorage.setItem('boreal.lang', 'en'));
   await lmp.reload();
-  await lmp.waitForSelector('h1');
+  await ready(lmp);
   const ovf = await lmp.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   ok('langue : mobile 375 px en anglais sans défilement horizontal', ovf <= 1, 'débordement ' + ovf);
   ok('langue : aucune erreur de console', lerrors.length === 0, lerrors.join(' | '));
@@ -370,7 +387,8 @@ const ok = (name, cond, extra = '') => {
   await np.waitForFunction((b) => document.querySelectorAll('.node.locked').length === b, lockedBefore);
   ok('parcours : réinitialiser le niveau de départ', true);
   await np.click('.path-actions a[href$="/niveau/kql"]');
-  await np.waitForSelector('h1');
+  await routed(np, /\/niveau\/kql/);
+  await ready(np, /Tester mon niveau|Test my level/);
   ok('test de niveau : page d’introduction avec 3 niveaux', (await np.$$('ol li')).length >= 2 && /niveau/i.test(await np.textContent('h1')));
   await np.click('button.btn.primary.big');
   await np.waitForSelector('.kicker[role=status]');
@@ -388,12 +406,12 @@ const ok = (name, cond, extra = '') => {
   ap.on('pageerror', (e) => aerrors.push('pageerror: ' + e.message));
   ap.on('console', (m) => { if (m.type() === 'error') aerrors.push('console: ' + m.text()); });
   await ap.goto(base + '#/ia');
-  await ap.waitForSelector('h1');
+  await ready(ap);
   ok('IA : accueil de la section', /Agentic AI/.test(await ap.textContent('h1')));
   const modLinks = await ap.$$eval('a[href*="#/ia/module/"]', (as) => new Set(as.map((a) => a.getAttribute('href'))).size);
   ok('IA : 18 modules listés', modLinks === 18, String(modLinks));
   await ap.goto(base + '#/ia/cours/m16-l1');
-  await ap.waitForSelector('h1');
+  await ready(ap);
   ok('IA : une leçon du module 16 s’affiche', /menaces/i.test(await ap.textContent('h1')));
   await ap.goto(base + '#/ia/exercice/m16-q1b');
   await ap.waitForSelector('fieldset.qcm');
@@ -421,7 +439,7 @@ const ok = (name, cond, extra = '') => {
   const nVerif = (await ap.$$('.pill.warn')).length;
   ok('IA : ressources listées avec leur statut', nRes >= 25 && nVerif >= 4, nRes + ' / ' + nVerif);
   await ap.goto(base + '#/ia/projets');
-  await ap.waitForSelector('h1');
+  await ready(ap);
   ok('IA : page des projets', /lab/i.test(await ap.textContent('h1')));
   await ap.goto(base + '#/ia/cours/m08-l1');
   await ap.waitForSelector('#schema svg');
@@ -429,13 +447,13 @@ const ok = (name, cond, extra = '') => {
   await ap.click('#schema button[aria-label="Étape suivante"]');
   ok('schéma animé : l’étape suivante est annoncée', /Étape \d\/\d/.test(await ap.textContent('#schema .flow-panel')));
   await ap.goto(base + '#/ia/projet/f01');
-  await ap.waitForSelector('h1');
+  await ready(ap);
   ok('IA : un projet de synthèse s’ouvre', /triage/i.test(await ap.textContent('h1')));
   await ap.goto(base + '#/ia/couverture');
   await ap.waitForSelector('table.coverage');
   ok('IA : matrice de couverture', (await ap.$$('table.coverage tbody tr')).length >= 18);
   await ap.goto(base + '#/ia');
-  await ap.waitForSelector('h1');
+  await ready(ap);
   await ap.keyboard.press('Control+K');
   await ap.waitForSelector('[role=dialog] input');
   await ap.fill('[role=dialog] input', 'injection indirecte');
@@ -447,7 +465,7 @@ const ok = (name, cond, extra = '') => {
 
   // 12. Clavier : tabulation atteint un élément interactif et le lien d'évitement existe
   await page.goto(base + '#/azure');
-  await page.waitForSelector('h1');
+  await ready(page);
   await page.keyboard.press('Tab');
   const focused = await page.evaluate(() => document.activeElement && document.activeElement.tagName);
   ok('clavier : le focus atteint un élément interactif', ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(focused), String(focused));

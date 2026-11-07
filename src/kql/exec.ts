@@ -1,11 +1,11 @@
-import type { Expr, LetDef, Named, Op, Pipeline, QueryAst, Source } from './ast.ts';
-import { checkIdents, inferTy, typeCheck } from './check.ts';
+import type { Expr, LetDef, Named, Op, ParsePart, Pipeline, QueryAst, Source } from './ast.ts';
+import { checkIdents, inferTy, typeCheck, walk } from './check.ts';
 import { evalBool, evalExpr, tick, toBoolValue } from './eval.ts';
-import type { Ctx, Env } from './eval.ts';
-import { AGGREGATES, FUNCTIONS } from './functions.ts';
-import { KqlError } from './types.ts';
+import type { Ctx, Env, WinCtx } from './eval.ts';
+import { AGGREGATES, FUNCTIONS, WINDOW_FUNCTIONS } from './functions.ts';
+import { KqlError, Timespan } from './types.ts';
 import type { Dyn, Row, RunOptions, Table, Ty, Value } from './types.ts';
-import { compareValues, normKey, suggest, toNumber, toStr, typeOfValue } from './values.ts';
+import { compareValues, fmtDate, normKey, suggest, toNumber, toStr, typeOfValue } from './values.ts';
 import { tr } from '../i18n/lang.ts';
 
 const semantic = (msg: string, at?: { pos: { line: number; col: number } }, hint?: string) =>
@@ -15,8 +15,46 @@ type Params = Record<string, Value> | null;
 
 // -------------------------------------------------------------------- utilitaires
 
-function envOf(ctx: Ctx, row: Row | null, params: Params): Env {
-  return { ctx, row, params };
+function envOf(ctx: Ctx, row: Row | null, params: Params, win?: WinCtx | null): Env {
+  return { ctx, row, params, win };
+}
+
+// ------------------------------------------------------------ jeux de lignes sérialisés
+
+/** Fournit le contexte de fenêtre de chaque ligne d'un jeu sérialisé (null si le jeu n'est pas sérialisé). */
+function windowOf(t: Table): ((index: number) => WinCtx) | null {
+  if (!t.serialized) return null;
+  const memo = new Map<Expr, Value[]>();
+  return (index) => ({ rows: t.rows, index, memo });
+}
+
+function windowCall(e: Expr): Extract<Expr, { k: 'call' }> | null {
+  let found: Extract<Expr, { k: 'call' }> | null = null;
+  walk(e, (n) => {
+    if (!found && n.k === 'call' && WINDOW_FUNCTIONS.has(n.name)) found = n;
+  });
+  return found;
+}
+
+/** Refuse tout de suite (même sur une table vide) une fonction de fenêtre appliquée à un jeu non sérialisé. */
+function requireSerialized(exprs: Expr[], t: Table): void {
+  if (t.serialized) return;
+  for (const e of exprs) {
+    const c = windowCall(e);
+    if (c) {
+      throw semantic(
+        tr(`${c.name}() exige un jeu de lignes sérialisé (ordonné), ce qui n’est pas le cas ici.`, `${c.name}() requires a serialized (ordered) row set, which is not the case here.`),
+        c,
+        tr('Ajoutez « | serialize » (ou « | sort by ... », « | top ... ») juste avant cet opérateur. summarize, join, distinct et union produisent des lignes non sérialisées.', 'Add “| serialize” (or “| sort by ...”, “| top ...”) right before this operator. summarize, join, distinct and union produce non-serialized rows.'),
+      );
+    }
+  }
+}
+
+/** Les opérateurs ligne à ligne (project, extend...) conservent l'état sérialisé de leur entrée. */
+function keepSerialized(out: Table, from: Table): Table {
+  if (from.serialized) out.serialized = true;
+  return out;
 }
 
 function colSet(t: Table): Set<string> {
@@ -272,18 +310,27 @@ function applyOp(ctx: Ctx, op: Op, t: Table, params: Params): Table {
     case 'where':
       return opWhere(ctx, op, t, params);
     case 'project':
-      return opProject(ctx, op, t, params);
+      return keepSerialized(opProject(ctx, op, t, params), t);
     case 'extend':
       return opExtend(ctx, op, t, params);
+    case 'serialize': {
+      const base: Table = { ...t, serialized: true };
+      if (op.items.length === 0) return base;
+      return opExtend(ctx, { op: 'extend', items: op.items, pos: op.pos }, base, params);
+    }
+    case 'parse':
+      return opParse(ctx, op, t, params);
+    case 'make-series':
+      return opMakeSeries(ctx, op, t, params);
     case 'project-away': {
       for (const c of op.cols) if (!t.columns.includes(c)) throw unknownCol(c, t, op);
       const cols = t.columns.filter((c) => !op.cols.includes(c));
-      return projectCols(t, cols);
+      return keepSerialized(projectCols(t, cols), t);
     }
     case 'project-keep': {
       for (const c of op.cols) if (!t.columns.includes(c)) throw unknownCol(c, t, op);
       const cols = t.columns.filter((c) => op.cols.includes(c));
-      return projectCols(t, cols);
+      return keepSerialized(projectCols(t, cols), t);
     }
     case 'project-rename': {
       const map = new Map<string, string>();
@@ -300,7 +347,7 @@ function applyOp(ctx: Ctx, op: Op, t: Table, params: Params): Table {
         t.columns.forEach((c) => (o[map.get(c) ?? c] = r[c]));
         return o;
       });
-      return { columns, types, rows };
+      return { columns, types, rows, serialized: t.serialized };
     }
     case 'take': {
       const n = evalExpr(op.n, envOf(ctx, null, params));
@@ -311,10 +358,10 @@ function applyOp(ctx: Ctx, op: Op, t: Table, params: Params): Table {
       const n = evalExpr(op.n, envOf(ctx, null, params));
       if (typeof n !== 'number' || n < 0) throw semantic('top attend un nombre entier positif (ex. top 10 by ...).', op);
       const sorted = sortRows(ctx, t, [{ expr: op.by, desc: op.desc, nullsFirst: op.nullsFirst }], params, op);
-      return { ...t, rows: sorted.slice(0, n) };
+      return { ...t, rows: sorted.slice(0, n), serialized: true };
     }
     case 'sort':
-      return { ...t, rows: sortRows(ctx, t, op.keys, params, op) };
+      return { ...t, rows: sortRows(ctx, t, op.keys, params, op), serialized: true };
     case 'summarize':
       return opSummarize(ctx, op, t, params);
     case 'distinct': {
@@ -329,7 +376,7 @@ function applyOp(ctx: Ctx, op: Op, t: Table, params: Params): Table {
             rows.push(r);
           }
         }
-        return { ...t, rows };
+        return { ...t, rows, serialized: false };
       }
       const proj = opProject(ctx, { op: 'project', items: op.cols, pos: op.pos }, t, params);
       const seen = new Set<string>();
@@ -341,7 +388,7 @@ function applyOp(ctx: Ctx, op: Op, t: Table, params: Params): Table {
           rows.push(r);
         }
       }
-      return { ...proj, rows };
+      return { ...proj, rows, serialized: false };
     }
     case 'count':
       return mkTable(['Count'], { Count: 'number' }, [{ Count: t.rows.length }], { Count: 'long' });
@@ -391,11 +438,13 @@ function opWhere(ctx: Ctx, op: Extract<Op, { op: 'where' }>, t: Table, params: P
   if (ty === 'string' || ty === 'number' || ty === 'datetime' || ty === 'timespan') {
     throw semantic(tr('Le filtre where attend une condition booléenne (vrai/faux).', 'The where filter expects a boolean condition (true/false).'), op, tr('Comparez la valeur à quelque chose, par exemple : where Colonne == "valeur".', 'Compare the value to something, for example: where Column == "value".'));
   }
+  requireSerialized([op.pred], t);
+  const win = windowOf(t);
   const rows: Row[] = [];
-  for (const r of t.rows) {
+  t.rows.forEach((r, i) => {
     tick(ctx);
-    if (evalBool(op.pred, envOf(ctx, r, params))) rows.push(r);
-  }
+    if (evalBool(op.pred, envOf(ctx, r, params, win?.(i)))) rows.push(r);
+  });
   return { ...t, rows };
 }
 
@@ -407,16 +456,18 @@ function opProject(ctx: Ctx, op: Extract<Op, { op: 'project' }>, t: Table, param
     checkIdents(it.expr, cols, ctx, params);
     typeCheck(it.expr, t.types, ctx);
   });
+  requireSerialized(op.items.map((it) => it.expr), t);
+  const win = windowOf(t);
   const rows: Row[] = [];
-  for (const r of t.rows) {
+  t.rows.forEach((r, k) => {
     tick(ctx);
-    const env = envOf(ctx, r, params);
+    const env = envOf(ctx, r, params, win?.(k));
     const o: Row = {};
     op.items.forEach((it, i) => {
       o[names[i]] = evalExpr(it.expr, env);
     });
     rows.push(o);
-  }
+  });
   const types: Record<string, Ty> = {};
   op.items.forEach((it, i) => (types[names[i]] = inferTy(it.expr, t.types, ctx)));
   const kqlTypes: Record<string, string> = {};
@@ -440,16 +491,34 @@ function opExtend(ctx: Ctx, op: Extract<Op, { op: 'extend' }>, t: Table, params:
       avail.add(names[i]);
     }
   });
-  const rows: Row[] = [];
-  for (const r of t.rows) {
-    tick(ctx);
-    const o: Row = { ...r };
+  requireSerialized(op.items.map((it) => it.expr), t);
+  let rows: Row[] = [];
+  if (t.serialized && op.items.some((it) => windowCall(it.expr))) {
+    // Avec une fonction de fenêtre, on calcule colonne par colonne : prev(x) doit voir la valeur de x
+    // calculée par un élément précédent du même extend, sur les lignes voisines.
+    const work: Row[] = t.rows.map((r) => ({ ...r }));
+    const memo = new Map<Expr, Value[]>();
     op.items.forEach((it, i) => {
-      o[names[i]] = evalExpr(it.expr, envOf(ctx, o, params));
+      const vals = work.map((o, k) => {
+        tick(ctx);
+        return evalExpr(it.expr, envOf(ctx, o, params, { rows: work, index: k, memo }));
+      });
+      vals.forEach((v, k) => {
+        work[k][names[i]] = v;
+      });
     });
-    rows.push(o);
+    rows = work;
+  } else {
+    for (const r of t.rows) {
+      tick(ctx);
+      const o: Row = { ...r };
+      op.items.forEach((it, i) => {
+        o[names[i]] = evalExpr(it.expr, envOf(ctx, o, params));
+      });
+      rows.push(o);
+    }
   }
-  return mkTable(columns, types, rows, t.kqlTypes);
+  return keepSerialized(mkTable(columns, types, rows, t.kqlTypes), t);
 }
 
 function sortRows(ctx: Ctx, t: Table, keys: { expr: Expr; desc: boolean; nullsFirst?: boolean }[], params: Params, at: { pos: { line: number; col: number } }): Row[] {
@@ -793,6 +862,222 @@ function opSummarize(ctx: Ctx, op: Extract<Op, { op: 'summarize' }>, t: Table, p
     rows.push(o);
   }
   return mkTable(outNames, outTypes, rows);
+}
+
+// ----------------------------------------------------------------------- parse
+
+const PARSE_TYPES = ['string', 'long', 'int', 'real', 'double', 'bool', 'boolean', 'datetime', 'timespan', 'time'];
+
+interface ParseMatch {
+  /** Valeurs brutes extraites, dans l'ordre du motif (s'arrête au premier élément sans correspondance). */
+  values: Record<string, string>;
+  /** Vrai quand tout le motif correspond. */
+  complete: boolean;
+}
+
+/**
+ * Correspondance « simple » : les constantes sont cherchées dans l'ordre (première occurrence à partir de la position courante),
+ * « * » ignore du texte, et une colonne s'étend jusqu'à la constante suivante (ou jusqu'à la fin du texte si elle termine le motif).
+ */
+function matchParse(text: string, parts: ParsePart[]): ParseMatch {
+  const values: Record<string, string> = {};
+  let pos = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const el = parts[i];
+    if (el.k === 'star') continue;
+    if (el.k === 'str') {
+      const at = text.indexOf(el.v, pos);
+      if (at < 0) return { values, complete: false };
+      pos = at + el.v.length;
+      continue;
+    }
+    const nx = parts[i + 1];
+    if (!nx) {
+      values[el.name] = text.slice(pos);
+      pos = text.length;
+    } else if (nx.k === 'str') {
+      const at = text.indexOf(nx.v, pos);
+      if (at < 0) return { values, complete: false };
+      values[el.name] = text.slice(pos, at);
+      pos = at;
+    }
+  }
+  return { values, complete: true };
+}
+
+const PARSE_TY_ALIASES: Record<string, string> = { double: 'real', boolean: 'bool', time: 'timespan' };
+
+function opParse(ctx: Ctx, op: Extract<Op, { op: 'parse' }>, t: Table, params: Params): Table {
+  checkIdents(op.expr, colSet(t), ctx, params);
+  typeCheck(op.expr, t.types, ctx);
+  const caps = op.parts.filter((p): p is Extract<ParsePart, { k: 'col' }> => p.k === 'col');
+  const seen = new Set<string>();
+  for (const c of caps) {
+    if (!PARSE_TYPES.includes(c.ty)) {
+      throw semantic(tr(`Type « ${c.ty} » non pris en charge dans parse.`, `Type “${c.ty}” is not supported in parse.`), c, tr(`Types pris en charge : ${PARSE_TYPES.join(', ')}.`, `Supported types: ${PARSE_TYPES.join(', ')}.`));
+    }
+    if (seen.has(c.name)) throw semantic(tr(`La colonne « ${c.name} » apparaît deux fois dans le motif de parse.`, `Column “${c.name}” appears twice in the parse pattern.`), c);
+    seen.add(c.name);
+  }
+  const columns = [...t.columns];
+  const types: Record<string, Ty> = { ...t.types };
+  const kqlTypes: Record<string, string> = { ...(t.kqlTypes ?? {}) };
+  for (const c of caps) {
+    const ty = PARSE_TY_ALIASES[c.ty] ?? c.ty;
+    if (!columns.includes(c.name)) columns.push(c.name);
+    types[c.name] = tyFromName(ty);
+    kqlTypes[c.name] = ty;
+  }
+  const rows: Row[] = [];
+  const win = windowOf(t);
+  t.rows.forEach((r, k) => {
+    tick(ctx);
+    const v = evalExpr(op.expr, envOf(ctx, r, params, win?.(k)));
+    const text = v === null ? null : toStr(v);
+    const m = text === null ? null : matchParse(text, op.parts);
+    const o: Row = { ...r };
+    let failed = m === null || !m.complete;
+    for (const c of caps) {
+      const ty = PARSE_TY_ALIASES[c.ty] ?? c.ty;
+      // Mode simple : sans correspondance complète, toutes les colonnes sont nulles. Mode relaxed : on garde ce qui a été extrait.
+      const raw = m && (m.complete || op.kind === 'relaxed') ? m.values[c.name] : undefined;
+      let val: Value = null;
+      if (raw !== undefined) {
+        val = ty === 'string' ? raw : convertTyped(raw.trim(), ty);
+        if (val === null && ty !== 'string') failed = true;
+      }
+      o[c.name] = val;
+    }
+    if (op.strict && failed) return; // parse-where : on retire les lignes qui ne correspondent pas
+    rows.push(o);
+  });
+  return keepSerialized(mkTable(columns, types, rows, kqlTypes), t);
+}
+
+// ----------------------------------------------------------------- make-series
+
+const MAX_SERIES_BINS = 100_000;
+
+const toSeriesValue = (v: Value): Value => (v instanceof Date ? fmtDate(v) : v instanceof Timespan ? toStr(v) : v);
+
+function opMakeSeries(ctx: Ctx, op: Extract<Op, { op: 'make-series' }>, t: Table, params: Params): Table {
+  const cols = colSet(t);
+  const byNames = resolveNames(op.by, true);
+  op.by.forEach((b) => {
+    checkIdents(b.expr, cols, ctx, params);
+    typeCheck(b.expr, t.types, ctx);
+  });
+  checkIdents(op.on, cols, ctx, params);
+  const constEnv = envOf(ctx, null, params);
+  const aggs = op.aggs.map((a) => buildAgg(ctx, a.item, t, byNames, params));
+  aggs.forEach((a, i) => {
+    if (a.names.length !== 1) {
+      throw semantic(tr('make-series accepte seulement des agrégations qui retournent une valeur (count, sum, avg, min, max, dcount...).', 'make-series only accepts aggregations that return a single value (count, sum, avg, min, max, dcount...).'), op.aggs[i].item);
+    }
+  });
+  const aggNames = aggs.map((a) => a.names[0]);
+  const axisName = simpleName(op.on) ?? 'Axis';
+  const outNames = [...byNames, ...aggNames, axisName];
+  if (new Set(outNames).size !== outNames.length) throw semantic(tr('Noms de colonnes dupliqués dans make-series.', 'Duplicate column names in make-series.'), op);
+  const defaults = op.aggs.map((a) => (a.def ? evalExpr(a.def, constEnv) : 0));
+
+  const step = evalExpr(op.step, constEnv);
+  const timeAxis = step instanceof Timespan;
+  const stepN = step instanceof Timespan ? step.ms : typeof step === 'number' ? step : NaN;
+  if (!(stepN > 0)) throw semantic(tr('make-series : « step » doit être un intervalle positif (ex. step 1h pour un axe datetime, step 10 pour un axe numérique).', 'make-series: “step” must be a positive interval (e.g. step 1h for a datetime axis, step 10 for a numeric axis).'), op);
+  const axisNum = (v: Value): number | null => {
+    if (timeAxis) return v instanceof Date ? v.getTime() : null;
+    return typeof v === 'number' ? v : null;
+  };
+
+  // Valeurs de l'axe, une fois pour chaque ligne (null : ligne ignorée).
+  const win = windowOf(t);
+  const axis = t.rows.map((r, k) => {
+    tick(ctx);
+    return axisNum(evalExpr(op.on, envOf(ctx, r, params, win?.(k))));
+  });
+  if (t.rows.length > 0 && axis.every((a) => a === null) && t.rows.some((r) => r !== undefined)) {
+    const sample = evalExpr(op.on, envOf(ctx, t.rows[0], params, win?.(0)));
+    if (sample !== null) {
+      throw semantic(timeAxis ? tr('make-series : l’axe « on » doit être de type datetime quand « step » est un intervalle de temps.', 'make-series: the “on” axis must be datetime when “step” is a time interval.') : tr('make-series : l’axe « on » doit être numérique quand « step » est un nombre.', 'make-series: the “on” axis must be numeric when “step” is a number.'), op);
+    }
+  }
+  const present = axis.filter((a): a is number => a !== null);
+  const fromV = op.from ? axisNum(evalExpr(op.from, constEnv)) : present.length ? Math.min(...present) : null;
+  if (op.from && fromV === null) throw semantic(tr('make-series : « from » doit avoir le même type que l’axe.', 'make-series: “from” must have the same type as the axis.'), op);
+  const toV = op.to ? axisNum(evalExpr(op.to, constEnv)) : null;
+  if (op.to && toV === null) throw semantic(tr('make-series : « to » doit avoir le même type que l’axe.', 'make-series: “to” must have the same type as the axis.'), op);
+
+  // Intervalles : [début + i·pas, début + (i+1)·pas). « to » est exclu ; sans « to », le dernier intervalle contient la plus grande valeur.
+  let nBins = 0;
+  if (fromV !== null) {
+    if (toV !== null) nBins = Math.max(0, Math.ceil((toV - fromV) / stepN));
+    else if (present.length) nBins = Math.max(0, Math.floor((Math.max(...present) - fromV) / stepN) + 1);
+  }
+  if (nBins > MAX_SERIES_BINS) {
+    throw new KqlError('limit', tr(`make-series produirait ${nBins} intervalles : le moteur local en accepte au plus ${MAX_SERIES_BINS}.`, `make-series would produce ${nBins} bins: the local engine accepts at most ${MAX_SERIES_BINS}.`), {
+      hint: tr('Augmentez « step » ou réduisez la plage avec from / to.', 'Increase “step” or narrow the range with from / to.'),
+    });
+  }
+
+  interface Group {
+    by: Value[];
+    bins: Map<number, ReturnType<Agg['make']>[]>;
+  }
+  const groups = new Map<string, Group>();
+  const getGroup = (key: string, by: Value[]): Group => {
+    let g = groups.get(key);
+    if (!g) {
+      g = { by, bins: new Map() };
+      groups.set(key, g);
+    }
+    return g;
+  };
+  t.rows.forEach((r, k) => {
+    const ax = axis[k];
+    if (ax === null || fromV === null) return;
+    const env = envOf(ctx, r, params, win?.(k));
+    const by = op.by.map((b) => evalExpr(b.expr, env));
+    const g = getGroup(by.map(normKey).join('\u0001'), by);
+    const bin = Math.floor((ax - fromV) / stepN);
+    if (bin < 0 || bin >= nBins) return;
+    let states = g.bins.get(bin);
+    if (!states) {
+      states = aggs.map((a) => a.make());
+      g.bins.set(bin, states);
+    }
+    for (const s of states) s.add(r);
+  });
+  if (op.by.length === 0 && groups.size === 0 && nBins > 0) getGroup('', []);
+
+  const axisValues: Value[] = [];
+  for (let i = 0; i < nBins && fromV !== null; i++) {
+    const x = fromV + i * stepN;
+    axisValues.push(timeAxis ? fmtDate(new Date(x)) : x);
+  }
+  const rows: Row[] = [];
+  for (const g of groups.values()) {
+    const o: Row = {};
+    byNames.forEach((n, i) => (o[n] = g.by[i]));
+    aggs.forEach((_, ai) => {
+      const arr: Value[] = [];
+      for (let b = 0; b < nBins; b++) {
+        const states = g.bins.get(b);
+        arr.push(toSeriesValue(states ? states[ai].result()[0] : defaults[ai]));
+      }
+      o[aggNames[ai]] = arr as Value;
+    });
+    o[axisName] = axisValues as Value;
+    rows.push(o);
+  }
+  const types: Record<string, Ty> = {};
+  op.by.forEach((b, i) => (types[byNames[i]] = inferTy(b.expr, t.types, ctx)));
+  const kqlTypes: Record<string, string> = {};
+  [...aggNames, axisName].forEach((n) => {
+    types[n] = 'dynamic';
+    kqlTypes[n] = 'dynamic';
+  });
+  return mkTable(outNames, types, rows, kqlTypes);
 }
 
 // ---------------------------------------------------------------------- join

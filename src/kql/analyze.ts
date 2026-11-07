@@ -123,6 +123,23 @@ export function analyze(ast: QueryAst, tableNames: string[]): string[] {
         case 'mv-expand':
           op.items.forEach((i) => walkExpr(i.expr, false));
           break;
+        case 'serialize':
+          op.items.forEach((i) => walkExpr(i.expr, false));
+          break;
+        case 'parse':
+          walkExpr(op.expr, false);
+          break;
+        case 'make-series':
+          op.aggs.forEach((a) => {
+            walkExpr(a.item.expr, false);
+            if (a.def) walkExpr(a.def, false);
+          });
+          walkExpr(op.on, false);
+          if (op.from) walkExpr(op.from, false);
+          if (op.to) walkExpr(op.to, false);
+          walkExpr(op.step, false);
+          op.by.forEach((i) => walkExpr(i.expr, false));
+          break;
         case 'distinct':
           op.cols.forEach((i) => walkExpr(i.expr, false));
           break;

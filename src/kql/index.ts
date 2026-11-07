@@ -1,6 +1,6 @@
 import { analyze } from './analyze.ts';
 import { executeAst } from './exec.ts';
-import { AGGREGATES, FUNCTIONS } from './functions.ts';
+import { AGGREGATES, FUNCTIONS, WINDOW_FUNCTIONS } from './functions.ts';
 import { parseQuery, SUPPORTED_OPERATORS } from './parser.ts';
 import { KqlError } from './types.ts';
 import type { RunOptions, RunResult } from './types.ts';
@@ -11,7 +11,7 @@ export { SUPPORTED_OPERATORS } from './parser.ts';
 export { display, fmtDate, fmtSpan, normKey, toStr } from './values.ts';
 export { highlight } from './highlight.ts';
 
-export const SUPPORTED_FUNCTIONS: string[] = Object.keys(FUNCTIONS).sort();
+export const SUPPORTED_FUNCTIONS: string[] = [...Object.keys(FUNCTIONS), ...WINDOW_FUNCTIONS].sort();
 export const SUPPORTED_AGGREGATES: string[] = [...AGGREGATES].sort();
 export const SUPPORTED_OPERATOR_LIST: string[] = [...SUPPORTED_OPERATORS];
 

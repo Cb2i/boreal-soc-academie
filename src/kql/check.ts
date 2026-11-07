@@ -1,7 +1,7 @@
 import type { Expr } from './ast.ts';
 import type { Ctx } from './eval.ts';
 import { unknownNameError } from './eval.ts';
-import { FUNCTIONS } from './functions.ts';
+import { FUNCTIONS, WINDOW_FUNCTIONS } from './functions.ts';
 import { KqlError } from './types.ts';
 import type { Ty } from './types.ts';
 import { tr } from '../i18n/lang.ts';
@@ -88,6 +88,11 @@ export function inferTy(e: Expr, types: Record<string, Ty>, ctx: Ctx, depth = 0)
     case 'unary':
       return inferTy(e.e, types, ctx, depth + 1);
     case 'call': {
+      if (WINDOW_FUNCTIONS.has(e.name)) {
+        // prev()/next() renvoient le type de leur colonne ; row_number() et row_cumsum() renvoient un nombre.
+        if (e.name === 'prev' || e.name === 'next') return e.args[0] ? inferTy(e.args[0], types, ctx, depth + 1) : 'any';
+        return 'number';
+      }
       const fd = FUNCTIONS[e.name];
       if (e.name === 'iff' || e.name === 'iif') {
         const a = inferTy(e.args[1] ?? e, types, ctx, depth + 1);

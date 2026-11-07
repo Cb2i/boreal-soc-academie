@@ -27,6 +27,7 @@ const HYPHEN_PREFIXES: Record<string, string[]> = {
   mv: ['expand', 'apply'],
   project: ['away', 'rename', 'keep', 'reorder'],
   make: ['series'],
+  parse: ['where'],
   top: ['nested'],
 };
 

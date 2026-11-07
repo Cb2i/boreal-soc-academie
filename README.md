@@ -113,7 +113,7 @@ e2e/               scénario Playwright de bout en bout
 
 Le moteur interprète un sous-ensemble documenté de KQL sur des tables fictives. Il compare les résultats et non le texte des requêtes, sur deux jeux de données (un visible, un caché). Verdicts possibles : correcte, correcte mais optimisable, résultat bon avec raisonnement fragile, résultat incorrect, erreur de syntaxe, fonction non prise en charge. Les contextes Log Analytics / Sentinel et Defender XDR (Advanced Hunting) sont séparés (colonne temporelle `TimeGenerated` contre `Timestamp`).
 
-Limites connues : pas de `make-series`, `row_number`, `parse`, ni de plusieurs fonctionnalités avancées. La page « Limites » de l'application les liste à partir du code.
+Limites connues : `parse`, `make-series` et les fonctions de fenêtre (`row_number`, `prev`, `next`, `row_cumsum`) sont pris en charge dans un sous-ensemble local ; `series_*`, `lookup`, `mv-apply`, `scan` et d'autres fonctionnalités avancées ne le sont pas. La page « Limites » de l'application les liste à partir du code.
 
 ## Confidentialité
 
