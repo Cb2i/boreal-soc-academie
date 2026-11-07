@@ -9,7 +9,7 @@ const DIST = process.argv[2] ?? 'dist';
 const BUDGET_KB = Number(process.env.BUNDLE_BUDGET_KB ?? 100);
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
-const files = [...html.matchAll(/(?:<script[^>]*\ssrc|<link[^>]*rel="modulepreload"[^>]*\shref)="\.?\/?(assets\/[^"]+\.js)"/g)].map((m) => m[1]);
+const files = [...html.matchAll(/(?:<script[^>]*\ssrc|<link[^>]*rel="modulepreload"[^>]*\shref)="[^"]*?(assets\/[^"\/]+\.js)"/g)].map((m) => m[1]);
 if (files.length === 0) {
   console.error(`Aucun fichier JS initial trouvé dans ${join(DIST, 'index.html')} : lancer npm run build d'abord.`);
   process.exit(1);
