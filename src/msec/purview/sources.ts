@@ -10,6 +10,13 @@ const S = (id: string, title: string, path: string, product: string, topic: stri
 const LIC = 'Les tableaux de licences changent : revérifier la description de service avant tout achat ou toute affirmation à un client.';
 const S2 = (...a: Parameters<typeof S>): SourceDef => ({ ...S(...a), consulted: C2 });
 
+
+const BU = 'Article de blog : vérifier chaque affirmation dans la documentation Microsoft Learn ; licences, noms et écrans changent.';
+/** Source communautaire (blogue ou article hors Microsoft) : l'URL est complète, le titre porte l'auteur et la date. */
+const B = (id: string, title: string, url: string, product: string, topic: string, uncertainty: string = BU): SourceDef => ({
+  id: `purview-blog-${id}`, title, url, product, topic, status: 'communautaire', consulted: C2, uncertainty,
+});
+
 export const PURVIEW_SOURCES: SourceDef[] = [
   S('overview', 'Learn about Microsoft Purview', 'purview/purview', 'Microsoft Purview', 'Vue d’ensemble'),
   S('portal', 'Learn about the Microsoft Purview portal', 'purview/purview-portal', 'Microsoft Purview', 'Portail Purview'),
@@ -99,4 +106,24 @@ export const PURVIEW_SOURCES: SourceDef[] = [
   S2('sam-copilot', 'Get ready for Microsoft 365 Copilot and agents with SharePoint Advanced Management', 'microsoft-365/copilot/get-ready-copilot-sharepoint-advanced-management', 'SharePoint Advanced Management', 'Préparer Copilot'),
   S2('rcd', 'Restrict discovery of SharePoint sites and content', 'sharepoint/restricted-content-discovery', 'SharePoint Advanced Management', 'Restricted Content Discovery'),
   S2('copilot-controls', 'Copilot controls security and governance', 'copilot/implement/copilot-controls-security-governance', 'Gouvernance de l’IA', 'Contrôles de sécurité de Copilot'),
+  S2('fabric-dlp', 'Get started with data loss prevention policies for Fabric and Power BI', 'purview/dlp-powerbi-get-started', 'Data Loss Prevention', 'Fabric et Power BI', 'preview', 'L’action « Restreindre l’accès » est en préversion ; les classificateurs avancés (EDM, trainable, named entities) ne sont pas pris en charge.'),
+  S2('priva-overexposure', 'Data overexposure policies in privacy risk management', 'privacy/priva/risk-management-policy-data-overexposure', 'Priva', 'Surexposition de données personnelles'),
+  S2('priva-transfer', 'Data transfer policies in privacy risk management', 'privacy/priva/risk-management-policy-data-transfer', 'Priva', 'Transferts de données personnelles'),
+  S2('sentinel-purview', 'Integrate Microsoft Sentinel and Microsoft Purview', 'azure/sentinel/purview-solution', 'Microsoft Sentinel', 'Solution Purview pour Sentinel'),
+  S2('sentinel-ip', 'Stream data from Microsoft Purview Information Protection to Microsoft Sentinel', 'azure/sentinel/connect-microsoft-purview', 'Microsoft Sentinel', 'Connecteur Information Protection', 'preview', 'Le connecteur est en préversion.'),
+  S2('teams-meeting-labels', 'Use sensitivity labels to protect calendar items, Teams meetings, and chat', 'purview/sensitivity-labels-meetings', 'Information Protection', 'Réunions Teams et clavardage', 'ga', 'Certaines options des réunions exigent Teams Premium.'),
+  S2('teams-chat', 'Manage chat for sensitive Teams meetings', 'microsoftteams/manage-chat-sensitive-meetings', 'Teams', 'Clavardage des réunions sensibles'),
+  S2('copilot-studio', 'Use Microsoft Purview to manage data security and compliance for Microsoft Copilot Studio', 'purview/ai-copilot-studio', 'Gouvernance de l’IA', 'Agents Copilot Studio'),
+  S2('agents-step2', 'Step 2: Protect sensitive info in grounding data', 'purview/deploymentmodels/depmod-sc-agents-step2', 'Gouvernance de l’IA', 'Données d’ancrage des agents'),
+  S2('sc-agents', 'Security Copilot agents in Microsoft Purview overview', 'purview/copilot-in-purview-agents-overview', 'Security Copilot', 'Agents de triage DLP et IRM', 'preview', 'Les agents de triage sont en préversion et consomment des SCU.'),
+  // ---- Blogues et articles hors Microsoft (lus le 2026-11-07, non validés dans un locataire réel) ----
+  B('nikki-browser', 'Nikki Chapple : Microsoft Purview Browser Extension, governing AI shadow IT (2025-08, mis à jour 2026-05)', 'https://nikkichapple.com/microsoft-purview-browser-extension-protect-ai/', 'Gouvernance de l’IA', 'Extension de navigateur Purview'),
+  B('nikki-copilot-investigate', 'Nikki Chapple : How to investigate Microsoft 365 Copilot interactions (2025-03)', 'https://nikkichapple.com/investigating-microsoft-365-copilot-interactions/', 'Gouvernance de l’IA', 'Enquêter sur les interactions Copilot'),
+  B('o365itpros-retention', 'Tony Redmond, Office365itpros : Separate Copilot interactions and Teams chat retention (2024-11)', 'https://office365itpros.com/2024/11/12/copilot-interaction-retention/', 'Data Lifecycle Management', 'Rétention Copilot séparée de Teams', BU + ' Article de 2024 : le comportement a pu changer.'),
+  B('ciaops-labels', 'CIAOPS (directorcia) : Your sensitivity labels aren’t doing anything (2026-06)', 'https://blog.ciaops.com/2026/06/27/your-sensitivity-labels-arent-doing-anything/', 'Information Protection', 'Couverture réelle des étiquettes'),
+  B('adam-shadow-ai', 'Adam the Automator : Stop shadow AI with Microsoft Purview (2026-07)', 'https://adamtheautomator.com/stop-shadow-ai-microsoft-purview/', 'Gouvernance de l’IA', 'IA non autorisée : découverte et DLP'),
+  B('ninjaone-dlp', 'NinjaOne : How to configure Microsoft Purview DLP (2026-06)', 'https://www.ninjaone.com/blog/how-to-configure-microsoft-purview-dlp/', 'Data Loss Prevention', 'Configurer une première DLP'),
+  B('lighthouse-ai-dlp', 'Lighthouse : Data loss prevention in the age of AI, deploying Microsoft Purview DLP (2025-07)', 'https://www.lighthouseglobal.com/blog/ai-aware-dlp', 'Data Loss Prevention', 'DLP pour l’IA : déploiement par phases'),
+  B('sra-ai-data', 'Bill Lyons, Security Risk Advisors : How to use Microsoft Purview to secure your data for AI (2026-07)', 'https://sra.io/blog/how-to-use-microsoft-purview-to-secure-your-data-for-ai/', 'Gouvernance de l’IA', 'Préparer les données pour Copilot'),
+  B('2tolead-network-dlp', 'Kanwal Khipple, 2toLead : Purview network data security, stop leaks to shadow AI (2026-09)', 'https://www.2tolead.com/insights/purview-network-dlp-global-secure-access', 'Data Loss Prevention', 'DLP réseau avec Global Secure Access'),
 ];
