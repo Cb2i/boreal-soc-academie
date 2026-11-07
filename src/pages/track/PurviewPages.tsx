@@ -3,6 +3,7 @@ import { useTrack } from '../../agentic/TrackContext.tsx';
 import { GROUPS, USE_CASES } from '../../msec/purview/usecases/index.ts';
 import type { UcGroup } from '../../msec/purview/usecases/index.ts';
 import { SOURCE_BY_ID } from '../../msec/sources.ts';
+import { PURVIEW_SOURCES } from '../../msec/purview/sources.ts';
 import { tr } from '../../i18n/lang.ts';
 
 /** Catalogue des cas d'usage Purview : recherche, filtre par thème, fiches repliables avec étapes, test, pièges et sources. */
@@ -55,6 +56,15 @@ export function UseCasesPage() {
           </section>
         );
       })}
+      <section>
+        <h2>{tr('Blogues et articles hors Microsoft', 'Non-Microsoft blogs and articles')}</h2>
+        <p className="muted">{tr('Sources communautaires lues le 2026-11-07 : retours de terrain utiles, mais non validés dans un locataire réel. Chaque affirmation doit être confirmée dans la documentation Microsoft Learn avant d’être appliquée.', 'Community sources, French only for now.')}</p>
+        <ul>
+          {PURVIEW_SOURCES.filter((r) => r.id.startsWith('purview-blog-')).map((r) => (
+            <li key={r.id}><a href={r.url} target="_blank" rel="noreferrer noopener">{r.title}</a> <span className="muted small">({r.topic})</span></li>
+          ))}
+        </ul>
+      </section>
       {!list.length && <p className="muted">{tr('Aucun cas ne correspond.', 'No matching case.')}</p>}
       <p className="muted small">{list.length} / {USE_CASES.length} {tr('cas affichés', 'cases shown')}</p>
     </div>
