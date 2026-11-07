@@ -2,11 +2,13 @@
 import type { SourceDef, SourceStatus } from '../types.ts';
 
 const C = '2026-11-06';
+const C2 = '2026-11-07';
 const L = 'https://learn.microsoft.com/';
 const S = (id: string, title: string, path: string, product: string, topic: string, status: SourceStatus = 'ga', uncertainty?: string): SourceDef => ({
   id: `purview-${id}`, title: `Microsoft Learn : ${title}`, url: L + path, product, topic, status, consulted: C, ...(uncertainty ? { uncertainty } : {}),
 });
 const LIC = 'Les tableaux de licences changent : revérifier la description de service avant tout achat ou toute affirmation à un client.';
+const S2 = (...a: Parameters<typeof S>): SourceDef => ({ ...S(...a), consulted: C2 });
 
 export const PURVIEW_SOURCES: SourceDef[] = [
   S('overview', 'Learn about Microsoft Purview', 'purview/purview', 'Microsoft Purview', 'Vue d’ensemble'),
@@ -54,4 +56,47 @@ export const PURVIEW_SOURCES: SourceDef[] = [
   S('cm-scoring', 'Compliance Manager scoring', 'purview/compliance-manager-scoring', 'Compliance Manager', 'Calcul du score'),
   S('cm-actions', 'Working with improvement actions in Compliance Manager', 'purview/compliance-manager-improvement-actions', 'Compliance Manager', 'Actions d’amélioration'),
   S('hunting-cloudapp', 'CloudAppEvents (advanced hunting)', 'defender-xdr/advanced-hunting-cloudappevents-table', 'Defender XDR', 'Table CloudAppEvents', 'ga', 'La table n’est alimentée que si Defender for Cloud Apps est déployé avec le connecteur Microsoft 365.'),
+  // ---- Cas d'usage (recherche du 2026-11-07 : meme date de consultation) ----
+  S2('sit-credit-card', 'Credit card number', 'purview/sit-defn-credit-card-number', 'Information Protection', 'Type Credit card number'),
+  S2('sit-entities', 'Sensitive information type entity definitions', 'purview/sit-sensitive-information-type-entity-definitions', 'Information Protection', 'Liste des types intégrés'),
+  S2('sit-customize', 'Customize a built-in sensitive information type', 'purview/sit-customize-a-built-in-sensitive-information-type', 'Information Protection', 'Personnaliser un type intégré'),
+  S2('edm-schema', 'Create the schema for exact data match based sensitive information types', 'purview/sit-get-started-exact-data-match-create-schema', 'Information Protection', 'Schéma EDM'),
+  S2('edm-sit', 'Create exact data match sensitive information type/rule package', 'purview/sit-get-started-exact-data-match-create-rule-package', 'Information Protection', 'Type EDM'),
+  S2('autolabel', 'Automatically apply a sensitivity label to Microsoft 365 data', 'purview/apply-sensitivity-label-automatically', 'Information Protection', 'Étiquetage automatique', 'ga', 'Les pages de l’assistant varient selon l’expérience du portail : suivre les écrans affichés.'),
+  S2('labels-default', 'Default sensitivity labels and policies to protect your data', 'purview/default-sensitivity-labels-policies', 'Information Protection', 'Étiquettes et politiques par défaut'),
+  S2('labels-containers', 'Use sensitivity labels to protect collaborative workspaces (groups and sites)', 'purview/sensitivity-labels-teams-groups-sites', 'Information Protection', 'Étiquettes de conteneur'),
+  S2('labels-sharing-link', 'Use sensitivity labels to configure the default sharing link type for sites and documents', 'purview/sensitivity-labels-default-sharing-link', 'Information Protection', 'Lien de partage par défaut'),
+  S2('dlp-cc-email', 'Help prevent sharing credit card numbers through email', 'purview/dlp-create-policy-cc-email', 'Data Loss Prevention', 'Scénario carte de crédit par courriel'),
+  S2('dlp-templates', 'What the DLP policy templates include', 'purview/dlp-policy-templates-include', 'Data Loss Prevention', 'Contenu des modèles (PCI DSS)'),
+  S2('dlp-copilot', 'Learn about using Microsoft Purview DLP to protect interactions with Microsoft 365 Copilot', 'purview/dlp-microsoft365-copilot-location-learn-about', 'Data Loss Prevention', 'DLP pour Copilot', 'preview', 'Une partie des contrôles (invites sensibles, courriels externes) est en aperçu ou en déploiement progressif : vérifier votre locataire.'),
+  S2('dlp-adaptive', 'Learn about Adaptive Protection in Data Loss Prevention', 'purview/dlp-adaptive-protection-learn', 'Data Loss Prevention', 'Protection adaptative dans DLP'),
+  S2('adaptive', 'Help dynamically mitigate risks with Adaptive Protection', 'purview/insider-risk-management-adaptive-protection', 'Insider Risk Management', 'Protection adaptative'),
+  S2('endpoint-paste', 'Help prevent leakage of sensitive content by restricting paste actions into browsers', 'purview/endpoint-dlp-create-policy-restrict-paste-in-browsers', 'Data Loss Prevention', 'Restreindre le collage'),
+  S2('browser-dlp', 'Learn about Data Loss Prevention for cloud apps in Edge for Business', 'purview/dlp-browser-dlp-learn', 'Data Loss Prevention', 'DLP dans Edge pour entreprise'),
+  S2('network-dlp', 'Learn about Network Data Security', 'purview/dlp-network-data-security-learn', 'Data Loss Prevention', 'Sécurité des données réseau'),
+  S2('shadow-ai-step3', 'Step 3: Block sensitive data going to sanctioned AI apps', 'purview/deploymentmodels/depmod-data-leak-shadow-ai-step3', 'Data Loss Prevention', 'Fuite vers l’IA, étape 3'),
+  S2('ai-purview', 'Microsoft Purview data security and compliance protections for generative AI apps', 'purview/ai-microsoft-purview', 'Gouvernance de l’IA', 'Vue d’ensemble IA'),
+  S2('ai-m365-copilot', 'Use Microsoft Purview to manage data security and compliance for Microsoft 365 Copilot', 'purview/ai-m365-copilot', 'Gouvernance de l’IA', 'Copilot et Copilot Chat'),
+  S2('dspm-ai', 'Considerations for DSPM for AI', 'purview/dspm-for-ai-considerations', 'Gouvernance de l’IA', 'DSPM pour l’IA : politiques en un clic', 'ga', 'Cette page décrit l’expérience classique de DSPM pour l’IA : la nouvelle expérience de DSPM est en évolution.'),
+  S2('dspm-setup', 'Setup tasks for Data Security Posture Management', 'purview/data-security-posture-management-setup', 'Gouvernance de l’IA', 'Tâches de configuration DSPM', 'preview', 'Certaines options de la page (intégrations de partenaires) sont en aperçu.'),
+  S2('cc-copilot', 'Configure a Communication Compliance policy to detect generative AI interactions', 'purview/communication-compliance-copilot', 'Communication Compliance', 'Interactions d’IA'),
+  S2('retention-copilot', 'Learn about retention for Copilot and AI apps', 'purview/retention-policies-copilot', 'Data Lifecycle Management', 'Rétention pour Copilot et l’IA'),
+  S2('retention-create', 'Create and configure retention policies', 'purview/create-retention-policies', 'Data Lifecycle Management', 'Création des politiques de rétention'),
+  S2('audit-copilot', 'Audit logs for Copilot and AI activities', 'purview/audit-copilot', 'Audit', 'Audit des activités d’IA'),
+  S2('edisc-copilot', 'Search for and delete Copilot data in eDiscovery', 'purview/edisc-search-copilot-data', 'eDiscovery', 'Données Copilot'),
+  S2('priority-cleanup', 'Override holds to clean up files for Copilot and reclaim storage', 'purview/priority-cleanup-onedrive-sharepoint', 'Data Lifecycle Management', 'Nettoyage prioritaire'),
+  S2('dsi', 'Learn about Data Security Investigations', 'purview/data-security-investigations', 'Data Security Investigations', 'Vue d’ensemble', 'ga', 'La facturation est à l’utilisation et à la capacité : vérifier les coûts avant d’activer les insights proactifs de DSPM.'),
+  S2('dsi-workflow', 'Learn about the Data Security Investigations workflow', 'purview/data-security-investigations-workflow', 'Data Security Investigations', 'Flux de travail'),
+  S2('dsi-personal', 'Review personal data examinations in Data Security Investigations', 'purview/data-security-investigations-personal-data', 'Data Security Investigations', 'Données personnelles'),
+  S2('ib', 'Learn about Information Barriers', 'purview/information-barriers', 'Information Barriers', 'Vue d’ensemble'),
+  S2('ib-sharepoint', 'Use Information Barriers with SharePoint', 'purview/information-barriers-sharepoint', 'Information Barriers', 'SharePoint et OneDrive'),
+  S2('ib-teams', 'Information Barriers in Microsoft Teams', 'purview/information-barriers-teams', 'Information Barriers', 'Teams'),
+  S2('gov-overview', 'Data governance with Microsoft Purview', 'purview/data-governance-overview', 'Data Governance', 'Vue d’ensemble'),
+  S2('gov-start', 'Get started with Microsoft Purview data governance', 'purview/data-governance-get-started', 'Data Governance', 'Mise en route'),
+  S2('uc-plan', 'Plan for Unified Catalog with best practices', 'purview/unified-catalog-plan', 'Data Governance', 'Planifier le Unified Catalog'),
+  S2('dq', 'Overview of data quality in Microsoft Purview Unified Catalog', 'purview/unified-catalog-data-quality', 'Data Governance', 'Qualité des données'),
+  S2('scan', 'Scans and ingestion in Data Map', 'purview/data-map-scan-ingestion', 'Data Governance', 'Analyses Data Map'),
+  S2('sam-copilot', 'Get ready for Microsoft 365 Copilot and agents with SharePoint Advanced Management', 'microsoft-365/copilot/get-ready-copilot-sharepoint-advanced-management', 'SharePoint Advanced Management', 'Préparer Copilot'),
+  S2('rcd', 'Restrict discovery of SharePoint sites and content', 'sharepoint/restricted-content-discovery', 'SharePoint Advanced Management', 'Restricted Content Discovery'),
+  S2('copilot-controls', 'Copilot controls security and governance', 'copilot/implement/copilot-controls-security-governance', 'Gouvernance de l’IA', 'Contrôles de sécurité de Copilot'),
 ];
