@@ -154,6 +154,7 @@ export const TRACKS: TrackMeta[] = [
     descEn: 'Data protection and governance with Microsoft Purview: portal and roles, classification, sensitivity labels, DLP, insider risk, Communication Compliance, audit, eDiscovery, retention and SOC operations.',
     nav: [
       ...COMMON_NAV,
+      { sub: 'cas-usage', fr: 'Cas d’usage', en: 'Use cases' },
       { sub: 'sources', fr: 'Sources', en: 'Sources' },
     ],
   },
