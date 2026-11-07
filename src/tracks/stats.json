@@ -31,6 +31,14 @@
     "competencies": 78,
     "resources": 11
   },
+  "purview": {
+    "modules": 6,
+    "lessons": 12,
+    "exercises": 150,
+    "projects": 9,
+    "competencies": 12,
+    "resources": 0
+  },
   "scenarios": {
     "modules": 8,
     "lessons": 24,

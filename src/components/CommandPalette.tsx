@@ -13,17 +13,6 @@ interface Item { key: string; label: string; kind: string; hint: string; to: str
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-export function SearchButton({ onOpen }: { onOpen: () => void }) {
-  const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-  return (
-    <button type="button" className="search-btn" onClick={onOpen} aria-label={tr('Rechercher un exercice, un cours ou une page', 'Search for an exercise, a lesson or a page')} aria-keyshortcuts="Control+K Meta+K">
-      <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M13 13l4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-      <span className="search-label">{tr('Rechercher', 'Search')}</span>
-      <kbd>{mac ? '⌘K' : 'Ctrl K'}</kbd>
-    </button>
-  );
-}
-
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const lang = useLang();
   const p = useProgress();
@@ -63,7 +52,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       locked: !isUnlocked(e, ALL_EXERCISES, p.done, p.settings.unlockAll, p.startLevel[e.path]),
       done: !!p.done[e.id],
     }));
-    const short: Record<string, string> = { ia: 'IA', xdr: 'XDR', intune: 'Intune', scenarios: 'Scénarios', mdc: 'Defender for Cloud' };
+    const short: Record<string, string> = { ia: 'IA', xdr: 'XDR', intune: 'Intune', scenarios: 'Scénarios', mdc: 'Defender for Cloud', purview: 'Purview' };
     const aiItems: Item[] = tracks
       ? TRACKS.flatMap((t) => {
           const c = tracks[t.id];

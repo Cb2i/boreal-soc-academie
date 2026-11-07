@@ -57,10 +57,6 @@ export const UNSUPPORTED_FUNCTIONS = new Set([
   'hash_md5',
   'new_guid',
   'rand',
-  'row_number',
-  'prev',
-  'next',
-  'row_cumsum',
   'series_decompose_anomalies',
   'series_decompose',
   'series_fir',
@@ -593,6 +589,12 @@ export const FUNCTIONS: Record<string, FnDef> = {
 };
 
 /** Fonctions à évaluation paresseuse, gérées par l'évaluateur. */
+/**
+ * Fonctions de fenêtre : elles lisent les lignes voisines et exigent un jeu de lignes sérialisé (après sort, top ou serialize).
+ * Elles sont évaluées dans eval.ts (evalWindow), pas via FUNCTIONS.
+ */
+export const WINDOW_FUNCTIONS = new Set(['row_number', 'prev', 'next', 'row_cumsum']);
+
 export const LAZY_FUNCTIONS = new Set(['iff', 'iif', 'case', 'coalesce', 'toscalar', 'materialize']);
 
 export const FUNCTION_RETURN_TYPES: Record<string, Ty | 'arg0' | 'special'> = {

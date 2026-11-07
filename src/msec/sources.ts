@@ -2,6 +2,7 @@
 // Date de consultation commune : session de recherche du 2026-10-24 (Microsoft Learn, consulté via la recherche et la lecture de pages).
 import type { SourceDef } from './types.ts';
 import { MDC_SOURCES } from './mdc/sources.ts';
+import { PURVIEW_SOURCES } from './purview/sources.ts';
 
 export const CONSULTED = '2026-10-24';
 
@@ -330,6 +331,7 @@ export const SOURCES: SourceDef[] = [
   { id: 'intune-troubleshoot-policies', title: 'Microsoft Learn : Troubleshooting policies and profiles in Microsoft Intune', url: L + 'troubleshoot/mem/intune/device-configuration/troubleshoot-policies-in-microsoft-intune', product: 'Intune', topic: 'Volet de dépannage intégré, licence, géré, jointure Entra', status: 'ga' },
   { id: 'intune-graph-overview', title: 'Microsoft Learn : Working with Intune in Microsoft Graph', url: L + 'graph/api/resources/intune-graph-overview', product: 'Intune', topic: 'API Graph pour la gestion des appareils', status: 'ga' },
   ...MDC_SOURCES,
+  ...PURVIEW_SOURCES,
   { id: 'win-mdm-collect-logs', title: 'Microsoft Learn : Collect MDM logs', url: L + 'windows/client-management/mdm-collect-logs', product: 'Windows', topic: 'Rapport de diagnostic MDM Windows', status: 'ga' },
 ];
 

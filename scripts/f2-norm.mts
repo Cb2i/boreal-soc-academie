@@ -1,8 +1,7 @@
 // Normalisation déterministe de la terminologie (avant la relecture manuelle) : npx tsx scripts/f2-norm.mts
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { h } from '../src/i18n/prose.ts';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 
-const RULES: [RegExp, string][] = [
+const RULES: [RegExp, string | ((...args: string[]) => string)][] = [
   [/Defender pour Office 365/g, 'Defender for Office 365'],
   [/\b(?:l[’'])?[Ee]xplorateur de menaces/g, 'Threat Explorer'],
   [/sécurité des terminaux/g, 'sécurité des points de terminaison'],
@@ -19,10 +18,10 @@ const RULES: [RegExp, string][] = [
   [/\b(?:Chasse avancée|chasse avancée|[Aa]dvanced hunting)/g, 'Advanced Hunting'],
   [/\bde Advanced Hunting/g, 'd’Advanced Hunting'],
   // locataire, laboratoire
-  [/\b(le|un|ce|du|au|votre|notre|son|ton|d[’'] ?un|dans le|sur le|de ce) tenant\b(?! compte)/g, (m: string, d: string) => `${d} locataire`],
-  [/\b(le|du|au|ce|un|chaque|votre|notre|ton|de) labs?\b(?![-\w])/g, (m: string, d: string) => `${d} laboratoire`],
+  [/\b(le|un|ce|du|au|votre|notre|son|ton|d[’'] ?un|dans le|sur le|de ce) tenant\b(?! compte)/g, (_m: string, d: string) => `${d} locataire`],
+  [/\b(le|du|au|ce|un|chaque|votre|notre|ton|de) labs?\b(?![-\w])/g, (_m: string, d: string) => `${d} laboratoire`],
   [/\bles labs\b/g, 'les laboratoires'],
-  [/\bpousse(nt)? les gens vers\b/g, (m: string, n: string) => `pousse${n ?? ''} les utilisateurs vers`],
+  [/\bpousse(nt)? les gens vers\b/g, (_m: string, n: string) => `pousse${n ?? ''} les utilisateurs vers`],
   [/\bles gens n[’']ont pas râlé\b/g, 'les utilisateurs ne se sont pas plaints'],
   [/\bUn texte court que les gens liront\b/g, 'Un texte court que les utilisateurs liront'],
   [/\bC[’']est le genre d[’']erreur\b/g, 'C’est le type d’erreur'],
@@ -48,14 +47,14 @@ const RULES: [RegExp, string][] = [
   [/\bsans surprivilège\b/g, 'sans privilèges excessifs'],
   [/\bla règle déclenchante\b/g, 'la règle qui a déclenché l’alerte'],
   [/\bterminaux\b/g, 'points de terminaison'],
-  [/\b(à|aux|des|les|ces|vos|nos|sur|de) stratégies(?! de groupe)/g, (m: string, d: string) => `${d} politiques`],
-  [/\b(la|une|cette|votre|notre|chaque|selon la|sur la|Rédigez la|Paramétrez la|Relire une|Rédigez une|Paramétrez une|Cas : la) stratégie(?! de groupe| réseau)(?!\w)/g, (m: string, d: string) => `${d} politique`],
+  [/\b(à|aux|des|les|ces|vos|nos|sur|de) stratégies(?! de groupe)/g, (_m: string, d: string) => `${d} politiques`],
+  [/\b(la|une|cette|votre|notre|chaque|selon la|sur la|Rédigez la|Paramétrez la|Relire une|Rédigez une|Paramétrez une|Cas : la) stratégie(?! de groupe| réseau)(?!\w)/g, (_m: string, d: string) => `${d} politique`],
   [/\bCas : stratégie(?! de groupe)/g, 'Cas : politique'],
   [/\bStratégie de groupe\b/g, 'stratégie de groupe'],
   [/\bphishing\b(?!\.example)/g, 'hameçonnage'],
   [/\bmalwares\b/g, 'maliciels'],
   [/\bmalware\b/g, 'maliciel'],
-  [/\b(le|du|au|dans le|vers le|sur le) cloud\b(?! (?:Security|Adoption|Apps|Shell|Discovery|Logging))/g, (m: string, d: string) => `${d} nuage`],
+  [/\b(le|du|au|dans le|vers le|sur le) cloud\b(?! (?:Security|Adoption|Apps|Shell|Discovery|Logging))/g, (_m: string, d: string) => `${d} nuage`],
   [/\bposture cloud\b/g, 'posture infonuagique'],
   [/\b[Nn]e bâtissez\b/g, (m: string) => m[0] === 'N' ? 'Ne construisez' : 'ne construisez'],
   [/\bbâtit\b/g, 'établit'],

@@ -43,6 +43,15 @@ export type Source =
   | { kind: 'print'; items: Named[]; pos: Pos }
   | { kind: 'union'; withsource?: string; items: Pipeline[]; pos: Pos };
 
+/** Élément du motif d'un parse : constante, * (texte ignoré) ou colonne à extraire. */
+export type ParsePart = { k: 'str'; v: string; pos: Pos } | { k: 'star'; pos: Pos } | { k: 'col'; name: string; ty: string; pos: Pos };
+
+/** Agrégation d'un make-series, avec sa valeur par défaut (default = ...) pour les intervalles vides. */
+export interface SeriesAgg {
+  item: Named;
+  def?: Expr;
+}
+
 export type Op =
   | { op: 'where'; pred: Expr; pos: Pos }
   | { op: 'project'; items: Named[]; pos: Pos }
@@ -59,6 +68,9 @@ export type Op =
   | { op: 'join'; kind: string; right: Pipeline; on: Expr[]; pos: Pos }
   | { op: 'union'; withsource?: string; items: Pipeline[]; pos: Pos }
   | { op: 'mv-expand'; items: { name?: string; expr: Expr; ty?: string }[]; pos: Pos }
+  | { op: 'serialize'; items: Named[]; pos: Pos }
+  | { op: 'parse'; kind: 'simple' | 'relaxed'; strict: boolean; expr: Expr; parts: ParsePart[]; pos: Pos }
+  | { op: 'make-series'; aggs: SeriesAgg[]; on: Expr; from?: Expr; to?: Expr; step: Expr; by: Named[]; pos: Pos }
   | { op: 'getschema'; pos: Pos }
   | { op: 'render'; kind: string; pos: Pos };
 

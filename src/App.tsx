@@ -1,23 +1,30 @@
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { useRoute, href } from './router.ts';
 import { AnnouncerProvider } from './components/Announcer.tsx';
 import { useProgress } from './state/useProgress.ts';
 import { totalXp } from './state/progress.ts';
-import { HomePage } from './pages/HomePage.tsx';
 import { LandingPage } from './pages/LandingPage.tsx';
 import { TRACKS, TRACK_BY_ROUTE } from './tracks/meta.ts';
 import { TRACK_ENTRIES } from './tracks/entries.ts';
-import { CatalogPage } from './pages/CatalogPage.tsx';
-import { PathPage } from './pages/PathPage.tsx';
-import { LessonPage } from './pages/LessonPage.tsx';
-import { ExercisePage } from './pages/ExercisePage.tsx';
-import { DashboardPage } from './pages/DashboardPage.tsx';
-import { ReviewPage } from './pages/ReviewPage.tsx';
-import { PlaygroundPage } from './pages/PlaygroundPage.tsx';
-import { LabsPage } from './pages/LabsPage.tsx';
-import { CoveragePage } from './pages/CoveragePage.tsx';
-import { LimitsPage } from './pages/LimitsPage.tsx';
-import { CommandPalette, SearchButton } from './components/CommandPalette.tsx';
+import { SearchButton } from './components/SearchButton.tsx';
+import { AZURE_ROUTES } from './pages/azureRoutes.ts';
+
+/**
+ * La section Azure (218 exercices, cours, moteur KQL) et la palette de recherche ne sont chargées qu'à la demande :
+ * l'accueil et les autres parcours ne les téléchargent pas. On attend `contentReady` pour que le contenu soit
+ * déjà dans la langue courante au premier rendu (cas d'un visiteur dont la langue mémorisée est l'anglais).
+ */
+const AzureRoutes = lazy(async () => {
+  const { contentReady } = await import('./content/index.ts');
+  await contentReady;
+  return import('./pages/AzureRoutes.tsx');
+});
+const CommandPalette = lazy(async () => {
+  const { contentReady } = await import('./content/index.ts');
+  await contentReady;
+  const m = await import('./components/CommandPalette.tsx');
+  return { default: m.CommandPalette };
+});
 
 type Section = string;
 /** 'home', 'azure' ou la route d'un parcours (ia, xdr, intune, scenarios). */
@@ -65,8 +72,6 @@ function ErrorBoundaryFallback() {
 
 import { Component } from 'react';
 import type { ReactNode } from 'react';
-import { PlacementPage } from './pages/PlacementPage.tsx';
-import { CertificatePage } from './pages/CertificatePage.tsx';
 import { StreakChip } from './components/StreakChip.tsx';
 import { tr, useLang, setLang } from './i18n/lang.ts';
 class Boundary extends Component<{ children: ReactNode; resetKey: string }, { failed: boolean; key: string }> {
@@ -89,6 +94,9 @@ export function App() {
   const p = useProgress();
   const xp = totalXp(p);
   const [searchOpen, setSearchOpen] = useState(false);
+  // La palette reste montée après sa première ouverture (gestion du focus à la fermeture).
+  const [paletteUsed, setPaletteUsed] = useState(false);
+  useEffect(() => { if (searchOpen) setPaletteUsed(true); }, [searchOpen]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -131,20 +139,11 @@ export function App() {
   let page: ReactNode;
   switch (route.name) {
     case 'accueil': page = <LandingPage />; break;
-    case 'azure': page = <HomePage />; break;
-    case 'catalogue': page = <CatalogPage />; break;
-    case 'parcours': page = route.params[0] ? <PathPage id={route.params[0]} /> : <CatalogPage />; break;
-    case 'cours': page = <LessonPage key={route.params[0]} id={route.params[0] ?? ''} />; break;
-    case 'exercice': page = <ExercisePage key={route.params[0]} id={route.params[0] ?? ''} />; break;
-    case 'revision': page = route.params[0] ? <ExercisePage key={route.params[0]} id={route.params[0]} review /> : <ReviewPage />; break;
-    case 'niveau': page = route.params[0] ? <PlacementPage id={route.params[0]} /> : <CatalogPage />; break;
-    case 'certificat': page = <CertificatePage id={route.params[0] ?? ''} />; break;
-    case 'tableau': page = <DashboardPage />; break;
-    case 'terrain': page = <PlaygroundPage route={route} />; break;
-    case 'labos': page = <LabsPage />; break;
-    case 'couverture': page = <CoveragePage />; break;
-    case 'limites': page = <LimitsPage />; break;
     default: {
+      if (AZURE_ROUTES.has(route.name)) {
+        page = <Suspense fallback={<p className="muted" role="status">{tr('Chargement de la section…', 'Loading the section…')}</p>}><AzureRoutes route={route} /></Suspense>;
+        break;
+      }
       const Entry = TRACK_ENTRIES[route.name];
       if (Entry) {
         page = <Suspense fallback={<p className="muted" role="status">{tr('Chargement de la section…', 'Loading the section…')}</p>}><Entry route={route} /></Suspense>;
@@ -192,7 +191,7 @@ export function App() {
           {section === 'azure' && <span className="xp-chip" aria-label={tr(`${xp} points d’expérience`, `${xp} experience points`)}>{xp} XP</span>}
         </div>
       </header>
-      <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
+      {paletteUsed && <Suspense fallback={null}><CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} /></Suspense>}
       <main id="main" tabIndex={-1} className="wrap">
         <Boundary resetKey={`${route.name}/${route.params.join('/')}`}>{page}</Boundary>
       </main>

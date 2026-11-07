@@ -300,7 +300,7 @@ describe('erreurs', () => {
     expect(err('Logins | where User').kind).toBe('semantic');
   });
   it('opérateur valide mais non pris en charge', () => {
-    const e = err('Logins | parse User with "a" b:string');
+    const e = err('Logins | mv-apply x = Attempts to typeof(long) on (take 1)');
     expect(e.kind).toBe('unsupported');
   });
   it('fonction non prise en charge vs fonction inconnue', () => {

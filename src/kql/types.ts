@@ -23,6 +23,8 @@ export interface Table {
   rows: Row[];
   /** Types KQL d'affichage (long, real, int...) quand ils sont connus. */
   kqlTypes?: Record<string, string>;
+  /** Jeu de lignes sérialisé (ordonné) : requis par row_number(), prev(), next() et row_cumsum(). Produit par sort, top et serialize. */
+  serialized?: boolean;
 }
 
 export type KqlErrorKind = 'syntax' | 'semantic' | 'unsupported' | 'limit';

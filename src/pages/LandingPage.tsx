@@ -1,5 +1,4 @@
-import { ALL_EXERCISES, ALL_LESSONS } from '../content/index.ts';
-import { PATHS } from '../content/paths.ts';
+import azureStats from '../content/azure-stats.json';
 import { useStoreProgress } from '../agentic/state.ts';
 import { STORES } from '../tracks/stores.ts';
 import { TRACKS } from '../tracks/meta.ts';
@@ -40,7 +39,7 @@ function TrackCard({ id, delay }: { id: string; delay: number }) {
 export function LandingPage() {
   const az = useProgress();
   const azDone = Object.keys(az.done).length;
-  const azPct = Math.round((azDone / ALL_EXERCISES.length) * 100);
+  const azPct = Math.round((azDone / azureStats.exercises) * 100);
   const live = TRACKS.filter((t) => TRACK_ENTRIES[t.route]);
   return (
     <div className="stack landing">
@@ -61,7 +60,7 @@ export function LandingPage() {
             <Ring pct={azPct} size={44} stroke={5} color="#3fd0c9"><span className="ring-num">{azPct}%</span></Ring>
           </div>
           <p className="muted">{tr('Fondations Azure, identité, observabilité, Sentinel, KQL et enquêtes SOC, avec un moteur KQL local.', 'Azure foundations, identity, observability, Sentinel, KQL and SOC investigations, with a local KQL engine.')}</p>
-          <p className="muted small">{PATHS.length} {tr('parcours', 'paths')} · {ALL_LESSONS.length} {tr('cours', 'lessons')} · {ALL_EXERCISES.length} {tr('exercices', 'exercises')} · {azDone} {tr('réussis', 'completed')}</p>
+          <p className="muted small">{azureStats.paths} {tr('parcours', 'paths')} · {azureStats.lessons} {tr('cours', 'lessons')} · {azureStats.exercises} {tr('exercices', 'exercises')} · {azDone} {tr('réussis', 'completed')}</p>
           <span className="btn primary">{azDone > 0 ? tr('Continuer', 'Continue') : tr('Commencer', 'Start')} →</span>
         </a>
         {live.map((t, i) => <TrackCard key={t.id} id={t.id} delay={0.12 + i * 0.07} />)}

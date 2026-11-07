@@ -1,6 +1,6 @@
 import { lex } from './lexer.ts';
 import type { Token } from './lexer.ts';
-import type { Expr, LetDef, Named, Op, Pipeline, Pos, QueryAst, SortKey, Source } from './ast.ts';
+import type { Expr, LetDef, Named, Op, ParsePart, Pipeline, Pos, QueryAst, SeriesAgg, SortKey, Source } from './ast.ts';
 import { KqlError } from './types.ts';
 import type { Dyn } from './types.ts';
 import { tr } from '../i18n/lang.ts';
@@ -24,20 +24,20 @@ export const SUPPORTED_OPERATORS = [
   'join',
   'union',
   'mv-expand',
+  'serialize',
+  'parse',
+  'parse-where',
+  'make-series',
   'getschema',
   'render',
 ] as const;
 
 /** Opérateurs KQL valides mais non pris en charge par le moteur local. */
 const UNSUPPORTED_OPERATORS = new Set([
-  'parse',
-  'parse-where',
-  'make-series',
   'evaluate',
   'lookup',
   'search',
   'find',
-  'serialize',
   'scan',
   'sample',
   'sample-distinct',
@@ -479,6 +479,16 @@ class Parser {
         const u = this.parseUnionTail();
         return { op: 'union', withsource: u.withsource, items: u.items, pos: p };
       }
+      case 'serialize': {
+        // « serialize » seul marque les lignes comme sérialisées ; avec des expressions, il se comporte comme extend.
+        const items: Named[] = this.isP('|') || this.isP(';') || this.isP(')') || this.peek().t === 'eof' ? [] : this.parseNamedList();
+        return { op: 'serialize', items, pos: p };
+      }
+      case 'parse':
+      case 'parse-where':
+        return this.parseParse(name === 'parse-where', p);
+      case 'make-series':
+        return this.parseMakeSeries(p);
       case 'mv-expand': {
         const items: { name?: string; expr: Expr; ty?: string }[] = [];
         while (this.isId('bagexpansion') || this.isId('with_itemindex')) {
@@ -504,6 +514,107 @@ class Parser {
       default:
         this.err(tr(`Opérateur « ${name} » inconnu.`, `Unknown operator “${name}”.`), t, tr('Opérateurs pris en charge : ', 'Supported operators: ') + SUPPORTED_OPERATORS.join(', ') + '.');
     }
+  }
+
+  /** parse [kind=simple|relaxed] expr with [*] "constante" colonne[:type] ... (et parse-where, qui retire les lignes sans correspondance). */
+  parseParse(strict: boolean, p: Pos): Op {
+    let kind: 'simple' | 'relaxed' = 'simple';
+    while (this.isId('kind') && this.isP('=', 1)) {
+      const kt = this.peek();
+      this.next();
+      this.next();
+      const v = this.expectIdent('de mode (simple ou relaxed)').v;
+      if (v === 'regex') {
+        throw new KqlError('unsupported', tr('Le mode « kind=regex » de parse n’est pas pris en charge par le moteur local.', 'The “kind=regex” mode of parse is not supported by the local engine.'), {
+          line: kt.line,
+          col: kt.col,
+          hint: tr('Utilisez kind=simple (par défaut) ou kind=relaxed, ou la fonction extract() avec une expression régulière.', 'Use kind=simple (default) or kind=relaxed, or the extract() function with a regular expression.'),
+        });
+      }
+      if (v !== 'simple' && v !== 'relaxed') this.err(tr(`Mode de parse inconnu : « ${v} ».`, `Unknown parse mode: “${v}”.`), kt, tr('Modes pris en charge : simple et relaxed.', 'Supported modes: simple and relaxed.'));
+      kind = v;
+    }
+    const expr = this.parseExpr();
+    if (!this.isId('with')) this.err(tr('Il manque « with » après l’expression dans « parse » (ex. parse Message with "user=" User).', '“with” is missing after the expression in “parse” (e.g. parse Message with "user=" User).'), this.peek());
+    this.next();
+    const parts: ParsePart[] = [];
+    while (!this.isP('|') && !this.isP(';') && !this.isP(')') && this.peek().t !== 'eof') {
+      const t = this.peek();
+      if (t.t === 'str') {
+        this.next();
+        parts.push({ k: 'str', v: t.v, pos: pos(t) });
+      } else if (this.isP('*')) {
+        this.next();
+        parts.push({ k: 'star', pos: pos(t) });
+      } else if (t.t === 'ident') {
+        this.next();
+        let ty = 'string';
+        if (this.isP(':')) {
+          this.next();
+          ty = this.expectIdent('de type').v;
+        }
+        parts.push({ k: 'col', name: t.v, ty, pos: pos(t) });
+      } else {
+        this.err(tr(`Dans le motif de parse, une chaîne, « * » ou un nom de colonne est attendu, trouvé ${this.describe(t)}.`, `In the parse pattern, a string, “*” or a column name is expected, found ${this.describe(t)}.`), t);
+      }
+    }
+    if (parts.length === 0 || !parts.some((x) => x.k === 'col')) {
+      this.err(tr('Le motif de parse doit contenir au moins une colonne à extraire.', 'The parse pattern must contain at least one column to extract.'), this.peek());
+    }
+    parts.forEach((x, i) => {
+      if (x.k !== 'col') return;
+      const nx = parts[i + 1];
+      if (nx && nx.k === 'col') {
+        this.err(tr(`Les colonnes « ${x.name} » et « ${nx.name} » sont collées : séparez-les par une chaîne constante.`, `Columns “${x.name}” and “${nx.name}” are adjacent: separate them with a constant string.`), this.peek());
+      }
+      if (nx && nx.k === 'star') {
+        throw new KqlError('unsupported', tr(`« * » juste après la colonne « ${x.name} » n’est pas pris en charge par le moteur local.`, `“*” right after column “${x.name}” is not supported by the local engine.`), {
+          line: nx.pos.line,
+          col: nx.pos.col,
+          hint: tr('Placez une chaîne constante après la colonne pour délimiter sa valeur.', 'Put a constant string after the column to delimit its value.'),
+        });
+      }
+    });
+    return { op: 'parse', kind, strict, expr, parts, pos: p };
+  }
+
+  /** make-series [Nom =] agg() [default = valeur] [, ...] on axe [from début] [to fin] step pas [by ...] */
+  parseMakeSeries(p: Pos): Op {
+    const aggs: SeriesAgg[] = [];
+    do {
+      const item = this.parseNamed();
+      let def: Expr | undefined;
+      if (this.isId('default') && this.isP('=', 1)) {
+        this.next();
+        this.next();
+        def = this.parseExpr();
+      }
+      aggs.push({ item, def });
+    } while (this.acceptP(','));
+    if (!this.isId('on')) this.err(tr('Il manque « on » dans « make-series » (ex. make-series count() on TimeGenerated step 1h).', '“on” is missing in “make-series” (e.g. make-series count() on TimeGenerated step 1h).'), this.peek());
+    this.next();
+    const on = this.parseExpr();
+    let from: Expr | undefined;
+    let to: Expr | undefined;
+    if (this.isId('from')) {
+      this.next();
+      from = this.parseExpr();
+    }
+    if (this.isId('to')) {
+      this.next();
+      to = this.parseExpr();
+    }
+    if (!this.isId('step')) this.err(tr('Il manque « step » dans « make-series » (ex. step 1h).', '“step” is missing in “make-series” (e.g. step 1h).'), this.peek());
+    this.next();
+    const step = this.parseExpr();
+    const by: Named[] = [];
+    if (this.isId('by')) {
+      this.next();
+      do {
+        by.push(this.parseNamed());
+      } while (this.acceptP(','));
+    }
+    return { op: 'make-series', aggs, on, from, to, step, by, pos: p };
   }
 
   parseJoin(p: Pos): Op {

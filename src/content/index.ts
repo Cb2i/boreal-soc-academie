@@ -16,7 +16,7 @@ import { PATHS } from './paths.ts';
 import { COMPETENCIES } from './competencies.ts';
 import type { EnBundle } from './en/types.ts';
 import { applyOverlay } from '../i18n/localize.ts';
-import { onBeforeLangChange } from '../i18n/lang.ts';
+import { getLang, onBeforeLangChange } from '../i18n/lang.ts';
 import { EX_TYPE_LABELS, LEVEL_NAMES } from './types.ts';
 import { LABS } from './labs.ts';
 
@@ -102,3 +102,12 @@ onBeforeLangChange(async (lang) => {
   applyContentLanguage(lang);
 });
 applyContentLanguage('fr');
+
+/**
+ * Ce module est chargé à la demande (pas avant le premier rendu) : si l'interface est déjà en anglais
+ * à ce moment, initLang() ne l'a pas vu. Les pages attendent cette promesse avant de lire le contenu.
+ */
+export const contentReady: Promise<void> =
+  getLang() === 'en'
+    ? loadEn().then(() => applyContentLanguage('en'))
+    : Promise.resolve();

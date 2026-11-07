@@ -5,12 +5,13 @@ import { InlineExercise } from '../../agentic/components/InlineExercise.tsx';
 import { Markdown } from '../../components/Markdown.tsx';
 import { tr } from '../../i18n/lang.ts';
 import { FlowDiagram } from '../../diagrams/FlowDiagram.tsx';
-import { FLOW_BY_LESSON } from '../../diagrams/index.ts';
+import { useFlow } from '../../diagrams/lazy.ts';
 
 export function LessonPage({ id }: { id: string }) {
   const { c, p, meta, to, store } = useTrack();
   const { EX_BY_ID, LESSON_BY_ID, MODULE_BY_ID, MODULES, LESSONS, RESOURCES, LEVELS } = c;
   const l = LESSON_BY_ID[id];
+  const flow = useFlow(id, meta.id);
   useEffect(() => {
     if (!l) return;
     store.set((s) => ({ ...markLessonSeen(s, l.id), last: { route: to('cours', l.id), title: l.title, at: Date.now() } }));
@@ -32,7 +33,7 @@ export function LessonPage({ id }: { id: string }) {
         <p className="lead muted">{l.summary}</p>
         <div className="row"><span className="pill">{l.minutes} min</span><span className="pill">{tr('Module', 'Module')} {m.n} : {m.title}</span></div>
         <nav className="toc" aria-label={tr('Sommaire de la leçon', 'Lesson contents')}>
-          <a href="#objectifs">{tr('Objectifs', 'Objectives')}</a><a href="#explication">{tr('Explication', 'Explanation')}</a>{FLOW_BY_LESSON[l.id] && <a href="#schema">{tr('Schéma animé', 'Animated diagram')}</a>}<a href="#demo">{tr('Démonstration', 'Demonstration')}</a><a href="#guide">{tr('Exercice guidé', 'Guided exercise')}</a><a href="#autonome">{tr('Exercice autonome', 'Independent exercise')}</a><a href="#evaluation">{tr('Évaluation courte', 'Short quiz')}</a><a href="#fiche">{tr('Fiche de révision', 'Revision sheet')}</a><a href="#liens">{tr('Liens', 'Links')}</a>
+          <a href="#objectifs">{tr('Objectifs', 'Objectives')}</a><a href="#explication">{tr('Explication', 'Explanation')}</a>{flow && <a href="#schema">{tr('Schéma animé', 'Animated diagram')}</a>}<a href="#demo">{tr('Démonstration', 'Demonstration')}</a><a href="#guide">{tr('Exercice guidé', 'Guided exercise')}</a><a href="#autonome">{tr('Exercice autonome', 'Independent exercise')}</a><a href="#evaluation">{tr('Évaluation courte', 'Short quiz')}</a><a href="#fiche">{tr('Fiche de révision', 'Revision sheet')}</a><a href="#liens">{tr('Liens', 'Links')}</a>
         </nav>
       </header>
 
@@ -49,7 +50,7 @@ export function LessonPage({ id }: { id: string }) {
         <div className="prose"><Markdown source={l.body} /></div>
       </section>
 
-      {FLOW_BY_LESSON[l.id] && <section id="schema" className="stack" aria-label={tr('Schéma animé', 'Animated diagram')}><FlowDiagram key={l.id} flow={FLOW_BY_LESSON[l.id]} /></section>}
+      {flow && <section id="schema" className="stack" aria-label={tr('Schéma animé', 'Animated diagram')}><FlowDiagram key={l.id} flow={flow} /></section>}
 
       <section id="demo" className="card stack demo" aria-labelledby="h-demo">
         <h2 id="h-demo" style={{ margin: 0 }}>{tr('Démonstration commentée', 'Annotated demonstration')} : {l.demo.title}</h2>
