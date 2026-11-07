@@ -481,7 +481,7 @@ class Parser {
       }
       case 'serialize': {
         // « serialize » seul marque les lignes comme sérialisées ; avec des expressions, il se comporte comme extend.
-        const items: Named[] = this.isP('|') || this.isP(';') || this.peek().t === 'eof' ? [] : this.parseNamedList();
+        const items: Named[] = this.isP('|') || this.isP(';') || this.isP(')') || this.peek().t === 'eof' ? [] : this.parseNamedList();
         return { op: 'serialize', items, pos: p };
       }
       case 'parse':
@@ -538,7 +538,7 @@ class Parser {
     if (!this.isId('with')) this.err(tr('Il manque « with » après l’expression dans « parse » (ex. parse Message with "user=" User).', '“with” is missing after the expression in “parse” (e.g. parse Message with "user=" User).'), this.peek());
     this.next();
     const parts: ParsePart[] = [];
-    while (!this.isP('|') && !this.isP(';') && this.peek().t !== 'eof') {
+    while (!this.isP('|') && !this.isP(';') && !this.isP(')') && this.peek().t !== 'eof') {
       const t = this.peek();
       if (t.t === 'str') {
         this.next();

@@ -81,3 +81,15 @@ describe('KQL : make-series', () => {
     expect(run('Ev | make-series c = count() on T step 0h').ok).toBe(false);
   });
 });
+
+describe('KQL : opérateurs en fin de sous-requête entre parenthèses', () => {
+  it('parse et parse-where terminent une sous-requête', () => {
+    const t = ok('let X = (Ev | where User == "bob" | parse Msg with "login user=" U " ip=" * | project U); X');
+    expect(t.rows.map((r) => r.U)).toEqual(['bob', 'bob']);
+    expect(ok('let X = (Ev | parse-where Msg with "login user=" U " ip=" * | project U); X').rows).toHaveLength(3);
+  });
+  it('serialize seul termine une sous-requête et une union', () => {
+    expect(ok('let X = (Ev | serialize); X').rows).toHaveLength(4);
+    expect(ok('union (Ev | serialize), (Ev | serialize)').rows).toHaveLength(8);
+  });
+});
